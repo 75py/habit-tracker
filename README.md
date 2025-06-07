@@ -1,5 +1,7 @@
 # Habit Tracker
 
+[![CI](https://github.com/75py/habit-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/75py/habit-tracker/actions/workflows/ci.yml)
+
 A cross-platform habit tracking application built with Kotlin Multiplatform and Compose Multiplatform.
 
 ## Project Overview
