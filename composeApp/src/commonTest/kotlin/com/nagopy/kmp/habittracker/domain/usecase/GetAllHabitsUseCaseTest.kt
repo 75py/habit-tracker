@@ -1,7 +1,11 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -12,7 +16,6 @@ class GetAllHabitsUseCaseTest {
     @Test
     fun `invoke should return all habits from repository`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
         val habits = listOf(
             Habit(
                 id = 1,
@@ -31,7 +34,8 @@ class GetAllHabitsUseCaseTest {
                 createdAt = LocalDate.parse("2024-01-02")
             )
         )
-        mockRepository.setHabits(habits)
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getAllHabits() } returns flowOf(habits)
         val useCase = GetAllHabitsUseCase(mockRepository)
 
         // When
@@ -46,7 +50,8 @@ class GetAllHabitsUseCaseTest {
     @Test
     fun `invoke should return empty list when no habits exist`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getAllHabits() } returns flowOf(emptyList())
         val useCase = GetAllHabitsUseCase(mockRepository)
 
         // When

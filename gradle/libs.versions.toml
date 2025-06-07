@@ -19,6 +19,7 @@ kotlinx-coroutines = "1.9.0"
 koin = "4.0.4"
 room = "2.7.1"
 ksp = "2.1.0-1.0.29"
+mockk = "1.13.13"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -50,6 +51,9 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 # kotlinx.datetime
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+
+# MockK
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

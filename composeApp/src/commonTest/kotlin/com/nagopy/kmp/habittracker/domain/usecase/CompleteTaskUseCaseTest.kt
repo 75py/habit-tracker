@@ -1,11 +1,15 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
-import kotlinx.coroutines.flow.first
+import com.nagopy.kmp.habittracker.domain.model.HabitLog
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CompleteTaskUseCaseTest {
@@ -13,69 +17,75 @@ class CompleteTaskUseCaseTest {
     @Test
     fun `invoke with habitId should create habit log for today`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val useCase = CompleteTaskUseCase(mockRepository)
+        val mockRepository = mockk<HabitRepository>()
         val habitId = 1L
+        val expectedLogId = 100L
+        val logSlot = slot<HabitLog>()
+        
+        coEvery { mockRepository.addHabitLog(capture(logSlot)) } returns expectedLogId
+        val useCase = CompleteTaskUseCase(mockRepository)
 
         // When
         val logId = useCase(habitId)
 
         // Then
-        assertTrue(logId > 0)
+        assertEquals(expectedLogId, logId)
+        coVerify(exactly = 1) { mockRepository.addHabitLog(any()) }
         
-        // Verify the log was created
-        val logsList = mockRepository.getHabitLogsForHabit(habitId).first()
-        assertEquals(1, logsList.size)
-        
-        val createdLog = logsList.first()
-        assertEquals(habitId, createdLog.habitId)
-        assertEquals(true, createdLog.isCompleted)
-        // Note: We can't easily test the exact date without mocking the clock
-        // but we can verify a log was created
+        // Verify the log has correct properties
+        val capturedLog = logSlot.captured
+        assertEquals(habitId, capturedLog.habitId)
+        assertEquals(true, capturedLog.isCompleted)
+        // Date should be today (current date in system timezone)
+        assertTrue(capturedLog.date != null)
     }
 
     @Test
     fun `invoke with habitId and date should create habit log for specific date`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val useCase = CompleteTaskUseCase(mockRepository)
+        val mockRepository = mockk<HabitRepository>()
         val habitId = 2L
         val specificDate = LocalDate.parse("2024-01-15")
+        val expectedLogId = 200L
+        val logSlot = slot<HabitLog>()
+        
+        coEvery { mockRepository.addHabitLog(capture(logSlot)) } returns expectedLogId
+        val useCase = CompleteTaskUseCase(mockRepository)
 
         // When
         val logId = useCase(habitId, specificDate)
 
         // Then
-        assertTrue(logId > 0)
+        assertEquals(expectedLogId, logId)
+        coVerify(exactly = 1) { mockRepository.addHabitLog(any()) }
         
-        // Verify the log was created with the correct date
-        val createdLog = mockRepository.getHabitLog(habitId, specificDate)
-        assertNotNull(createdLog)
-        assertEquals(habitId, createdLog.habitId)
-        assertEquals(specificDate, createdLog.date)
-        assertEquals(true, createdLog.isCompleted)
+        // Verify the log has correct properties
+        val capturedLog = logSlot.captured
+        assertEquals(habitId, capturedLog.habitId)
+        assertEquals(specificDate, capturedLog.date)
+        assertEquals(true, capturedLog.isCompleted)
     }
 
     @Test
-    fun `invoke should generate unique ids for multiple completions`() = runTest {
+    fun `invoke should call repository with correct habit log data`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val useCase = CompleteTaskUseCase(mockRepository)
+        val mockRepository = mockk<HabitRepository>()
         val habitId = 3L
-        val date1 = LocalDate.parse("2024-01-01")
-        val date2 = LocalDate.parse("2024-01-02")
+        val date = LocalDate.parse("2024-01-10")
+        val logSlot = slot<HabitLog>()
+        
+        coEvery { mockRepository.addHabitLog(capture(logSlot)) } returns 300L
+        val useCase = CompleteTaskUseCase(mockRepository)
 
         // When
-        val logId1 = useCase(habitId, date1)
-        val logId2 = useCase(habitId, date2)
+        useCase(habitId, date)
 
         // Then
-        assertTrue(logId1 != logId2)
-        assertTrue(logId1 > 0)
-        assertTrue(logId2 > 0)
+        coVerify(exactly = 1) { mockRepository.addHabitLog(any()) }
         
-        // Verify both logs were created
-        assertNotNull(mockRepository.getHabitLog(habitId, date1))
-        assertNotNull(mockRepository.getHabitLog(habitId, date2))
+        val capturedLog = logSlot.captured
+        assertEquals(habitId, capturedLog.habitId)
+        assertEquals(date, capturedLog.date)
+        assertEquals(true, capturedLog.isCompleted)
     }
 }

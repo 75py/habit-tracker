@@ -1,19 +1,22 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AddHabitUseCaseTest {
 
     @Test
     fun `invoke should add habit to repository and return id`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val useCase = AddHabitUseCase(mockRepository)
+        val mockRepository = mockk<HabitRepository>()
+        val expectedId = 1L
         val habit = Habit(
             name = "Morning Workout",
             description = "30 minutes of exercise",
@@ -21,41 +24,35 @@ class AddHabitUseCaseTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01")
         )
+        coEvery { mockRepository.createHabit(habit) } returns expectedId
+        val useCase = AddHabitUseCase(mockRepository)
 
         // When
         val habitId = useCase(habit)
 
         // Then
-        assertTrue(habitId > 0)
-        val savedHabit = mockRepository.getHabit(habitId)
-        assertEquals("Morning Workout", savedHabit?.name)
-        assertEquals("30 minutes of exercise", savedHabit?.description)
-        assertEquals("#FF5722", savedHabit?.color)
-        assertEquals(true, savedHabit?.isActive)
-        assertEquals(LocalDate.parse("2024-01-01"), savedHabit?.createdAt)
+        assertEquals(expectedId, habitId)
+        coVerify(exactly = 1) { mockRepository.createHabit(habit) }
     }
 
     @Test
-    fun `invoke should generate unique ids for multiple habits`() = runTest {
+    fun `invoke should call repository with correct habit data`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val useCase = AddHabitUseCase(mockRepository)
-        val habit1 = Habit(
-            name = "Habit 1",
-            createdAt = LocalDate.parse("2024-01-01")
-        )
-        val habit2 = Habit(
-            name = "Habit 2", 
+        val mockRepository = mockk<HabitRepository>()
+        val habit = Habit(
+            name = "Reading",
+            description = "Read for 30 minutes",
+            color = "#2196F3",
+            isActive = true,
             createdAt = LocalDate.parse("2024-01-02")
         )
+        coEvery { mockRepository.createHabit(habit) } returns 2L
+        val useCase = AddHabitUseCase(mockRepository)
 
         // When
-        val habitId1 = useCase(habit1)
-        val habitId2 = useCase(habit2)
+        useCase(habit)
 
         // Then
-        assertTrue(habitId1 != habitId2)
-        assertTrue(habitId1 > 0)
-        assertTrue(habitId2 > 0)
+        coVerify(exactly = 1) { mockRepository.createHabit(habit) }
     }
 }

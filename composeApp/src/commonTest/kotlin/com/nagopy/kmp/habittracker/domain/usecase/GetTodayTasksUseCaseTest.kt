@@ -1,7 +1,11 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -12,8 +16,7 @@ class GetTodayTasksUseCaseTest {
     @Test
     fun `invoke should return only active habits`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val habits = listOf(
+        val activeHabits = listOf(
             Habit(
                 id = 1,
                 name = "Exercise",
@@ -21,14 +24,6 @@ class GetTodayTasksUseCaseTest {
                 color = "#FF5722",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-01")
-            ),
-            Habit(
-                id = 2,
-                name = "Read",
-                description = "Read for 30 minutes",
-                color = "#2196F3",
-                isActive = false,
-                createdAt = LocalDate.parse("2024-01-02")
             ),
             Habit(
                 id = 3,
@@ -39,7 +34,8 @@ class GetTodayTasksUseCaseTest {
                 createdAt = LocalDate.parse("2024-01-03")
             )
         )
-        mockRepository.setHabits(habits)
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getActiveHabits() } returns flowOf(activeHabits)
         val useCase = GetTodayTasksUseCase(mockRepository)
 
         // When
@@ -58,16 +54,8 @@ class GetTodayTasksUseCaseTest {
     @Test
     fun `invoke should return empty list when no active habits exist`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
-        val habits = listOf(
-            Habit(
-                id = 1,
-                name = "Inactive Habit",
-                isActive = false,
-                createdAt = LocalDate.parse("2024-01-01")
-            )
-        )
-        mockRepository.setHabits(habits)
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getActiveHabits() } returns flowOf(emptyList())
         val useCase = GetTodayTasksUseCase(mockRepository)
 
         // When
@@ -80,7 +68,8 @@ class GetTodayTasksUseCaseTest {
     @Test
     fun `invoke should return empty list when no habits exist`() = runTest {
         // Given
-        val mockRepository = MockHabitRepository()
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getActiveHabits() } returns flowOf(emptyList())
         val useCase = GetTodayTasksUseCase(mockRepository)
 
         // When
