@@ -64,7 +64,8 @@ kotlin {
             implementation(libs.androidx.room.testing)
             implementation(libs.androidx.test.core)
             implementation(libs.kotlin.testJunit)
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.robolectric)
         }
     }
 }
@@ -99,5 +100,6 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
     add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
 }
 

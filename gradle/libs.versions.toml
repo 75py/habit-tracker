@@ -12,6 +12,7 @@ androidx-lifecycle = "2.9.0"
 androidx-testExt = "1.2.1"
 composeMultiplatform = "1.8.1"
 junit = "4.13.2"
+robolectric = "4.11.1"
 kotlin = "2.1.0"
 kotlinx-datetime = "0.6.1"
 kotlinx-coroutines = "1.9.0"
@@ -39,6 +40,7 @@ androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "
 
 # Testing
 androidx-test-core = { module = "androidx.test:core", version = "1.6.1" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 # Koin
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }

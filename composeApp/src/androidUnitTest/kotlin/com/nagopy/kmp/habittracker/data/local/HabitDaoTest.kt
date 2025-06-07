@@ -11,10 +11,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Unit tests for [HabitDao] to verify database operations work correctly.
  */
+@RunWith(RobolectricTestRunner::class)
 class HabitDaoTest {
 
     private lateinit var database: AppDatabase
