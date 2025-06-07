@@ -71,11 +71,37 @@ The data layer is responsible for data access and storage. It implements the rep
 - **Data Mappers**: Convert between data models and domain entities
 - **Network Models**: DTOs for API communication
 
+#### Room Database Implementation
+
+The local data persistence is implemented using **Room** for Kotlin Multiplatform:
+
+**Room Entities:**
+- `HabitEntity`: Represents habits in the database with fields for name, description, color, and creation date
+- `LogEntity`: Represents habit completion logs with foreign key relationship to habits
+
+**Data Access Object (DAO):**
+- `HabitDao`: Provides CRUD operations for both habits and habit logs
+- Includes methods for creating, reading, updating, and deleting habits
+- Supports querying habit logs by date ranges and completion status
+- Uses Flow for reactive data updates
+
+**Database Class:**
+- `AppDatabase`: Room database configuration with entities and version management
+- Provides access to DAOs through abstract methods
+
+**Repository Implementation:**
+- `HabitRepositoryImpl`: Implements the domain layer's `HabitRepository` interface
+- Uses `HabitDao` for database operations
+- Converts between data entities and domain models using mapper functions
+- Provides reactive data streams through Kotlin Flow
+
 **Key Principles:**
 - Implements domain repository interfaces
 - Handles data persistence and caching
 - Manages different data sources (local vs remote)
 - Maps between data models and domain entities
+- Uses Room annotations for type-safe database access
+- Implements foreign key relationships with cascade delete
 
 ## Dependency Flow
 

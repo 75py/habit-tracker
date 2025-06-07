@@ -59,6 +59,14 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        androidUnitTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.androidx.room.testing)
+            implementation(libs.androidx.test.core)
+            implementation(libs.kotlin.testJunit)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.robolectric)
+        }
     }
 }
 
@@ -92,5 +100,6 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
     add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
 }
 
