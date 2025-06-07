@@ -123,7 +123,7 @@ class HabitDaoTest {
         habitDao.insertHabit(habit2)
         
         val allHabits = habitDao.getAllHabits().first()
-        assertEquals(1, allHabits.size)
+        assertEquals(2, allHabits.size)
     }
 
     @Test
