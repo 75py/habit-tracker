@@ -7,7 +7,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -37,7 +39,8 @@ class CompleteTaskUseCaseTest {
         assertEquals(habitId, capturedLog.habitId)
         assertEquals(true, capturedLog.isCompleted)
         // Date should be today (current date in system timezone)
-        assertTrue(capturedLog.date != null)
+        val expectedToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        assertEquals(expectedToday, capturedLog.date)
     }
 
     @Test

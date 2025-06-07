@@ -64,18 +64,4 @@ class GetTodayTasksUseCaseTest {
         // Then
         assertEquals(0, result.size)
     }
-
-    @Test
-    fun `invoke should return empty list when no habits exist`() = runTest {
-        // Given
-        val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(emptyList())
-        val useCase = GetTodayTasksUseCase(mockRepository)
-
-        // When
-        val result = useCase().first()
-
-        // Then
-        assertEquals(0, result.size)
-    }
 }
