@@ -64,6 +64,7 @@ kotlin {
             implementation(libs.androidx.room.testing)
             implementation(libs.androidx.test.core)
             implementation(libs.kotlin.testJunit)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
         }
     }
 }

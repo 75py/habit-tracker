@@ -2,15 +2,15 @@ package com.nagopy.kmp.habittracker.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Test
 
 /**
  * Unit tests for [HabitDao] to verify database operations work correctly.
@@ -48,7 +48,7 @@ class HabitDaoTest {
         val retrievedHabit = habitDao.getHabitById(habitId)
         
         assertNotNull(retrievedHabit)
-        assertEquals(testHabit.name, retrievedHabit.name)
+        assertEquals(testHabit.name, retrievedHabit!!.name)
         assertEquals(testHabit.description, retrievedHabit.description)
         assertEquals(testHabit.color, retrievedHabit.color)
         assertEquals(testHabit.isActive, retrievedHabit.isActive)
@@ -76,7 +76,7 @@ class HabitDaoTest {
         val retrievedHabit = habitDao.getHabitById(habitId)
         
         assertNotNull(retrievedHabit)
-        assertEquals("Updated Name", retrievedHabit.name)
+        assertEquals("Updated Name", retrievedHabit!!.name)
         assertEquals("Updated Description", retrievedHabit.description)
         assertEquals(originalHabit.color, retrievedHabit.color)
     }
@@ -172,7 +172,7 @@ class HabitDaoTest {
         val retrievedLog = habitDao.getHabitLog(habitId, "2024-01-01")
         
         assertNotNull(retrievedLog)
-        assertEquals(habitId, retrievedLog.habitId)
+        assertEquals(habitId, retrievedLog!!.habitId)
         assertEquals("2024-01-01", retrievedLog.date)
         assertTrue(retrievedLog.isCompleted)
     }
