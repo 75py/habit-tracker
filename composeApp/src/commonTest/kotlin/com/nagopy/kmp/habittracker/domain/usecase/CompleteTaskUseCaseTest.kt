@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,6 +29,7 @@ class CompleteTaskUseCaseTest {
         val useCase = CompleteTaskUseCase(mockRepository)
 
         // When
+        val expectedToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val logId = useCase(habitId)
 
         // Then
@@ -39,7 +41,6 @@ class CompleteTaskUseCaseTest {
         assertEquals(habitId, capturedLog.habitId)
         assertEquals(true, capturedLog.isCompleted)
         // Date should be today (current date in system timezone)
-        val expectedToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         assertEquals(expectedToday, capturedLog.date)
     }
 
