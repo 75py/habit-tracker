@@ -1,7 +1,7 @@
 package com.nagopy.kmp.habittracker.data.local
 
 import androidx.room.Room
-import androidx.room.testing.MigrationTestHelper
+import androidx.test.core.app.ApplicationProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -9,26 +9,33 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 
 /**
  * Unit tests for [HabitDao] to verify database operations work correctly.
  */
 class HabitDaoTest {
 
-    // Note: In a real KMP project, we'd need to create the database differently
-    // for each platform. For now, this provides the test structure.
-    
-    private fun createTestDatabase(): AppDatabase {
-        // This is a placeholder - actual implementation would vary by platform
-        return Room.inMemoryDatabaseBuilder<AppDatabase>()
-            .build()
+    private lateinit var database: AppDatabase
+    private lateinit var habitDao: HabitDao
+
+    @Before
+    fun setup() {
+        database = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            AppDatabase::class.java
+        ).build()
+        habitDao = database.habitDao()
+    }
+
+    @After
+    fun teardown() {
+        database.close()
     }
 
     @Test
     fun insertAndGetHabit_shouldReturnSameHabit() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         val testHabit = HabitEntity(
             name = "Test Habit",
             description = "Test Description",
@@ -46,15 +53,10 @@ class HabitDaoTest {
         assertEquals(testHabit.color, retrievedHabit.color)
         assertEquals(testHabit.isActive, retrievedHabit.isActive)
         assertEquals(testHabit.createdAt, retrievedHabit.createdAt)
-        
-        database.close()
     }
 
     @Test
     fun updateHabit_shouldUpdateCorrectly() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         val originalHabit = HabitEntity(
             name = "Original Name",
             description = "Original Description",
@@ -77,15 +79,10 @@ class HabitDaoTest {
         assertEquals("Updated Name", retrievedHabit.name)
         assertEquals("Updated Description", retrievedHabit.description)
         assertEquals(originalHabit.color, retrievedHabit.color)
-        
-        database.close()
     }
 
     @Test
     fun deleteHabit_shouldRemoveHabit() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         val testHabit = HabitEntity(
             name = "Test Habit",
             description = "Test Description",
@@ -99,15 +96,10 @@ class HabitDaoTest {
         
         habitDao.deleteHabitById(habitId)
         assertNull(habitDao.getHabitById(habitId))
-        
-        database.close()
     }
 
     @Test
     fun getAllHabits_shouldReturnAllHabits() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         val habit1 = HabitEntity(
             name = "Habit 1",
             description = "Description 1",
@@ -129,15 +121,10 @@ class HabitDaoTest {
         
         val allHabits = habitDao.getAllHabits().first()
         assertEquals(2, allHabits.size)
-        
-        database.close()
     }
 
     @Test
     fun getActiveHabits_shouldReturnOnlyActiveHabits() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         val activeHabit = HabitEntity(
             name = "Active Habit",
             description = "Active Description",
@@ -160,15 +147,10 @@ class HabitDaoTest {
         val activeHabits = habitDao.getActiveHabits().first()
         assertEquals(1, activeHabits.size)
         assertTrue(activeHabits.first().isActive)
-        
-        database.close()
     }
 
     @Test
     fun insertAndGetHabitLog_shouldWork() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         // First create a habit
         val habit = HabitEntity(
             name = "Test Habit",
@@ -193,15 +175,10 @@ class HabitDaoTest {
         assertEquals(habitId, retrievedLog.habitId)
         assertEquals("2024-01-01", retrievedLog.date)
         assertTrue(retrievedLog.isCompleted)
-        
-        database.close()
     }
 
     @Test
     fun getHabitLogsForHabit_shouldReturnCorrectLogs() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         // Create a habit
         val habit = HabitEntity(
             name = "Test Habit",
@@ -223,15 +200,10 @@ class HabitDaoTest {
         
         val logs = habitDao.getHabitLogsForHabit(habitId).first()
         assertEquals(3, logs.size)
-        
-        database.close()
     }
 
     @Test
     fun deleteHabitLog_shouldRemoveLog() = runTest {
-        val database = createTestDatabase()
-        val habitDao = database.habitDao()
-        
         // Create a habit
         val habit = HabitEntity(
             name = "Test Habit",
@@ -254,7 +226,5 @@ class HabitDaoTest {
         
         habitDao.deleteHabitLog(habitId, "2024-01-01")
         assertNull(habitDao.getHabitLog(habitId, "2024-01-01"))
-        
-        database.close()
     }
 }
