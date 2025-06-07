@@ -12,7 +12,8 @@ import kotlinx.datetime.todayIn
  * This encapsulates the business logic for marking habits as completed.
  */
 class CompleteTaskUseCase(
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val clock: Clock = Clock.System
 ) {
     
     /**
@@ -21,7 +22,7 @@ class CompleteTaskUseCase(
      * @return The ID of the created habit log entry
      */
     suspend operator fun invoke(habitId: Long): Long {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val today = clock.todayIn(TimeZone.currentSystemDefault())
         return invoke(habitId, today)
     }
     

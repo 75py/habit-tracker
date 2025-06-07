@@ -8,9 +8,11 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -25,11 +27,17 @@ class CompleteTaskUseCaseTest {
         val expectedLogId = 100L
         val logSlot = slot<HabitLog>()
         
+        // Use a fixed date to make the test deterministic
+        val fixedDate = LocalDate.parse("2024-01-20")
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedClock = object : Clock {
+            override fun now(): Instant = fixedInstant
+        }
+        
         coEvery { mockRepository.addHabitLog(capture(logSlot)) } returns expectedLogId
-        val useCase = CompleteTaskUseCase(mockRepository)
+        val useCase = CompleteTaskUseCase(mockRepository, fixedClock)
 
         // When
-        val expectedToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val logId = useCase(habitId)
 
         // Then
@@ -40,8 +48,8 @@ class CompleteTaskUseCaseTest {
         val capturedLog = logSlot.captured
         assertEquals(habitId, capturedLog.habitId)
         assertEquals(true, capturedLog.isCompleted)
-        // Date should be today (current date in system timezone)
-        assertEquals(expectedToday, capturedLog.date)
+        // Date should be the fixed date we set in the clock
+        assertEquals(fixedDate, capturedLog.date)
     }
 
     @Test
