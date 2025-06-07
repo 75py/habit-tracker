@@ -72,6 +72,16 @@ Use cases encapsulate specific business operations and ensure a single responsib
 - Independent and testable
 - Use cases provide clear business operations that can be easily tested in isolation
 
+**Testing Infrastructure:**
+The domain layer uses a comprehensive testing approach with the following tools:
+
+- **MockK**: Kotlin-native mocking library used to create mock implementations of repository interfaces
+- **kotlin.test**: Test framework providing assertion methods and test structure
+- **kotlinx-coroutines-test**: Testing utilities for coroutines and Flow operations
+- **Test Isolation**: Each use case is tested independently with mocked dependencies, ensuring true unit testing
+
+MockK provides superior type safety and Kotlin-specific features compared to manual mock implementations, including support for suspend functions, extension functions, and proper coroutine handling.
+
 #### Domain Layer Class Diagram
 
 ```mermaid
