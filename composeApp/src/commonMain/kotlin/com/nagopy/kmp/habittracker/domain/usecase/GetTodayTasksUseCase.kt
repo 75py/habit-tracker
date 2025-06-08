@@ -55,15 +55,21 @@ class GetTodayTasksUseCase(
     private suspend fun generateHourlyTasks(habit: Habit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
         val startTime = habit.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
+        val intervalMinutes = 60 // Hourly = every 60 minutes
         
         var currentTime = startTime
-        while (currentTime.hour < 24) {
+        val endOfDay = LocalTime(23, 59)
+        
+        while (currentTime <= endOfDay) {
             tasks.add(createTask(habit, date, currentTime))
-            currentTime = LocalTime(
-                (currentTime.hour + 1) % 24,
-                currentTime.minute
-            )
-            if (currentTime.hour == 0) break // Wrapped around to next day
+            
+            // Calculate next time by adding 60 minutes
+            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+            val newHour = totalMinutes / 60
+            val newMinute = totalMinutes % 60
+            
+            if (newHour >= 24) break
+            currentTime = LocalTime(newHour, newMinute)
         }
         
         return tasks
@@ -72,14 +78,21 @@ class GetTodayTasksUseCase(
     private suspend fun generateIntervalTasks(habit: Habit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
         val startTime = habit.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
-        val intervalHours = habit.intervalHours.coerceAtLeast(1)
+        val intervalMinutes = habit.intervalMinutes.coerceAtLeast(1)
         
         var currentTime = startTime
-        while (currentTime.hour < 24) {
+        val endOfDay = LocalTime(23, 59)
+        
+        while (currentTime <= endOfDay) {
             tasks.add(createTask(habit, date, currentTime))
-            val nextHour = currentTime.hour + intervalHours
-            if (nextHour >= 24) break
-            currentTime = LocalTime(nextHour, currentTime.minute)
+            
+            // Calculate next time by adding interval minutes
+            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+            val newHour = totalMinutes / 60
+            val newMinute = totalMinutes % 60
+            
+            if (newHour >= 24) break
+            currentTime = LocalTime(newHour, newMinute)
         }
         
         return tasks
