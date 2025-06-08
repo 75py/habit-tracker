@@ -1,11 +1,13 @@
 package com.nagopy.kmp.habittracker.util
 
+import kotlin.native.Platform
+
 /**
  * iOS implementation to check if this is a debug build
- * For iOS, we'll default to true for development and can be configured later
+ * Uses simple compilation-time approach for debug detection
  */
 actual fun isDebugBuild(): Boolean {
-    // For simplicity, always enable debug logging on iOS during development
-    // This can be refined later with proper build configuration detection
-    return true
+    // In iOS, we can detect debug builds by checking if DEBUG is defined
+    // This is a simple approach that works with standard iOS debug builds
+    return Platform.isDebugBinary
 }
