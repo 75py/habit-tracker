@@ -123,7 +123,7 @@ class TodayViewModelTest {
     }
 
     @Test
-    fun `completeTask should call use case and refresh tasks`() = runTest {
+    fun `completeTask should call use case and update UI state`() = runTest {
         // Given
         val task = Task(
             habitId = 1L,
@@ -145,8 +145,7 @@ class TodayViewModelTest {
         
         // Then
         coVerify { completeTaskUseCase(1L, LocalDate.parse("2024-01-20"), LocalTime(7, 0)) }
-        // Verify tasks are refreshed (getTodayTasksUseCase called again)
-        // This is tested implicitly by checking the flow is collected
+        // Verify the use case is called - UI state updates are handled separately
     }
 
     @Test

@@ -74,8 +74,8 @@ class TodayViewModel(
                 // Cancel the notification for the completed task
                 manageNotificationsUseCase.cancelTaskNotification(task)
                 
-                // Refresh tasks to update with latest data from backend
-                loadTasks()
+                // No need to reload all tasks - UI state is already updated
+                // The completion is tracked both in the backend and UI state
             } catch (exception: Exception) {
                 // Revert the UI state change if backend call failed
                 val taskKey = createTaskKey(task)
