@@ -219,12 +219,22 @@ The `GetTodayTasksUseCase` implements sophisticated logic to generate task insta
 - Clear separation between habit templates (rules) and task instances (execution)
 
 **Testing Infrastructure:**
-The domain layer uses a comprehensive testing approach with the following tools:
+The application uses a comprehensive testing approach across all layers:
 
+**Domain Layer Testing:**
 - **MockK**: Kotlin-native mocking library used to create mock implementations of repository interfaces
 - **kotlin.test**: Test framework providing assertion methods and test structure
 - **kotlinx-coroutines-test**: Testing utilities for coroutines and Flow operations
 - **Test Isolation**: Each use case is tested independently with mocked dependencies, ensuring true unit testing
+
+**Data Layer Testing:**
+- **Repository Implementation Tests**: Full test coverage of `HabitRepositoryImpl` with mocked DAO dependencies
+- **Mapper Tests**: Comprehensive testing of data transformation logic including edge cases and error handling
+- **Database Tests**: Android-specific tests using Room's testing utilities with in-memory database
+
+**Presentation Layer Testing:**
+- **ViewModel Tests**: All ViewModels tested with mocked use case dependencies
+- **UI State Testing**: Verification of state management and user interaction handling
 
 MockK provides superior type safety and Kotlin-specific features compared to manual mock implementations, including support for suspend functions, extension functions, and proper coroutine handling.
 
