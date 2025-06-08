@@ -12,6 +12,8 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toNSDate
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 import platform.UserNotifications.*
 import platform.Foundation.*
@@ -21,15 +23,15 @@ import platform.Foundation.*
  */
 @OptIn(ExperimentalForeignApi::class)
 class IOSNotificationScheduler(
-    private val habitRepository: HabitRepository,
-    private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase
-) : NotificationScheduler {
+    private val habitRepository: HabitRepository
+) : NotificationScheduler, KoinComponent {
 
     companion object {
         private const val HABIT_REMINDER_CATEGORY = "HABIT_REMINDER"
         private const val COMPLETE_ACTION = "COMPLETE_ACTION"
     }
 
+    private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
