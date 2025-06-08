@@ -88,14 +88,35 @@ class AndroidNotificationScheduler(
         )
 
         // Schedule the alarm
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setExact(
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Check if we can schedule exact alarms on Android 12+ (API 31+)
+                if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) {
+                    // Cannot schedule exact alarms - fall back to inexact scheduling
+                    // This is better than throwing an exception
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                }
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
+        } catch (e: SecurityException) {
+            // SecurityException can occur if the app doesn't have permission to schedule exact alarms
+            // Fall back to inexact scheduling
+            alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 triggerTime,
                 pendingIntent
@@ -142,13 +163,30 @@ class AndroidNotificationScheduler(
     }
 
     override suspend fun areNotificationsEnabled(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val basicNotificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
+        
+        // Notifications are considered enabled if basic permissions are granted
+        // Exact alarm permission is checked separately during scheduling
+        return basicNotificationsEnabled
+    }
+
+    /**
+     * Check if the app can schedule exact alarms.
+     * This is used internally to determine the best alarm scheduling strategy.
+     */
+    private fun canScheduleExactAlarms(): Boolean {
+        return if (Build.VERSION.SDK_INT >= 31) { // API 31 = Android 12
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            // On Android < 12, exact alarms don't require special permission
+            true
         }
     }
 
