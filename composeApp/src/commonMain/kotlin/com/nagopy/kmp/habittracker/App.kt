@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import com.nagopy.kmp.habittracker.presentation.app.AppViewModel
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditScreen
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListScreen
@@ -19,9 +20,11 @@ sealed class Screen {
 }
 
 @Composable
-@Preview
 fun App() {
     MaterialTheme {
+        // Initialize app-level functionality (including notification permissions)
+        val appViewModel: AppViewModel = koinInject()
+        
         var currentScreen by remember { mutableStateOf<Screen>(Screen.HabitList) }
         
         // Log screen navigation for debugging
