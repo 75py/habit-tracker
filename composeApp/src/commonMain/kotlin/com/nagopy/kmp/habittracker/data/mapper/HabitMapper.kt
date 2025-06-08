@@ -65,7 +65,7 @@ private fun parseScheduledTimes(timesString: String): List<LocalTime> {
 
 private fun formatScheduledTimes(times: List<LocalTime>): String {
     return times.joinToString(",") { time ->
-        String.format("%02d:%02d", time.hour, time.minute)
+        "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
     }
 }
 
