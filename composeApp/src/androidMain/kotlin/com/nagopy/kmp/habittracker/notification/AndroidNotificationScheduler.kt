@@ -97,27 +97,18 @@ class AndroidNotificationScheduler(
 
         // Schedule the alarm
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Check if we can schedule exact alarms on Android 12+ (API 31+)
-                if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) {
-                    // Cannot schedule exact alarms - fall back to inexact scheduling
-                    Logger.w("Cannot schedule exact alarms, falling back to inexact scheduling for task: ${task.habitName}", "AndroidNotificationScheduler")
-                    alarmManager.set(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                } else {
-                    Logger.d("Scheduling exact alarm with setExactAndAllowWhileIdle for task: ${task.habitName}", "AndroidNotificationScheduler")
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                }
+            // Check if we can schedule exact alarms on Android 12+ (API 31+)
+            if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) {
+                // Cannot schedule exact alarms - fall back to inexact scheduling
+                Logger.w("Cannot schedule exact alarms, falling back to inexact scheduling for task: ${task.habitName}", "AndroidNotificationScheduler")
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
             } else {
-                Logger.d("Scheduling exact alarm with setExact for task: ${task.habitName}", "AndroidNotificationScheduler")
-                alarmManager.setExact(
+                Logger.d("Scheduling exact alarm with setExactAndAllowWhileIdle for task: ${task.habitName}", "AndroidNotificationScheduler")
+                alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
