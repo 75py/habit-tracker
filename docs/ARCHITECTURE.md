@@ -390,6 +390,57 @@ Each layer has its own DI module:
 - `DomainModule`: Use cases and business logic dependencies
 - `DataModule`: Repositories, data sources, and database dependencies
 
+### Dependency Injection Patterns
+
+**Constructor Injection (Preferred):**
+The application consistently uses constructor injection for explicit dependency declaration:
+
+```kotlin
+// Example: Notification scheduler with explicit dependencies
+class AndroidNotificationScheduler(
+    private val context: Context,
+    private val habitRepository: HabitRepository
+) : NotificationScheduler
+
+// Koin module configuration
+val androidNotificationModule = module {
+    single<NotificationScheduler> { AndroidNotificationScheduler(androidContext(), get()) }
+}
+```
+
+**Benefits of Constructor Injection:**
+- **Explicit Dependencies**: All dependencies are clearly visible in the constructor
+- **Immutability**: Dependencies are injected once and remain immutable
+- **Testability**: Easy to provide mock dependencies for unit testing
+- **Compile-time Safety**: Missing dependencies cause compilation errors rather than runtime failures
+
+**Platform Consistency:**
+Both Android and iOS notification schedulers use the same constructor injection pattern:
+- Ensures consistent dependency management across platforms
+- Simplifies maintenance and reduces cognitive load
+- Enables shared testing patterns and mock strategies
+
+**Dependency Resolution:**
+- Koin automatically resolves dependencies through `get()` calls in module definitions
+- Type-safe dependency injection prevents runtime injection errors
+- Circular dependency detection helps maintain clean architecture
+
+### Module Organization
+
+**Platform-Specific Modules:**
+```kotlin
+// Common interface
+expect val notificationModule: Module
+
+// Android implementation
+actual val notificationModule: Module = androidNotificationModule
+
+// iOS implementation  
+actual val notificationModule: Module = iosNotificationModule
+```
+
+This pattern ensures platform-specific implementations while maintaining a unified interface for the common application module.
+
 ## Benefits of This Architecture
 
 1. **Separation of Concerns**: Each layer has a single responsibility
@@ -478,3 +529,58 @@ The notification feature separates the shared interface from platform-specific i
 - Easy to add new notification features without affecting other layers
 - Platform-specific changes contained to respective implementation layers
 - Clear dependency injection pattern for easy configuration
+
+### Notification Content Strategy
+
+The notification system ensures that push notifications always display current, up-to-date habit information, even when habit details have changed since tasks were originally scheduled.
+
+#### Implementation Details
+
+**Data Fetching Pattern:**
+Both iOS and Android notification schedulers fetch current habit data at notification scheduling time:
+
+```kotlin
+// Example implementation pattern used in both platforms
+val habit = habitRepository.getHabit(task.habitId)
+val habitName = habit?.name ?: task.habitName
+val habitDescription = habit?.description ?: task.habitDescription
+```
+
+**Fallback Strategy:**
+- **Primary Source**: Current habit data fetched from `HabitRepository`
+- **Fallback Source**: Task data (preserves existing functionality if habit lookup fails)
+- **Error Handling**: Graceful degradation ensures notifications are always delivered
+
+**Dependency Injection:**
+- **Android**: Constructor injection of `HabitRepository` via Koin module
+- **iOS**: Constructor injection pattern matching Android for consistency
+- **Shared Pattern**: Both platforms use the same DI approach for maintainability
+
+#### Performance Considerations
+
+**Database Access:**
+- Notification schedulers now perform database lookups during scheduling
+- Impact is minimal as scheduling typically happens during off-peak periods
+- Repository calls are suspend functions supporting proper coroutine handling
+
+**Caching Strategy:**
+- No additional caching implemented as habit data changes are infrequent
+- Repository layer handles any necessary caching optimizations
+- Task fallback data ensures robustness even if repository is temporarily unavailable
+
+#### Design Benefits
+
+**Data Consistency:**
+- Notifications always reflect current habit names and descriptions
+- Eliminates user confusion from stale notification content
+- Maintains data integrity across the entire application
+
+**Backward Compatibility:**
+- Fallback to task data preserves existing behavior if needed
+- No breaking changes to existing notification functionality
+- Graceful handling of edge cases (deleted habits, repository errors)
+
+**Testing Coverage:**
+- Comprehensive test suite verifies current data fetching logic
+- Tests ensure fallback behavior works correctly
+- Isolated testing of notification scheduler dependencies

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -24,7 +25,8 @@ import java.time.ZoneId
  * Android implementation of NotificationScheduler using AlarmManager and NotificationManager.
  */
 class AndroidNotificationScheduler(
-    private val context: Context
+    private val context: Context,
+    private val habitRepository: HabitRepository
 ) : NotificationScheduler {
 
     companion object {
@@ -54,10 +56,15 @@ class AndroidNotificationScheduler(
         val notificationId = generateNotificationId(task)
         val triggerTime = calculateTriggerTime(task)
 
+        // Fetch the actual habit to get current name and description
+        val habit = habitRepository.getHabit(task.habitId)
+        val habitName = habit?.name ?: task.habitName
+        val habitDescription = habit?.description ?: task.habitDescription
+
         // Create the notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(task.habitName)
-            .setContentText(task.habitDescription.ifEmpty { "Time to complete your habit!" })
+            .setContentTitle(habitName)
+            .setContentText(habitDescription.ifEmpty { "Time to complete your habit!" })
             .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon as fallback
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
