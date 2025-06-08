@@ -6,12 +6,15 @@ import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditScreen
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListScreen
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListViewModel
+import com.nagopy.kmp.habittracker.presentation.today.TodayScreen
+import com.nagopy.kmp.habittracker.presentation.today.TodayViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 sealed class Screen {
     data object HabitList : Screen()
     data object AddHabit : Screen()
+    data object Today : Screen()
 }
 
 @Composable
@@ -25,6 +28,7 @@ fun App() {
                 val viewModel: HabitListViewModel = koinInject()
                 HabitListScreen(
                     onAddHabitClick = { currentScreen = Screen.AddHabit },
+                    onTodayClick = { currentScreen = Screen.Today },
                     onHabitClick = { /* TODO: Navigate to edit habit */ },
                     viewModel = viewModel
                 )
@@ -36,6 +40,14 @@ fun App() {
                     onSaveSuccess = { currentScreen = Screen.HabitList },
                     onNavigateBack = { currentScreen = Screen.HabitList },
                     viewModel = viewModel
+                )
+            }
+            
+            Screen.Today -> {
+                val viewModel: TodayViewModel = koinInject()
+                TodayScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { currentScreen = Screen.HabitList }
                 )
             }
         }

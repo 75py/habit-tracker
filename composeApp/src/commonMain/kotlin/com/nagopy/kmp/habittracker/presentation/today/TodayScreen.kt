@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,14 +28,23 @@ import kotlinx.datetime.LocalTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
-    viewModel: TodayViewModel
+    viewModel: TodayViewModel,
+    onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Today's Tasks") }
+                title = { Text("Today's Tasks") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -181,5 +192,5 @@ private fun TaskItem(
 }
 
 private fun formatTime(time: LocalTime): String {
-    return String.format("%02d:%02d", time.hour, time.minute)
+    return "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
 }

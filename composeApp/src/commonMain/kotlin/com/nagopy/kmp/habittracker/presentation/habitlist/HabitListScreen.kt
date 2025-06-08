@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 @Composable
 fun HabitListScreen(
     onAddHabitClick: () -> Unit,
+    onTodayClick: () -> Unit,
     onHabitClick: (Habit) -> Unit = {},
     viewModel: HabitListViewModel
 ) {
@@ -34,7 +37,15 @@ fun HabitListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Habits") }
+                title = { Text("My Habits") },
+                actions = {
+                    IconButton(onClick = onTodayClick) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Today's Tasks"
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
