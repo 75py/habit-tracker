@@ -9,15 +9,13 @@ actual fun parseColor(colorString: String): Color {
     // Remove the '#' prefix if present
     val hex = colorString.removePrefix("#")
     
-    // Parse the hex string to a long value
-    val colorLong = hex.toLong(16)
+    // Ensure we have a 6-character hex string
+    require(hex.length == 6) { "Color string must be in format #RRGGBB" }
     
-    // Convert to ARGB format (assuming the input is RGB, so add full alpha)
-    val argb = if (hex.length == 6) {
-        0xFF000000L or colorLong
-    } else {
-        colorLong
-    }
+    // Parse RGB components
+    val red = hex.substring(0, 2).toInt(16) / 255f
+    val green = hex.substring(2, 4).toInt(16) / 255f
+    val blue = hex.substring(4, 6).toInt(16) / 255f
     
-    return Color(argb.toULong())
+    return Color(red = red, green = green, blue = blue, alpha = 1f)
 }
