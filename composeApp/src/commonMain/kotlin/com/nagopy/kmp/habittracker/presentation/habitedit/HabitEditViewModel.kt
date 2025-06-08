@@ -50,12 +50,27 @@ class HabitEditViewModel(
     fun updateFrequencyType(frequencyType: FrequencyType) {
         _uiState.value = _uiState.value.copy(
             frequencyType = frequencyType,
-            intervalHours = if (frequencyType == FrequencyType.HOURLY) 1 else _uiState.value.intervalHours
+            intervalMinutes = if (frequencyType == FrequencyType.HOURLY) 60 else _uiState.value.intervalMinutes
         )
     }
 
-    fun updateIntervalHours(intervalHours: Int) {
-        _uiState.value = _uiState.value.copy(intervalHours = intervalHours)
+    fun updateIntervalMinutes(intervalMinutes: Int) {
+        _uiState.value = _uiState.value.copy(intervalMinutes = intervalMinutes)
+    }
+    
+    fun updateIntervalValue(value: Int, unit: TimeUnit) {
+        val intervalMinutes = when (unit) {
+            TimeUnit.MINUTES -> value
+            TimeUnit.HOURS -> value * 60
+        }
+        _uiState.value = _uiState.value.copy(
+            intervalMinutes = intervalMinutes,
+            intervalUnit = unit
+        )
+    }
+    
+    fun updateIntervalUnit(unit: TimeUnit) {
+        _uiState.value = _uiState.value.copy(intervalUnit = unit)
     }
 
     fun updateScheduledTimes(scheduledTimes: List<LocalTime>) {
@@ -84,7 +99,7 @@ class HabitEditViewModel(
                     isActive = currentState.isActive,
                     createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
                     frequencyType = currentState.frequencyType,
-                    intervalHours = currentState.intervalHours,
+                    intervalMinutes = currentState.intervalMinutes,
                     scheduledTimes = currentState.scheduledTimes
                 )
 
@@ -121,6 +136,13 @@ class HabitEditViewModel(
 }
 
 /**
+ * Time unit for interval specification
+ */
+enum class TimeUnit {
+    MINUTES, HOURS
+}
+
+/**
  * UI state for the Habit Edit screen
  */
 data class HabitEditUiState(
@@ -129,9 +151,17 @@ data class HabitEditUiState(
     val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
     val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-    val intervalHours: Int = 24,
+    val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
+    val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
     val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
     val nameError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false
-)
+) {
+    // Helper property to get the interval value in the selected unit
+    val intervalValue: Int
+        get() = when (intervalUnit) {
+            TimeUnit.MINUTES -> intervalMinutes
+            TimeUnit.HOURS -> intervalMinutes / 60
+        }
+}

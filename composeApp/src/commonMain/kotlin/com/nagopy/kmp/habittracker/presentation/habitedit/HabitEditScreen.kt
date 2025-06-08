@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import kotlinx.datetime.LocalTime
 
@@ -173,7 +174,7 @@ fun HabitEditScreen(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Interval Hours (for HOURLY and INTERVAL types)
+                // Interval Configuration (for HOURLY and INTERVAL types)
                 if (uiState.frequencyType == FrequencyType.HOURLY || uiState.frequencyType == FrequencyType.INTERVAL) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -186,11 +187,11 @@ fun HabitEditScreen(
                         )
                         
                         OutlinedTextField(
-                            value = uiState.intervalHours.toString(),
+                            value = uiState.intervalValue.toString(),
                             onValueChange = { 
-                                val hours = it.toIntOrNull()
-                                if (hours != null && hours > 0) {
-                                    viewModel.updateIntervalHours(hours)
+                                val value = it.toIntOrNull()
+                                if (value != null && value > 0) {
+                                    viewModel.updateIntervalValue(value, uiState.intervalUnit)
                                 }
                             },
                             modifier = Modifier.width(80.dp),
@@ -199,11 +200,53 @@ fun HabitEditScreen(
                             enabled = uiState.frequencyType != FrequencyType.HOURLY
                         )
                         
-                        Text(
-                            text = "hours",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Unit selector dropdown
+                        if (uiState.frequencyType != FrequencyType.HOURLY) {
+                            var expanded by remember { mutableStateOf(false) }
+                            
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = !expanded },
+                                modifier = Modifier.width(100.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = when (uiState.intervalUnit) {
+                                        TimeUnit.MINUTES -> "minutes"
+                                        TimeUnit.HOURS -> "hours"
+                                    },
+                                    onValueChange = { },
+                                    readOnly = true,
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    modifier = Modifier.menuAnchor()
+                                )
+                                
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("minutes") },
+                                        onClick = {
+                                            viewModel.updateIntervalUnit(TimeUnit.MINUTES)
+                                            expanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("hours") },
+                                        onClick = {
+                                            viewModel.updateIntervalUnit(TimeUnit.HOURS)
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "hour",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(12.dp))
