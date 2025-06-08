@@ -32,11 +32,19 @@ import kotlinx.datetime.LocalTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitEditScreen(
+    habitId: Long? = null,
     onSaveSuccess: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: HabitEditViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Load habit for editing if habitId is provided
+    LaunchedEffect(habitId) {
+        if (habitId != null) {
+            viewModel.loadHabitForEdit(habitId)
+        }
+    }
     
     // Predefined color options
     val colorOptions = listOf(
@@ -55,7 +63,7 @@ fun HabitEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Habit") },
+                title = { Text(if (uiState.editHabitId != null) "Edit Habit" else "Add Habit") },
                 navigationIcon = {
                     TextButton(onClick = onNavigateBack) {
                         Text("Cancel")
@@ -84,13 +92,23 @@ fun HabitEditScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
             // Name field
             Column {
                 OutlinedTextField(
@@ -416,6 +434,7 @@ fun HabitEditScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
+            }
             }
         }
     }
