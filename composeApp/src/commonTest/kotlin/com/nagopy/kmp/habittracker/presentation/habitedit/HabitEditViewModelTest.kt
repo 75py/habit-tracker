@@ -308,4 +308,36 @@ class HabitEditViewModelTest {
             })
         }
     }
+
+    @Test
+    fun `saveHabit should complete navigation after notification scheduling without hanging`() = runTest {
+        // Given
+        val expectedHabitId = 456L
+        coEvery { mockAddHabitUseCase(any()) } returns expectedHabitId
+        
+        viewModel.updateName("Test Habit")
+
+        var successResult: Long? = null
+        var navigationCompleted = false
+
+        // When - save habit which should trigger notification scheduling and navigation
+        viewModel.saveHabit(
+            onSuccess = { habitId -> 
+                successResult = habitId
+                navigationCompleted = true
+            },
+            onError = { }
+        )
+        
+        // Advance dispatcher to complete all coroutines
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - navigation should complete indicating the method didn't hang
+        assertEquals(expectedHabitId, successResult)
+        assertTrue(navigationCompleted, "Navigation should complete after save operation")
+        assertFalse(viewModel.uiState.value.isSaving, "isSaving should be false after completion")
+        
+        // Verify notification scheduling was called
+        coVerify(exactly = 1) { mockManageNotificationsUseCase.scheduleNotificationsForTodayTasks() }
+    }
 }
