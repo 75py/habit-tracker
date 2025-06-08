@@ -27,7 +27,8 @@ fun HabitEntity.toDomainModel(): Habit {
             FrequencyType.ONCE_DAILY
         },
         intervalMinutes = intervalMinutes,
-        scheduledTimes = parseScheduledTimes(scheduledTimes)
+        scheduledTimes = parseScheduledTimes(scheduledTimes),
+        endTime = endTime?.let { parseTime(it) }
     )
 }
 
@@ -41,7 +42,8 @@ fun Habit.toEntity(): HabitEntity {
         createdAt = createdAt.toString(),
         frequencyType = frequencyType.name,
         intervalMinutes = intervalMinutes,
-        scheduledTimes = formatScheduledTimes(scheduledTimes)
+        scheduledTimes = formatScheduledTimes(scheduledTimes),
+        endTime = endTime?.let { formatTime(it) }
     )
 }
 
@@ -67,6 +69,21 @@ private fun formatScheduledTimes(times: List<LocalTime>): String {
     return times.joinToString(",") { time ->
         "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
     }
+}
+
+private fun parseTime(timeString: String): LocalTime? {
+    return try {
+        val parts = timeString.trim().split(":")
+        if (parts.size == 2) {
+            LocalTime(parts[0].toInt(), parts[1].toInt())
+        } else null
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun formatTime(time: LocalTime): String {
+    return "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
 }
 
 // HabitLog mappers

@@ -58,9 +58,9 @@ class GetTodayTasksUseCase(
         val intervalMinutes = 60 // Hourly = every 60 minutes
         
         var currentTime = startTime
-        val endOfDay = LocalTime(23, 59)
+        val endTime = habit.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
         
-        while (currentTime <= endOfDay) {
+        while (currentTime <= endTime) {
             tasks.add(createTask(habit, date, currentTime))
             
             // Calculate next time by adding 60 minutes
@@ -81,9 +81,9 @@ class GetTodayTasksUseCase(
         val intervalMinutes = habit.intervalMinutes.coerceAtLeast(1)
         
         var currentTime = startTime
-        val endOfDay = LocalTime(23, 59)
+        val endTime = habit.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
         
-        while (currentTime <= endOfDay) {
+        while (currentTime <= endTime) {
             tasks.add(createTask(habit, date, currentTime))
             
             // Calculate next time by adding interval minutes

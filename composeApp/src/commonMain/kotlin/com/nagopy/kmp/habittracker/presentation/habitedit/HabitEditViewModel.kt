@@ -77,6 +77,10 @@ class HabitEditViewModel(
         _uiState.value = _uiState.value.copy(scheduledTimes = scheduledTimes)
     }
 
+    fun updateEndTime(endTime: LocalTime?) {
+        _uiState.value = _uiState.value.copy(endTime = endTime)
+    }
+
     fun saveHabit(onSuccess: (Long) -> Unit, onError: (String) -> Unit) {
         val currentState = _uiState.value
         
@@ -100,7 +104,8 @@ class HabitEditViewModel(
                     createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
                     frequencyType = currentState.frequencyType,
                     intervalMinutes = currentState.intervalMinutes,
-                    scheduledTimes = currentState.scheduledTimes
+                    scheduledTimes = currentState.scheduledTimes,
+                    endTime = currentState.endTime
                 )
 
                 val habitId = addHabitUseCase(habit)
@@ -154,6 +159,7 @@ data class HabitEditUiState(
     val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
     val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
     val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
+    val endTime: LocalTime? = null, // End time for interval-based habits
     val nameError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false
