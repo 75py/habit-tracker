@@ -10,3 +10,10 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     appDeclaration()
     modules(appModule)
 }
+
+/**
+ * Helper function for iOS to initialize Koin at app startup
+ */
+fun doInitKoin() {
+    initKoin()
+}
