@@ -27,7 +27,7 @@ class UpdateHabitUseCaseTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.ONCE_DAILY,
-            intervalHours = 24,
+            intervalMinutes = 1440,
             scheduledTimes = listOf(LocalTime(7, 30))
         )
         coEvery { mockRepository.updateHabit(habit) } just runs
@@ -52,7 +52,7 @@ class UpdateHabitUseCaseTest {
             isActive = false,
             createdAt = LocalDate.parse("2024-01-02"),
             frequencyType = FrequencyType.HOURLY,
-            intervalHours = 2,
+            intervalMinutes = 120,
             scheduledTimes = listOf(LocalTime(20, 0))
         )
         coEvery { mockRepository.updateHabit(habit) } just runs
