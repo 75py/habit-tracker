@@ -1,12 +1,15 @@
 package com.nagopy.kmp.habittracker.notification
 
 import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.mockk
 import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.justRun
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -29,6 +32,9 @@ class AndroidNotificationSchedulerTest {
 
     @Before
     fun setup() {
+        // Initialize logger first to avoid potential issues
+        com.nagopy.kmp.habittracker.util.Logger.init()
+        
         context = ApplicationProvider.getApplicationContext()
         mockHabitRepository = mockk()
         scheduler = AndroidNotificationScheduler(context, mockHabitRepository)

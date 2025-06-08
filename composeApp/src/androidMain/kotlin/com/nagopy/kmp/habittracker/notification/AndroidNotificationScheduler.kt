@@ -25,7 +25,7 @@ import java.time.ZoneId
 /**
  * Android implementation of NotificationScheduler using AlarmManager and NotificationManager.
  */
-class AndroidNotificationScheduler(
+open class AndroidNotificationScheduler(
     private val context: Context,
     private val habitRepository: HabitRepository
 ) : NotificationScheduler {
@@ -41,7 +41,7 @@ class AndroidNotificationScheduler(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    private val alarmManager: AlarmManager by lazy {
+    protected open val alarmManager: AlarmManager by lazy {
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     }
 
@@ -98,7 +98,7 @@ class AndroidNotificationScheduler(
         // Schedule the alarm
         try {
             // Check if we can schedule exact alarms on Android 12+ (API 31+)
-            if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) {
+            if (Build.VERSION.SDK_INT >= 31 && !canScheduleExactAlarms()) {
                 // Cannot schedule exact alarms - fall back to inexact scheduling
                 Logger.w("Cannot schedule exact alarms, falling back to inexact scheduling for task: ${task.habitName}", "AndroidNotificationScheduler")
                 alarmManager.set(
@@ -108,11 +108,21 @@ class AndroidNotificationScheduler(
                 )
             } else {
                 Logger.d("Scheduling exact alarm with setExactAndAllowWhileIdle for task: ${task.habitName}", "AndroidNotificationScheduler")
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
+                try {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } catch (e: NoSuchMethodError) {
+                    // Method not available, fall back to regular set()
+                    Logger.w("setExactAndAllowWhileIdle method not available, falling back to set() for task: ${task.habitName}", "AndroidNotificationScheduler")
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                }
             }
             Logger.i("Successfully scheduled notification for task: ${task.habitName} at ${task.scheduledTime}", "AndroidNotificationScheduler")
         } catch (e: SecurityException) {
@@ -123,6 +133,9 @@ class AndroidNotificationScheduler(
                 triggerTime,
                 pendingIntent
             )
+        } catch (e: Exception) {
+            // Any other exception during alarm scheduling
+            Logger.e(e, "Unexpected exception when scheduling alarm for task: ${task.habitName}", "AndroidNotificationScheduler")
         }
     }
 
@@ -209,7 +222,13 @@ class AndroidNotificationScheduler(
      */
     private fun canScheduleExactAlarms(): Boolean {
         return if (Build.VERSION.SDK_INT >= 31) { // API 31 = Android 12
-            alarmManager.canScheduleExactAlarms()
+            try {
+                alarmManager.canScheduleExactAlarms()
+            } catch (e: NoSuchMethodError) {
+                // Method not available in test environment or older versions
+                Logger.w("canScheduleExactAlarms method not available, assuming false", "AndroidNotificationScheduler")
+                false
+            }
         } else {
             // On Android < 12, exact alarms don't require special permission
             true
