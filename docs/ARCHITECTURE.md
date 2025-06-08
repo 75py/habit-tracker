@@ -27,6 +27,27 @@ The Habit Tracker follows a **three-layer architecture** pattern that ensures cl
 └─────────────────────────────────────┘
 ```
 
+## Logging Strategy
+
+The application uses **Napier** for cross-platform logging with the following guidelines:
+
+- **Debug Information**: Use `Logger.d()` for general debug information
+- **Exception Logging**: All caught exceptions must be logged using `Logger.e(exception)` inside catch blocks
+- **Debug Build Only**: Logs are only printed in debug builds using `DebugAntilog`
+- **Consistent Tagging**: Use meaningful tags to categorize log messages by feature or component
+
+**Example Usage:**
+```kotlin
+try {
+    // Some operation
+} catch (e: Exception) {
+    Logger.e(e, "Failed to save habit")
+    // Handle exception
+}
+
+Logger.d("Habit created successfully", tag = "HabitCreation")
+```
+
 ## Layer Responsibilities
 
 ### Presentation Layer

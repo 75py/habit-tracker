@@ -117,6 +117,36 @@ class HabitEditViewModelTest {
     }
 
     @Test
+    fun `updateFrequencyType should set intervalHours to 1 when HOURLY is selected`() {
+        // Given - start with a different interval
+        viewModel.updateIntervalHours(4)
+        assertEquals(4, viewModel.uiState.value.intervalHours)
+
+        // When
+        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
+        assertEquals(1, uiState.intervalHours)
+    }
+
+    @Test
+    fun `updateFrequencyType should not change intervalHours when non-HOURLY is selected`() {
+        // Given - start with a custom interval
+        viewModel.updateIntervalHours(3)
+        assertEquals(3, viewModel.uiState.value.intervalHours)
+
+        // When
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
+        assertEquals(3, uiState.intervalHours) // Should preserve the existing value
+    }
+
+    @Test
     fun `updateIntervalHours should update interval hours`() {
         // When
         viewModel.updateIntervalHours(2)
@@ -277,5 +307,37 @@ class HabitEditViewModelTest {
                 habit.description == "30 minutes workout"
             })
         }
+    }
+
+    @Test
+    fun `saveHabit should complete navigation after notification scheduling without hanging`() = runTest {
+        // Given
+        val expectedHabitId = 456L
+        coEvery { mockAddHabitUseCase(any()) } returns expectedHabitId
+        
+        viewModel.updateName("Test Habit")
+
+        var successResult: Long? = null
+        var navigationCompleted = false
+
+        // When - save habit which should trigger notification scheduling and navigation
+        viewModel.saveHabit(
+            onSuccess = { habitId -> 
+                successResult = habitId
+                navigationCompleted = true
+            },
+            onError = { }
+        )
+        
+        // Advance dispatcher to complete all coroutines
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - navigation should complete indicating the method didn't hang
+        assertEquals(expectedHabitId, successResult)
+        assertTrue(navigationCompleted, "Navigation should complete after save operation")
+        assertFalse(viewModel.uiState.value.isSaving, "isSaving should be false after completion")
+        
+        // Verify notification scheduling was called
+        coVerify(exactly = 1) { mockManageNotificationsUseCase.scheduleNotificationsForTodayTasks() }
     }
 }

@@ -9,6 +9,7 @@ import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListScreen
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListViewModel
 import com.nagopy.kmp.habittracker.presentation.today.TodayScreen
 import com.nagopy.kmp.habittracker.presentation.today.TodayViewModel
+import com.nagopy.kmp.habittracker.util.Logger
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -25,6 +26,11 @@ fun App() {
         val appViewModel: AppViewModel = koinInject()
         
         var currentScreen by remember { mutableStateOf<Screen>(Screen.HabitList) }
+        
+        // Log screen navigation for debugging
+        LaunchedEffect(currentScreen) {
+            Logger.d("Navigating to screen: $currentScreen", tag = "Navigation")
+        }
         
         when (currentScreen) {
             Screen.HabitList -> {

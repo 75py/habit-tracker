@@ -15,6 +15,7 @@ Habit Tracker is a modern mobile application that helps users build and maintain
 - **Room Database**: Handles local data persistence with a type-safe database layer
 - **Koin**: Lightweight dependency injection framework for managing application dependencies
 - **kotlinx.datetime**: Cross-platform date and time handling
+- **Napier**: Cross-platform logging library for consistent debugging and error tracking
 
 ## Project Structure
 
