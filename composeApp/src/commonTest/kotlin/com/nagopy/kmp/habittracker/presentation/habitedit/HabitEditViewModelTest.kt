@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -22,13 +23,14 @@ import kotlin.test.assertTrue
 class HabitEditViewModelTest {
 
     private val mockAddHabitUseCase = mockk<AddHabitUseCase>()
+    private val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
     private lateinit var viewModel: HabitEditViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = HabitEditViewModel(mockAddHabitUseCase)
+        viewModel = HabitEditViewModel(mockAddHabitUseCase, mockManageNotificationsUseCase)
     }
 
     @AfterTest
