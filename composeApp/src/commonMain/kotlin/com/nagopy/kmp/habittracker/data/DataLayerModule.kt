@@ -13,5 +13,6 @@ import org.koin.dsl.module
  * - Data mappers
  */
 val dataModule = module {
+    includes(databaseModule)
     single<HabitRepository> { HabitRepositoryImpl(get()) }
 }
