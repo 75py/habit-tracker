@@ -133,7 +133,7 @@ class HabitListViewModelTest {
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-02"),
                 frequencyType = FrequencyType.HOURLY,
-                intervalHours = 1,
+                intervalMinutes = 60,
                 scheduledTimes = listOf(LocalTime(10, 0))
             )
         )
