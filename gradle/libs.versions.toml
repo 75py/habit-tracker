@@ -20,6 +20,7 @@ koin = "4.0.4"
 room = "2.7.1"
 ksp = "2.1.0-1.0.29"
 mockk = "1.13.13"
+napier = "2.7.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -55,6 +56,9 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 # MockK
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+# Napier
+napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
