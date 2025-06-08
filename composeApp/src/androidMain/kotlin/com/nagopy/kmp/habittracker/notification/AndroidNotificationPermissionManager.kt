@@ -9,8 +9,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.nagopy.kmp.habittracker.domain.notification.NotificationPermissionManager
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 
 /**
  * Android implementation of NotificationPermissionManager.
@@ -62,43 +60,24 @@ class AndroidNotificationPermissionManager(
                 return true
             }
             
-            // Request permission if not already granted
-            return suspendCancellableCoroutine { continuation ->
-                val requestCode = NOTIFICATION_PERMISSION_REQUEST_CODE
-                
-                // Store the continuation to be resumed in onRequestPermissionsResult
-                permissionRequestContinuation = continuation
-                
-                ActivityCompat.requestPermissions(
-                    activity,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    requestCode
-                )
-            }
+            // For now, just request permission and return current status
+            // This avoids the deprecated onRequestPermissionsResult callback
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                NOTIFICATION_PERMISSION_REQUEST_CODE
+            )
+            
+            // Return current status - the permission dialog will appear
+            // but we don't wait for the result
+            return areNotificationsEnabled()
         } else {
             // For Android < 13, notifications are enabled by default
             return NotificationManagerCompat.from(context).areNotificationsEnabled()
         }
     }
     
-    /**
-     * Handle permission result from activity.
-     * This should be called from Activity.onRequestPermissionsResult().
-     */
-    fun onPermissionResult(requestCode: Int, grantResults: IntArray) {
-        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
-            val granted = grantResults.isNotEmpty() && 
-                         grantResults[0] == PackageManager.PERMISSION_GRANTED
-            permissionRequestContinuation?.resume(granted)
-            permissionRequestContinuation = null
-        }
-    }
-    
     companion object {
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
-        
-        // Store the continuation for permission request result
-        private var permissionRequestContinuation: 
-            kotlin.coroutines.Continuation<Boolean>? = null
     }
 }

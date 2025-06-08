@@ -37,14 +37,7 @@ class MainActivity : ComponentActivity() {
         notificationPermissionManager.clearActivity()
     }
     
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        notificationPermissionManager.onPermissionResult(requestCode, grantResults)
-    }
+
 }
 
 @Preview
