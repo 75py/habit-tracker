@@ -88,7 +88,7 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
         // Get all pending notifications and filter by habit ID
         center.getPendingNotificationRequestsWithCompletionHandler { requests ->
             val identifiersToCancel = requests?.mapNotNull { request ->
-                val requestIdentifier = request.identifier
+                val requestIdentifier = request.identifier()
                 if (requestIdentifier.startsWith("${habitId}_")) {
                     requestIdentifier
                 } else {
@@ -142,8 +142,8 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
         // Create the category
         val category = UNNotificationCategory.categoryWithIdentifier(
             identifier = "HABIT_REMINDER",
-            actions = listOf(completeAction),
-            intentIdentifiers = emptyList(),
+            actions = listOf<UNNotificationAction>(completeAction),
+            intentIdentifiers = listOf<String>(),
             options = UNNotificationCategoryOptionNone
         )
 
@@ -152,8 +152,8 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     }
 
     fun handleNotificationResponse(response: UNNotificationResponse) {
-        if (response.actionIdentifier == "COMPLETE_ACTION") {
-            val identifier = response.notification.request.identifier
+        if (response.actionIdentifier() == "COMPLETE_ACTION") {
+            val identifier = response.notification.request.identifier()
             val parts = identifier.split("_")
             
             if (parts.size >= 3) {
