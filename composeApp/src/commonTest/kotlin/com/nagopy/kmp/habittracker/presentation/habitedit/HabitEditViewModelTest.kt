@@ -117,6 +117,36 @@ class HabitEditViewModelTest {
     }
 
     @Test
+    fun `updateFrequencyType should set intervalHours to 1 when HOURLY is selected`() {
+        // Given - start with a different interval
+        viewModel.updateIntervalHours(4)
+        assertEquals(4, viewModel.uiState.value.intervalHours)
+
+        // When
+        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
+        assertEquals(1, uiState.intervalHours)
+    }
+
+    @Test
+    fun `updateFrequencyType should not change intervalHours when non-HOURLY is selected`() {
+        // Given - start with a custom interval
+        viewModel.updateIntervalHours(3)
+        assertEquals(3, viewModel.uiState.value.intervalHours)
+
+        // When
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
+        assertEquals(3, uiState.intervalHours) // Should preserve the existing value
+    }
+
+    @Test
     fun `updateIntervalHours should update interval hours`() {
         // When
         viewModel.updateIntervalHours(2)

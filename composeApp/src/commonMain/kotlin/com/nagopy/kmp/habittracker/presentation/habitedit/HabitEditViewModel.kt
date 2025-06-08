@@ -47,7 +47,10 @@ class HabitEditViewModel(
     }
 
     fun updateFrequencyType(frequencyType: FrequencyType) {
-        _uiState.value = _uiState.value.copy(frequencyType = frequencyType)
+        _uiState.value = _uiState.value.copy(
+            frequencyType = frequencyType,
+            intervalHours = if (frequencyType == FrequencyType.HOURLY) 1 else _uiState.value.intervalHours
+        )
     }
 
     fun updateIntervalHours(intervalHours: Int) {
