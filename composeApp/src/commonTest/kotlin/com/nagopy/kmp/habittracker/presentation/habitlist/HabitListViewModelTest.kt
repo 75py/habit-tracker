@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker.presentation.habitlist
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.GetAllHabitsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.DeleteHabitUseCase
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +25,7 @@ import kotlin.test.assertTrue
 class HabitListViewModelTest {
 
     private val mockGetAllHabitsUseCase = mockk<GetAllHabitsUseCase>()
+    private val mockDeleteHabitUseCase = mockk<DeleteHabitUseCase>()
     private lateinit var viewModel: HabitListViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -67,7 +69,7 @@ class HabitListViewModelTest {
         every { mockGetAllHabitsUseCase() } returns flowOf(mockHabits)
 
         // When
-        viewModel = HabitListViewModel(mockGetAllHabitsUseCase)
+        viewModel = HabitListViewModel(mockGetAllHabitsUseCase, mockDeleteHabitUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
@@ -87,7 +89,7 @@ class HabitListViewModelTest {
         every { mockGetAllHabitsUseCase() } returns errorFlow
 
         // When
-        viewModel = HabitListViewModel(mockGetAllHabitsUseCase)
+        viewModel = HabitListViewModel(mockGetAllHabitsUseCase, mockDeleteHabitUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
@@ -143,7 +145,7 @@ class HabitListViewModelTest {
             flowOf(refreshedHabits)
         )
 
-        viewModel = HabitListViewModel(mockGetAllHabitsUseCase)
+        viewModel = HabitListViewModel(mockGetAllHabitsUseCase, mockDeleteHabitUseCase)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // When
@@ -176,7 +178,7 @@ class HabitListViewModelTest {
         every { mockGetAllHabitsUseCase() } returns flowOf(mockHabits)
 
         // When
-        viewModel = HabitListViewModel(mockGetAllHabitsUseCase)
+        viewModel = HabitListViewModel(mockGetAllHabitsUseCase, mockDeleteHabitUseCase)
 
         // Then - After advancing the coroutines, loading should be complete
         testDispatcher.scheduler.advanceUntilIdle()
