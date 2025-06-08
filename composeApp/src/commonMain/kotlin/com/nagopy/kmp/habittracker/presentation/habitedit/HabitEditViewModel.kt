@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,8 @@ import kotlinx.datetime.todayIn
  * Manages the state of habit form and handles user interactions for adding/editing habits.
  */
 class HabitEditViewModel(
-    private val addHabitUseCase: AddHabitUseCase
+    private val addHabitUseCase: AddHabitUseCase,
+    private val manageNotificationsUseCase: ManageNotificationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HabitEditUiState())
@@ -81,6 +83,15 @@ class HabitEditViewModel(
                 )
 
                 val habitId = addHabitUseCase(habit)
+                
+                // Schedule notifications for the new habit
+                try {
+                    manageNotificationsUseCase.scheduleNotificationsForTodayTasks()
+                } catch (notificationException: Exception) {
+                    // Notifications are not critical, so we don't fail the save operation
+                    // In a production app, you might want to log this
+                }
+                
                 _uiState.value = currentState.copy(isSaving = false)
                 onSuccess(habitId)
             } catch (exception: Exception) {
