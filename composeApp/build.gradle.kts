@@ -57,6 +57,9 @@ kotlin {
             
             // kotlinx.datetime
             implementation(libs.kotlinx.datetime)
+            
+            // Napier
+            implementation(libs.napier)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

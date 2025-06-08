@@ -1,5 +1,6 @@
 package com.nagopy.kmp.habittracker.di
 
+import com.nagopy.kmp.habittracker.util.Logger
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
@@ -9,6 +10,9 @@ import org.koin.dsl.KoinAppDeclaration
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     appDeclaration()
     modules(appModule)
+}.also {
+    // Initialize logging after Koin setup
+    Logger.init()
 }
 
 /**
