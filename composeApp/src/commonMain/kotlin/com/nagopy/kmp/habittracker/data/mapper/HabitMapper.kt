@@ -4,7 +4,9 @@ import com.nagopy.kmp.habittracker.data.local.HabitEntity
 import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 
 /**
  * Mappers to convert between domain models and data entities.
@@ -18,7 +20,14 @@ fun HabitEntity.toDomainModel(): Habit {
         description = description,
         color = color,
         isActive = isActive,
-        createdAt = LocalDate.parse(createdAt)
+        createdAt = LocalDate.parse(createdAt),
+        frequencyType = try {
+            FrequencyType.valueOf(frequencyType)
+        } catch (e: IllegalArgumentException) {
+            FrequencyType.ONCE_DAILY
+        },
+        intervalHours = intervalHours,
+        scheduledTimes = parseScheduledTimes(scheduledTimes)
     )
 }
 
@@ -29,8 +38,35 @@ fun Habit.toEntity(): HabitEntity {
         description = description,
         color = color,
         isActive = isActive,
-        createdAt = createdAt.toString()
+        createdAt = createdAt.toString(),
+        frequencyType = frequencyType.name,
+        intervalHours = intervalHours,
+        scheduledTimes = formatScheduledTimes(scheduledTimes)
     )
+}
+
+// Helper functions for time formatting
+private fun parseScheduledTimes(timesString: String): List<LocalTime> {
+    return if (timesString.isEmpty()) {
+        listOf(LocalTime(9, 0)) // Default 9:00 AM
+    } else {
+        timesString.split(",").mapNotNull { timeStr ->
+            try {
+                val parts = timeStr.trim().split(":")
+                if (parts.size == 2) {
+                    LocalTime(parts[0].toInt(), parts[1].toInt())
+                } else null
+            } catch (e: Exception) {
+                null
+            }
+        }.ifEmpty { listOf(LocalTime(9, 0)) }
+    }
+}
+
+private fun formatScheduledTimes(times: List<LocalTime>): String {
+    return times.joinToString(",") { time ->
+        String.format("%02d:%02d", time.hour, time.minute)
+    }
 }
 
 // HabitLog mappers
