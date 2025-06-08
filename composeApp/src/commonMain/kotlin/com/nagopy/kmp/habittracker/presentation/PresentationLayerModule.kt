@@ -2,7 +2,6 @@ package com.nagopy.kmp.habittracker.presentation
 
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListViewModel
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -15,6 +14,6 @@ import org.koin.dsl.module
  * - State management
  */
 val presentationModule = module {
-    viewModel { HabitListViewModel(get()) }
-    viewModel { HabitEditViewModel(get()) }
+    factory { HabitListViewModel(get()) }
+    factory { HabitEditViewModel(get()) }
 }
