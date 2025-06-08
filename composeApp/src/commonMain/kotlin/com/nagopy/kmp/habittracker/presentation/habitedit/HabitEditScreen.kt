@@ -193,7 +193,8 @@ fun HabitEditScreen(
                             },
                             modifier = Modifier.width(80.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true
+                            singleLine = true,
+                            enabled = uiState.frequencyType != FrequencyType.HOURLY
                         )
                         
                         Text(
