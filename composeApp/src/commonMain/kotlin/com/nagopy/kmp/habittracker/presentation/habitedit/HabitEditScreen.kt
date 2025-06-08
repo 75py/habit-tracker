@@ -254,56 +254,28 @@ fun HabitEditScreen(
                         }
                         
                         if (showTimePicker) {
-                            // Simple time input dialog - in a real app you'd use a proper time picker
-                            var hourInput by remember { mutableStateOf("9") }
-                            var minuteInput by remember { mutableStateOf("0") }
+                            val timePickerState = rememberTimePickerState(
+                                initialHour = 9,
+                                initialMinute = 0,
+                                is24Hour = true
+                            )
                             
                             AlertDialog(
                                 onDismissRequest = { showTimePicker = false },
                                 title = { Text("Add Time") },
                                 text = {
-                                    Column {
-                                        Text("Enter time (24-hour format)")
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            OutlinedTextField(
-                                                value = hourInput,
-                                                onValueChange = { hourInput = it },
-                                                label = { Text("Hour") },
-                                                modifier = Modifier.width(80.dp),
-                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                singleLine = true
-                                            )
-                                            Text(":")
-                                            OutlinedTextField(
-                                                value = minuteInput,
-                                                onValueChange = { minuteInput = it },
-                                                label = { Text("Min") },
-                                                modifier = Modifier.width(80.dp),
-                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                singleLine = true
-                                            )
-                                        }
-                                    }
+                                    TimePicker(state = timePickerState)
                                 },
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            val hour = hourInput.toIntOrNull()
-                                            val minute = minuteInput.toIntOrNull()
-                                            if (hour != null && minute != null && 
-                                                hour in 0..23 && minute in 0..59) {
-                                                val newTime = LocalTime(hour, minute)
-                                                if (!uiState.scheduledTimes.contains(newTime)) {
-                                                    viewModel.updateScheduledTimes(
-                                                        uiState.scheduledTimes + newTime
-                                                    )
-                                                }
-                                                showTimePicker = false
+                                            val newTime = LocalTime(timePickerState.hour, timePickerState.minute)
+                                            if (!uiState.scheduledTimes.contains(newTime)) {
+                                                viewModel.updateScheduledTimes(
+                                                    uiState.scheduledTimes + newTime
+                                                )
                                             }
+                                            showTimePicker = false
                                         }
                                     ) {
                                         Text("Add")
@@ -327,52 +299,25 @@ fun HabitEditScreen(
                         }
                         
                         if (showTimePicker) {
-                            var hourInput by remember { mutableStateOf(uiState.scheduledTimes.first().hour.toString()) }
-                            var minuteInput by remember { mutableStateOf(uiState.scheduledTimes.first().minute.toString()) }
+                            val timePickerState = rememberTimePickerState(
+                                initialHour = uiState.scheduledTimes.first().hour,
+                                initialMinute = uiState.scheduledTimes.first().minute,
+                                is24Hour = true
+                            )
                             
                             AlertDialog(
                                 onDismissRequest = { showTimePicker = false },
                                 title = { Text("Set Start Time") },
                                 text = {
-                                    Column {
-                                        Text("Enter start time (24-hour format)")
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            OutlinedTextField(
-                                                value = hourInput,
-                                                onValueChange = { hourInput = it },
-                                                label = { Text("Hour") },
-                                                modifier = Modifier.width(80.dp),
-                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                singleLine = true
-                                            )
-                                            Text(":")
-                                            OutlinedTextField(
-                                                value = minuteInput,
-                                                onValueChange = { minuteInput = it },
-                                                label = { Text("Min") },
-                                                modifier = Modifier.width(80.dp),
-                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                singleLine = true
-                                            )
-                                        }
-                                    }
+                                    TimePicker(state = timePickerState)
                                 },
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            val hour = hourInput.toIntOrNull()
-                                            val minute = minuteInput.toIntOrNull()
-                                            if (hour != null && minute != null && 
-                                                hour in 0..23 && minute in 0..59) {
-                                                viewModel.updateScheduledTimes(
-                                                    listOf(LocalTime(hour, minute))
-                                                )
-                                                showTimePicker = false
-                                            }
+                                            viewModel.updateScheduledTimes(
+                                                listOf(LocalTime(timePickerState.hour, timePickerState.minute))
+                                            )
+                                            showTimePicker = false
                                         }
                                     ) {
                                         Text("Set")
