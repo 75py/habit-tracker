@@ -10,7 +10,7 @@ import org.koin.dsl.module
  * iOS notification module providing platform-specific notification scheduler
  */
 val iosNotificationModule = module {
-    single<NotificationScheduler> { IOSNotificationScheduler() }
+    single<NotificationScheduler> { IOSNotificationScheduler(get()) }
     single<NotificationPermissionManager> { IOSNotificationPermissionManager() }
     single<AppPreferences> { IOSAppPreferences() }
 }

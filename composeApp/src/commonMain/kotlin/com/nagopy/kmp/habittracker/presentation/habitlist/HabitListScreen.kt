@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +31,7 @@ import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 fun HabitListScreen(
     onAddHabitClick: () -> Unit,
     onTodayClick: () -> Unit,
-    onHabitClick: (Habit) -> Unit = {},
+    onHabitEdit: (Habit) -> Unit,
     viewModel: HabitListViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -125,7 +127,8 @@ fun HabitListScreen(
                     items(uiState.habits) { habit ->
                         HabitItem(
                             habit = habit,
-                            onClick = { onHabitClick(habit) }
+                            onEdit = { onHabitEdit(habit) },
+                            onDelete = { viewModel.deleteHabit(habit.id) }
                         )
                     }
                 }
@@ -138,10 +141,12 @@ fun HabitListScreen(
 @Composable
 private fun HabitItem(
     habit: Habit,
-    onClick: () -> Unit
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
     Card(
-        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -192,6 +197,50 @@ private fun HabitItem(
                     color = MaterialTheme.colorScheme.outline
                 )
             }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            // Edit button
+            IconButton(onClick = onEdit) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit habit",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            // Delete button
+            IconButton(onClick = { showDeleteConfirmation = true }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete habit",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Habit") },
+            text = { Text("Are you sure you want to delete \"${habit.name}\"? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete()
+                        showDeleteConfirmation = false
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

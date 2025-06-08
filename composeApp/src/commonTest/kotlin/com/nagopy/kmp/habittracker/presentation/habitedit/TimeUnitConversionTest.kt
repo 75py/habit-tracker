@@ -1,6 +1,8 @@
 package com.nagopy.kmp.habittracker.presentation.habitedit
 
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import io.mockk.mockk
 import kotlin.test.Test
@@ -29,10 +31,14 @@ class TimeUnitConversionTest {
     @Test
     fun `updateIntervalValue should convert minutes to minutes correctly`() {
         val mockAddHabitUseCase = mockk<AddHabitUseCase>(relaxed = true)
+        val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>(relaxed = true)
+        val mockGetHabitUseCase = mockk<GetHabitUseCase>(relaxed = true)
         val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
         
         val viewModel = HabitEditViewModel(
             addHabitUseCase = mockAddHabitUseCase,
+            updateHabitUseCase = mockUpdateHabitUseCase,
+            getHabitUseCase = mockGetHabitUseCase,
             manageNotificationsUseCase = mockManageNotificationsUseCase
         )
         
@@ -47,10 +53,14 @@ class TimeUnitConversionTest {
     @Test
     fun `updateIntervalValue should convert hours to minutes correctly`() {
         val mockAddHabitUseCase = mockk<AddHabitUseCase>(relaxed = true)
+        val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>(relaxed = true)
+        val mockGetHabitUseCase = mockk<GetHabitUseCase>(relaxed = true)
         val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
         
         val viewModel = HabitEditViewModel(
             addHabitUseCase = mockAddHabitUseCase,
+            updateHabitUseCase = mockUpdateHabitUseCase,
+            getHabitUseCase = mockGetHabitUseCase,
             manageNotificationsUseCase = mockManageNotificationsUseCase
         )
         

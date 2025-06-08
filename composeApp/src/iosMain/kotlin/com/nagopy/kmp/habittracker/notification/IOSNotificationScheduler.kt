@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.notification
 
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +14,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toNSDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+
 import platform.UserNotifications.*
 import platform.Foundation.*
 
@@ -20,7 +22,9 @@ import platform.Foundation.*
  * iOS implementation of NotificationScheduler using UserNotifications framework.
  */
 @OptIn(ExperimentalForeignApi::class)
-class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
+class IOSNotificationScheduler(
+    private val habitRepository: HabitRepository
+) : NotificationScheduler, KoinComponent {
 
     companion object {
         private const val HABIT_REMINDER_CATEGORY = "HABIT_REMINDER"
@@ -37,10 +41,15 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
 
         val identifier = generateNotificationId(task)
         
+        // Fetch the actual habit to get current name and description
+        val habit = habitRepository.getHabit(task.habitId)
+        val habitName = habit?.name ?: task.habitName
+        val habitDescription = habit?.description ?: task.habitDescription
+        
         // Create notification content
         val content = UNMutableNotificationContent().apply {
-            setTitle(task.habitName)
-            setBody(task.habitDescription.ifEmpty { "Time to complete your habit!" })
+            setTitle(habitName)
+            setBody(habitDescription.ifEmpty { "Time to complete your habit!" })
             setSound(UNNotificationSound.defaultSound())
             setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
         }

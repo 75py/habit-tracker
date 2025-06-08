@@ -196,4 +196,88 @@ Both screens are implemented using Compose Multiplatform and support:
 - All interactive elements have appropriate content descriptions
 - Form fields have clear labels and error messages
 - Color selection is supplemented with visual indicators beyond color alone
+
+## Notification System Specifications
+
+### Purpose
+The notification system provides timely reminders for scheduled habit tasks, helping users maintain consistent habit execution throughout the day. Notifications are platform-native and support interactive completion actions.
+
+### Notification Content Strategy
+
+**Dynamic Content Updates:**
+- Notifications always display current habit information at the time of scheduling
+- Content is fetched fresh from the database to ensure accuracy
+- Habit name and description changes are immediately reflected in new notifications
+
+**Content Sources (Priority Order):**
+1. **Primary**: Current habit data from `HabitRepository.getHabit()`
+2. **Fallback**: Task data (for robustness if habit lookup fails)
+
+**Content Structure:**
+- **Title**: Current habit name
+- **Body**: Current habit description (or default reminder text if empty)
+- **Actions**: Platform-specific completion actions
+
+### Scheduling Behavior
+
+**Task-Based Scheduling:**
+- Notifications are scheduled for each individual task instance
+- Multiple notifications can exist for the same habit at different times
+- Scheduling occurs when tasks are generated (typically daily)
+
+**Timing:**
+- Notifications trigger at the exact scheduled time for each task
+- Platform-specific precision (AlarmManager on Android, UserNotifications on iOS)
+- Handles device sleep states and background execution
+
+### Platform-Specific Implementation
+
+**Android:**
+- Uses `AlarmManager` for precise timing
+- `NotificationManager` for display and management
+- `BroadcastReceiver` for handling completion actions
+- Respects Android notification channels and permission model
+
+**iOS:**
+- Uses `UserNotifications` framework
+- Native iOS notification experience and permission handling
+- `UNNotificationRequest` for scheduling
+- `UNNotificationCategory` for interactive actions
+
+### Interactive Features
+
+**Completion Actions:**
+- "Complete" action button in notification
+- Tapping action marks the specific task as completed
+- Automatic notification dismissal after completion
+- Background execution without opening the app
+
+**Permission Management:**
+- Platform-appropriate permission requests
+- Graceful handling of denied permissions
+- Notifications only scheduled when permissions are granted
+
+### Error Handling
+
+**Robust Fallback:**
+- Failed habit lookups fall back to task data
+- Missing descriptions use default reminder text
+- Scheduling failures are logged but don't crash the app
+
+**Data Consistency:**
+- Repository errors don't prevent notification scheduling
+- Defensive programming ensures notifications are always attempted
+- Clean error recovery maintains user experience
+
+### Performance Considerations
+
+**Database Access:**
+- Minimal database calls during scheduling
+- Suspend function support for proper coroutine handling
+- No UI blocking during notification setup
+
+**Resource Management:**
+- Automatic cleanup of completed/cancelled notifications
+- Platform-appropriate memory and battery usage
+- Efficient notification ID generation and management
 - Touch targets meet minimum size requirements

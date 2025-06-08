@@ -16,6 +16,7 @@ import org.koin.compose.koinInject
 sealed class Screen {
     data object HabitList : Screen()
     data object AddHabit : Screen()
+    data class EditHabit(val habitId: Long) : Screen()
     data object Today : Screen()
 }
 
@@ -38,7 +39,7 @@ fun App() {
                 HabitListScreen(
                     onAddHabitClick = { currentScreen = Screen.AddHabit },
                     onTodayClick = { currentScreen = Screen.Today },
-                    onHabitClick = { /* TODO: Navigate to edit habit */ },
+                    onHabitEdit = { habit -> currentScreen = Screen.EditHabit(habit.id) },
                     viewModel = viewModel
                 )
             }
@@ -46,6 +47,17 @@ fun App() {
             Screen.AddHabit -> {
                 val viewModel: HabitEditViewModel = koinInject()
                 HabitEditScreen(
+                    onSaveSuccess = { currentScreen = Screen.HabitList },
+                    onNavigateBack = { currentScreen = Screen.HabitList },
+                    viewModel = viewModel
+                )
+            }
+            
+            is Screen.EditHabit -> {
+                val viewModel: HabitEditViewModel = koinInject()
+                val editScreen = currentScreen as Screen.EditHabit
+                HabitEditScreen(
+                    habitId = editScreen.habitId,
                     onSaveSuccess = { currentScreen = Screen.HabitList },
                     onNavigateBack = { currentScreen = Screen.HabitList },
                     viewModel = viewModel
