@@ -49,16 +49,98 @@ The presentation layer is responsible for handling user interface and user inter
 
 The domain layer contains the core business logic and domain entities. It's completely independent of external frameworks and platforms. It includes:
 
-- **Entities**: Core business models (Habit, HabitEntry, User, etc.)
-- **Use Cases**: Encapsulate specific business operations (CreateHabitUseCase, MarkHabitCompleteUseCase, etc.)
+- **Entities**: Core business models (Habit, HabitLog, etc.)
+- **Use Cases**: Encapsulate specific business operations and provide a clean interface for the presentation layer
 - **Repository Interfaces**: Define contracts for data access without implementation details
 - **Domain Services**: Complex business logic that doesn't belong to a specific entity
+
+**Repository Pattern:**
+The Repository pattern provides an abstraction layer between the business logic and data access layers. The `HabitRepository` interface defines all operations needed for habit management without exposing implementation details. This allows for easy testing with mock implementations and flexibility to change data sources.
+
+**Use Cases:**
+Use cases encapsulate specific business operations and ensure a single responsibility principle:
+
+- **GetAllHabitsUseCase**: Retrieves all habits from the repository
+- **AddHabitUseCase**: Creates a new habit with validation and business rules
+- **GetTodayTasksUseCase**: Returns active habits that represent today's tasks to be completed
+- **CompleteTaskUseCase**: Marks a habit as completed for a specific date by creating a habit log entry
 
 **Key Principles:**
 - Pure Kotlin with no platform-specific dependencies
 - Contains the application's business rules
 - Defines interfaces that outer layers must implement
 - Independent and testable
+- Use cases provide clear business operations that can be easily tested in isolation
+
+**Testing Infrastructure:**
+The domain layer uses a comprehensive testing approach with the following tools:
+
+- **MockK**: Kotlin-native mocking library used to create mock implementations of repository interfaces
+- **kotlin.test**: Test framework providing assertion methods and test structure
+- **kotlinx-coroutines-test**: Testing utilities for coroutines and Flow operations
+- **Test Isolation**: Each use case is tested independently with mocked dependencies, ensuring true unit testing
+
+MockK provides superior type safety and Kotlin-specific features compared to manual mock implementations, including support for suspend functions, extension functions, and proper coroutine handling.
+
+#### Domain Layer Class Diagram
+
+```mermaid
+classDiagram
+    class HabitRepository {
+        <<interface>>
+        +getAllHabits() Flow~List~Habit~~
+        +getActiveHabits() Flow~List~Habit~~
+        +createHabit(habit: Habit) Long
+        +addHabitLog(habitLog: HabitLog) Long
+        +getHabitLog(habitId: Long, date: LocalDate) HabitLog?
+    }
+    
+    class Habit {
+        +id: Long
+        +name: String
+        +description: String
+        +color: String
+        +isActive: Boolean
+        +createdAt: LocalDate
+    }
+    
+    class HabitLog {
+        +id: Long
+        +habitId: Long
+        +date: LocalDate
+        +isCompleted: Boolean
+    }
+    
+    class GetAllHabitsUseCase {
+        -habitRepository: HabitRepository
+        +invoke() Flow~List~Habit~~
+    }
+    
+    class AddHabitUseCase {
+        -habitRepository: HabitRepository
+        +invoke(habit: Habit) Long
+    }
+    
+    class GetTodayTasksUseCase {
+        -habitRepository: HabitRepository
+        +invoke() Flow~List~Habit~~
+    }
+    
+    class CompleteTaskUseCase {
+        -habitRepository: HabitRepository
+        +invoke(habitId: Long) Long
+        +invoke(habitId: Long, date: LocalDate) Long
+    }
+    
+    GetAllHabitsUseCase --> HabitRepository
+    AddHabitUseCase --> HabitRepository
+    GetTodayTasksUseCase --> HabitRepository
+    CompleteTaskUseCase --> HabitRepository
+    
+    HabitRepository ..> Habit
+    HabitRepository ..> HabitLog
+    CompleteTaskUseCase ..> HabitLog
+```
 
 ### Data Layer
 **Package**: `com.nagopy.kmp.habittracker.data`
