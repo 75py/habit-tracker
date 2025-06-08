@@ -15,7 +15,7 @@ import org.koin.dsl.module
  * - State management
  */
 val presentationModule = module {
-    factory { HabitListViewModel(get()) }
-    factory { HabitEditViewModel(get(), get()) }
+    factory { HabitListViewModel(get(), get()) }
+    factory { HabitEditViewModel(get(), get(), get(), get()) }
     factory { TodayViewModel(get(), get(), get()) }
 }
