@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -49,17 +50,24 @@ class AndroidNotificationScheduler(
     }
 
     override suspend fun scheduleTaskNotification(task: Task) {
+        Logger.d("Attempting to schedule notification for task: ${task.habitName} at ${task.scheduledTime}", "AndroidNotificationScheduler")
+        
         if (!areNotificationsEnabled()) {
+            Logger.w("Notifications are not enabled, skipping notification for task: ${task.habitName}", "AndroidNotificationScheduler")
             return
         }
 
         val notificationId = generateNotificationId(task)
         val triggerTime = calculateTriggerTime(task)
+        
+        Logger.d("Generated notification ID: $notificationId, trigger time: $triggerTime", "AndroidNotificationScheduler")
 
         // Fetch the actual habit to get current name and description
         val habit = habitRepository.getHabit(task.habitId)
         val habitName = habit?.name ?: task.habitName
         val habitDescription = habit?.description ?: task.habitDescription
+
+        Logger.d("Using habit name: '$habitName', description: '$habitDescription'", "AndroidNotificationScheduler")
 
         // Create the notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -93,13 +101,14 @@ class AndroidNotificationScheduler(
                 // Check if we can schedule exact alarms on Android 12+ (API 31+)
                 if (Build.VERSION.SDK_INT >= 31 && !alarmManager.canScheduleExactAlarms()) {
                     // Cannot schedule exact alarms - fall back to inexact scheduling
-                    // This is better than throwing an exception
+                    Logger.w("Cannot schedule exact alarms, falling back to inexact scheduling for task: ${task.habitName}", "AndroidNotificationScheduler")
                     alarmManager.set(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
                 } else {
+                    Logger.d("Scheduling exact alarm with setExactAndAllowWhileIdle for task: ${task.habitName}", "AndroidNotificationScheduler")
                     alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
@@ -107,15 +116,17 @@ class AndroidNotificationScheduler(
                     )
                 }
             } else {
+                Logger.d("Scheduling exact alarm with setExact for task: ${task.habitName}", "AndroidNotificationScheduler")
                 alarmManager.setExact(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
                 )
             }
+            Logger.i("Successfully scheduled notification for task: ${task.habitName} at ${task.scheduledTime}", "AndroidNotificationScheduler")
         } catch (e: SecurityException) {
             // SecurityException can occur if the app doesn't have permission to schedule exact alarms
-            // Fall back to inexact scheduling
+            Logger.e(e, "SecurityException when scheduling exact alarm for task: ${task.habitName}, falling back to inexact scheduling", "AndroidNotificationScheduler")
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 triggerTime,
@@ -131,6 +142,8 @@ class AndroidNotificationScheduler(
     }
 
     override suspend fun cancelTaskNotification(task: Task) {
+        Logger.d("Cancelling notification for task: ${task.habitName} at ${task.scheduledTime}", "AndroidNotificationScheduler")
+        
         val notificationId = generateNotificationId(task)
         
         // Cancel the scheduled alarm
@@ -145,10 +158,12 @@ class AndroidNotificationScheduler(
         pendingIntent?.let {
             alarmManager.cancel(it)
             it.cancel()
-        }
+            Logger.d("Cancelled scheduled alarm for task: ${task.habitName}", "AndroidNotificationScheduler")
+        } ?: Logger.w("No pending intent found to cancel for task: ${task.habitName}", "AndroidNotificationScheduler")
         
         // Cancel the notification if it's currently showing
         notificationManager.cancel(notificationId)
+        Logger.d("Cancelled notification display for task: ${task.habitName}", "AndroidNotificationScheduler")
     }
 
     override suspend fun cancelHabitNotifications(habitId: Long) {
@@ -159,7 +174,25 @@ class AndroidNotificationScheduler(
     }
 
     override suspend fun cancelAllNotifications() {
+        Logger.i("Cancelling all notifications", "AndroidNotificationScheduler")
         notificationManager.cancelAll()
+    }
+
+    /**
+     * Get information about the current alarm scheduling capabilities.
+     * This can be useful for debugging notification delivery issues.
+     */
+    fun getAlarmCapabilities(): String {
+        val canScheduleExact = canScheduleExactAlarms()
+        val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else {
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
+        
+        return "Android API ${Build.VERSION.SDK_INT}: " +
+               "Notifications enabled: $notificationsEnabled, " +
+               "Can schedule exact alarms: $canScheduleExact"
     }
 
     override suspend fun areNotificationsEnabled(): Boolean {
@@ -171,6 +204,8 @@ class AndroidNotificationScheduler(
         } else {
             NotificationManagerCompat.from(context).areNotificationsEnabled()
         }
+        
+        Logger.d("Notifications enabled check: basic=$basicNotificationsEnabled, canScheduleExact=${canScheduleExactAlarms()}", "AndroidNotificationScheduler")
         
         // Notifications are considered enabled if basic permissions are granted
         // Exact alarm permission is checked separately during scheduling

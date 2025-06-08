@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,8 +25,12 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        Logger.d("NotificationActionReceiver received intent with action: ${intent.action}", "NotificationActionReceiver")
+        
         if (intent.action == COMPLETE_ACTION) {
             handleCompleteAction(context, intent)
+        } else {
+            Logger.w("Unknown action received: ${intent.action}", "NotificationActionReceiver")
         }
     }
 
@@ -35,7 +40,10 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
         val timeString = intent.getStringExtra("scheduledTime")
         val notificationId = intent.getIntExtra("notificationId", -1)
 
+        Logger.d("Handling complete action for habitId: $habitId, date: $dateString, time: $timeString", "NotificationActionReceiver")
+
         if (habitId == -1L || dateString.isNullOrEmpty() || timeString.isNullOrEmpty()) {
+            Logger.w("Invalid data in complete action intent: habitId=$habitId, date=$dateString, time=$timeString", "NotificationActionReceiver")
             return
         }
 
@@ -47,18 +55,19 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     completeTaskFromNotificationUseCase(habitId, date, time)
+                    Logger.i("Successfully completed task from notification: habitId=$habitId, date=$date, time=$time", "NotificationActionReceiver")
                     
                     // Cancel the notification
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) 
                         as android.app.NotificationManager
                     notificationManager.cancel(notificationId)
+                    Logger.d("Cancelled notification with ID: $notificationId", "NotificationActionReceiver")
                 } catch (e: Exception) {
-                    // In a production app, you might want to log this error
-                    // or show a toast to the user
+                    Logger.e(e, "Failed to complete task from notification: habitId=$habitId", "NotificationActionReceiver")
                 }
             }
         } catch (e: Exception) {
-            // Handle parsing errors
+            Logger.e(e, "Failed to parse date/time from notification intent: date=$dateString, time=$timeString", "NotificationActionReceiver")
         }
     }
 }
