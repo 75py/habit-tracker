@@ -3,12 +3,14 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
@@ -60,7 +62,11 @@ class HabitEditViewModel(
                     description = currentState.description.trim(),
                     color = currentState.color,
                     isActive = currentState.isActive,
-                    createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                    createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                    // Default scheduling - once daily at 9:00 AM
+                    frequencyType = FrequencyType.ONCE_DAILY,
+                    intervalHours = 24,
+                    scheduledTimes = listOf(LocalTime(9, 0))
                 )
 
                 val habitId = addHabitUseCase(habit)

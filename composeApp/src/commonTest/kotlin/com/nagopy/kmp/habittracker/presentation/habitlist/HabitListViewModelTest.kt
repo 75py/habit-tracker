@@ -1,6 +1,7 @@
 package com.nagopy.kmp.habittracker.presentation.habitlist
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.GetAllHabitsUseCase
 import io.mockk.coEvery
 import io.mockk.every
@@ -10,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -45,7 +47,10 @@ class HabitListViewModelTest {
                 description = "30 minutes workout",
                 color = "#FF5722",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-01")
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalHours = 24,
+                scheduledTimes = listOf(LocalTime(7, 0))
             ),
             Habit(
                 id = 2,
@@ -53,7 +58,10 @@ class HabitListViewModelTest {
                 description = "Read for 20 minutes",
                 color = "#2196F3",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-02")
+                createdAt = LocalDate.parse("2024-01-02"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalHours = 24,
+                scheduledTimes = listOf(LocalTime(20, 0))
             )
         )
         every { mockGetAllHabitsUseCase() } returns flowOf(mockHabits)
@@ -99,7 +107,10 @@ class HabitListViewModelTest {
                 description = "",
                 color = "#FF5722",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-01")
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalHours = 24,
+                scheduledTimes = listOf(LocalTime(9, 0))
             )
         )
         val refreshedHabits = listOf(
@@ -109,7 +120,10 @@ class HabitListViewModelTest {
                 description = "",
                 color = "#FF5722",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-01")
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalHours = 24,
+                scheduledTimes = listOf(LocalTime(9, 0))
             ),
             Habit(
                 id = 2,
@@ -117,7 +131,10 @@ class HabitListViewModelTest {
                 description = "Added after refresh",
                 color = "#2196F3",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-02")
+                createdAt = LocalDate.parse("2024-01-02"),
+                frequencyType = FrequencyType.HOURLY,
+                intervalHours = 1,
+                scheduledTimes = listOf(LocalTime(10, 0))
             )
         )
 
@@ -150,7 +167,10 @@ class HabitListViewModelTest {
                 description = "",
                 color = "#FF5722",
                 isActive = true,
-                createdAt = LocalDate.parse("2024-01-01")
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalHours = 24,
+                scheduledTimes = listOf(LocalTime(9, 0))
             )
         )
         every { mockGetAllHabitsUseCase() } returns flowOf(mockHabits)
