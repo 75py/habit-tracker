@@ -41,12 +41,44 @@ The application follows a layered architecture pattern with clear separation of 
 - Android Studio Giraffe or later
 - Xcode 15+ (for iOS development)
 - Kotlin 1.9+
+- JDK 17 or later
 
 ### Building the Project
 
-1. Clone the repository
-2. Open the project in Android Studio
-3. Build and run the Android app directly from the IDE
-4. For iOS, open the `iosApp` folder in Xcode and run the project
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/75py/habit-tracker.git
+   cd habit-tracker
+   ```
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+2. **Android Development**
+   - Open the project in Android Studio
+   - Build and run the Android app directly from the IDE
+   - Or use the command line:
+     ```bash
+     ./gradlew assembleDebug
+     ./gradlew installDebug
+     ```
+
+3. **iOS Development**
+   - Open the `iosApp` folder in Xcode
+   - Run the project from Xcode
+   - Ensure you have iOS 14.0+ deployment target
+
+### Running Tests
+
+- **All Android Tests**: `./gradlew testDebugUnitTest`
+- **Common Tests**: `./gradlew cleanTest test`
+- **Database Tests**: Tests are automatically run with the above commands
+
+### Screenshots
+
+![App Screenshots](docs/images/screenshots-placeholder.png)
+*Screenshots showing the main features of the habit tracker app will be added here*
+
+**Key Features Shown:**
+- Today's Tasks Screen with time-based task list
+- Habit Creation with custom colors and scheduling
+- Task completion with real-time updates
+
+Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html).
