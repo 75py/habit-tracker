@@ -44,6 +44,104 @@ The presentation layer is responsible for handling user interface and user inter
 - UI components are stateless and reactive
 - No direct access to data sources or business logic
 
+#### MVVM Architecture
+
+The presentation layer follows the **Model-View-ViewModel (MVVM)** architectural pattern:
+
+**Model**: Represented by domain entities (Habit, HabitLog) and use cases that encapsulate business logic.
+
+**View**: Compose UI screens that display data and capture user interactions. Views are stateless and declarative.
+
+**ViewModel**: Intermediary between View and Model that:
+- Holds and manages UI state
+- Handles user actions and business logic coordination
+- Communicates with the domain layer through use cases
+- Survives configuration changes
+- Provides reactive state updates to the UI
+
+#### ViewModels
+
+**HabitListViewModel**:
+- **Purpose**: Manages the state of the habit list screen
+- **Dependencies**: `GetAllHabitsUseCase`
+- **State**: `HabitListUiState` containing habits list, loading state, and error state
+- **Key Functions**:
+  - `loadHabits()`: Fetches habits from the domain layer
+  - `refresh()`: Reloads the habits list
+- **State Flow**: Exposes UI state as `StateFlow<HabitListUiState>`
+
+**HabitEditViewModel**:
+- **Purpose**: Manages the state of the habit add/edit form
+- **Dependencies**: `AddHabitUseCase`
+- **State**: `HabitEditUiState` containing form fields, validation errors, and save state
+- **Key Functions**:
+  - `updateName(String)`: Updates habit name with validation
+  - `updateDescription(String)`: Updates habit description
+  - `updateColor(String)`: Updates selected color
+  - `updateIsActive(Boolean)`: Updates active status
+  - `saveHabit()`: Validates and saves the habit
+  - `clearErrors()`: Clears validation and save errors
+- **Validation**: Real-time form validation with error messaging
+- **State Flow**: Exposes UI state as `StateFlow<HabitEditUiState>`
+
+#### UI Screens
+
+**HabitListScreen**:
+- **File**: `presentation/habitlist/HabitListScreen.kt`
+- **Purpose**: Displays all user habits in a scrollable list
+- **Features**:
+  - Loading states with progress indicators
+  - Error states with retry functionality
+  - Empty states with user guidance
+  - Material Design 3 components
+  - Floating action button for adding habits
+- **Parameters**: Navigation callbacks and ViewModel injection
+
+**HabitEditScreen**:
+- **File**: `presentation/habitedit/HabitEditScreen.kt`
+- **Purpose**: Form interface for creating and editing habits
+- **Features**:
+  - Form validation with inline error messages
+  - Color selection palette
+  - Real-time input validation
+  - Save/cancel navigation
+  - Loading states during save operations
+- **Parameters**: Navigation callbacks and ViewModel injection
+
+#### State Management
+
+**UI State Pattern**: Each screen has a corresponding UI state data class:
+
+```kotlin
+// Example UI State structure
+data class HabitListUiState(
+    val habits: List<Habit> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+```
+
+**Reactive Updates**: UI components observe state changes through `collectAsState()` and automatically recompose when state updates.
+
+**Unidirectional Data Flow**: 
+1. User interactions trigger ViewModel functions
+2. ViewModel updates internal state
+3. UI observes state changes and recomposes
+4. ViewModel communicates with domain layer through use cases
+
+#### Dependency Injection
+
+ViewModels are registered in the `presentationModule` Koin module:
+
+```kotlin
+val presentationModule = module {
+    viewModel { HabitListViewModel(get()) }
+    viewModel { HabitEditViewModel(get()) }
+}
+```
+
+Use cases are automatically injected through Koin's dependency resolution, maintaining separation between presentation and domain layers.
+
 ### Domain Layer
 **Package**: `com.nagopy.kmp.habittracker.domain`
 

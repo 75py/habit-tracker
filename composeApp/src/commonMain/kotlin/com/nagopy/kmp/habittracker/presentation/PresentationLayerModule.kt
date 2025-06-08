@@ -1,5 +1,9 @@
 package com.nagopy.kmp.habittracker.presentation
 
+import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
+import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListViewModel
+import org.koin.dsl.module
+
 /**
  * Presentation Layer - Handles UI and user interactions
  * 
@@ -9,5 +13,7 @@ package com.nagopy.kmp.habittracker.presentation
  * - Navigation logic
  * - State management
  */
-
-// Placeholder for presentation layer module
+val presentationModule = module {
+    factory { HabitListViewModel(get()) }
+    factory { HabitEditViewModel(get()) }
+}

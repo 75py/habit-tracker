@@ -1,0 +1,241 @@
+package com.nagopy.kmp.habittracker.presentation.habitedit
+
+import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class HabitEditViewModelTest {
+
+    private val mockAddHabitUseCase = mockk<AddHabitUseCase>()
+    private lateinit var viewModel: HabitEditViewModel
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        viewModel = HabitEditViewModel(mockAddHabitUseCase)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `initial state should have default values`() {
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals("", uiState.name)
+        assertEquals("", uiState.description)
+        assertEquals("#2196F3", uiState.color)
+        assertTrue(uiState.isActive)
+        assertNull(uiState.nameError)
+        assertNull(uiState.saveError)
+        assertFalse(uiState.isSaving)
+    }
+
+    @Test
+    fun `updateName should update name and clear error when valid`() {
+        // When
+        viewModel.updateName("Morning Exercise")
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals("Morning Exercise", uiState.name)
+        assertNull(uiState.nameError)
+    }
+
+    @Test
+    fun `updateName should set error when name is blank`() {
+        // When
+        viewModel.updateName("")
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals("", uiState.name)
+        assertEquals("Name is required", uiState.nameError)
+    }
+
+    @Test
+    fun `updateDescription should update description`() {
+        // When
+        viewModel.updateDescription("30 minutes of exercise")
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals("30 minutes of exercise", uiState.description)
+    }
+
+    @Test
+    fun `updateColor should update color`() {
+        // When
+        viewModel.updateColor("#FF5722")
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals("#FF5722", uiState.color)
+    }
+
+    @Test
+    fun `updateIsActive should update isActive status`() {
+        // When
+        viewModel.updateIsActive(false)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertFalse(uiState.isActive)
+    }
+
+    @Test
+    fun `saveHabit should fail when name is blank`() = runTest {
+        // Given
+        var successCalled = false
+        var errorCalled = false
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { successCalled = true },
+            onError = { errorCalled = true }
+        )
+
+        // Then
+        assertFalse(successCalled)
+        assertFalse(errorCalled)
+        assertEquals("Name is required", viewModel.uiState.value.nameError)
+    }
+
+    @Test
+    fun `saveHabit should succeed with valid data`() = runTest {
+        // Given
+        val expectedHabitId = 123L
+        coEvery { mockAddHabitUseCase(any()) } returns expectedHabitId
+        
+        viewModel.updateName("Morning Exercise")
+        viewModel.updateDescription("30 minutes workout")
+        viewModel.updateColor("#FF5722")
+        viewModel.updateIsActive(true)
+
+        var successResult: Long? = null
+        var errorMessage: String? = null
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { successResult = it },
+            onError = { errorMessage = it }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals(expectedHabitId, successResult)
+        assertNull(errorMessage)
+        assertFalse(viewModel.uiState.value.isSaving)
+        
+        coVerify(exactly = 1) {
+            mockAddHabitUseCase(match { habit ->
+                habit.name == "Morning Exercise" &&
+                habit.description == "30 minutes workout" &&
+                habit.color == "#FF5722" &&
+                habit.isActive == true
+            })
+        }
+    }
+
+    @Test
+    fun `saveHabit should handle errors from use case`() = runTest {
+        // Given
+        val errorMessage = "Database error"
+        coEvery { mockAddHabitUseCase(any()) } throws Exception(errorMessage)
+        
+        viewModel.updateName("Valid Name")
+
+        var successResult: Long? = null
+        var errorResult: String? = null
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { successResult = it },
+            onError = { errorResult = it }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertNull(successResult)
+        assertEquals(errorMessage, errorResult)
+        assertEquals(errorMessage, viewModel.uiState.value.saveError)
+        assertFalse(viewModel.uiState.value.isSaving)
+    }
+
+    @Test
+    fun `saveHabit should manage saving state correctly`() = runTest {
+        // Given
+        coEvery { mockAddHabitUseCase(any()) } returns 1L
+        viewModel.updateName("Test Habit")
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { },
+            onError = { }
+        )
+
+        // Then - Initially saving should be true
+        assertTrue(viewModel.uiState.value.isSaving)
+
+        // When saving completes
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - Saving should be false
+        assertFalse(viewModel.uiState.value.isSaving)
+    }
+
+    @Test
+    fun `clearErrors should clear all error states`() {
+        // Given
+        viewModel.updateName("") // This sets nameError
+        val habitWithErrors = viewModel.uiState.value.copy(saveError = "Some save error")
+        
+        // When
+        viewModel.clearErrors()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertNull(uiState.nameError)
+        assertNull(uiState.saveError)
+    }
+
+    @Test
+    fun `saveHabit should trim whitespace from inputs`() = runTest {
+        // Given
+        coEvery { mockAddHabitUseCase(any()) } returns 1L
+        
+        viewModel.updateName("  Morning Exercise  ")
+        viewModel.updateDescription("  30 minutes workout  ")
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { },
+            onError = { }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify(exactly = 1) {
+            mockAddHabitUseCase(match { habit ->
+                habit.name == "Morning Exercise" &&
+                habit.description == "30 minutes workout"
+            })
+        }
+    }
+}

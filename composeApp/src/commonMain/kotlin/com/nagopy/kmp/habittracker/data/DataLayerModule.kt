@@ -1,5 +1,8 @@
 package com.nagopy.kmp.habittracker.data
 
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import org.koin.dsl.module
+
 /**
  * Data Layer - Responsible for data access, storage, and external APIs
  * 
@@ -9,5 +12,7 @@ package com.nagopy.kmp.habittracker.data
  * - Data sources (local and remote)
  * - Data mappers
  */
-
-// Placeholder for data layer module
+val dataModule = module {
+    includes(databaseModule)
+    single<HabitRepository> { HabitRepositoryImpl(get()) }
+}
