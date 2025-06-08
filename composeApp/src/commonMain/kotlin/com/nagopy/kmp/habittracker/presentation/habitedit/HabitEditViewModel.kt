@@ -6,6 +6,7 @@ import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,6 +72,8 @@ class HabitEditViewModel(
 
         viewModelScope.launch {
             try {
+                Logger.d("Creating new habit: ${currentState.name}", tag = "HabitEdit")
+                
                 val habit = Habit(
                     name = currentState.name.trim(),
                     description = currentState.description.trim(),
@@ -89,12 +92,13 @@ class HabitEditViewModel(
                     manageNotificationsUseCase.scheduleNotificationsForTodayTasks()
                 } catch (notificationException: Exception) {
                     // Notifications are not critical, so we don't fail the save operation
-                    // In a production app, you might want to log this
+                    Logger.e(notificationException, "Failed to schedule notifications for new habit", tag = "HabitEdit")
                 }
                 
                 _uiState.value = currentState.copy(isSaving = false)
                 onSuccess(habitId)
             } catch (exception: Exception) {
+                Logger.e(exception, "Failed to save habit", tag = "HabitEdit")
                 val errorMessage = exception.message ?: "Failed to save habit"
                 _uiState.value = currentState.copy(
                     isSaving = false,
