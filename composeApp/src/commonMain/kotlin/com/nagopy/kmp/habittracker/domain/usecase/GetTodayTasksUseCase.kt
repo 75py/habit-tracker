@@ -89,7 +89,12 @@ class GetTodayTasksUseCase(
         // For now, we check if the habit has any completion for the day
         // Future enhancement: track completion per time slot
         val existingLog = habitRepository.getHabitLog(habit.id, date)
-        val isCompleted = existingLog?.isCompleted == true
+        val isCompleted = when (habit.frequencyType) {
+            FrequencyType.ONCE_DAILY -> existingLog?.isCompleted == true
+            // For hourly/interval habits, we assume individual completion tracking
+            // would require enhancement to the data layer
+            FrequencyType.HOURLY, FrequencyType.INTERVAL -> false
+        }
         
         return Task(
             habitId = habit.id,
