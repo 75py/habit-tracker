@@ -19,7 +19,7 @@ class RequestNotificationPermissionOnStartupUseCase(
      * 
      * @return true if permission was granted or already enabled, false otherwise
      */
-    suspend fun invoke(): Boolean {
+    suspend operator fun invoke(): Boolean {
         // Check if we've already requested permission
         val alreadyRequested = appPreferences.getBoolean(
             AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, 
