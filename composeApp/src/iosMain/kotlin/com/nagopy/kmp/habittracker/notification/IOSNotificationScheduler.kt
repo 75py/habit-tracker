@@ -22,6 +22,11 @@ import platform.Foundation.*
 @OptIn(ExperimentalForeignApi::class)
 class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
 
+    companion object {
+        private const val HABIT_REMINDER_CATEGORY = "HABIT_REMINDER"
+        private const val COMPLETE_ACTION = "COMPLETE_ACTION"
+    }
+
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
@@ -37,7 +42,7 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
             setTitle(task.habitName)
             setBody(task.habitDescription.ifEmpty { "Time to complete your habit!" })
             setSound(UNNotificationSound.defaultSound())
-            setCategoryIdentifier("HABIT_REMINDER")
+            setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
         }
 
         // Calculate trigger time
@@ -87,19 +92,16 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     override suspend fun cancelHabitNotifications(habitId: Long) {
         // Get all pending notifications and filter by habit ID
         center.getPendingNotificationRequestsWithCompletionHandler { requests ->
-            val identifiersToCancel = mutableListOf<String>()
-            
-            if (requests != null) {
-                for (i in 0 until requests.count.toInt()) {
-                    val request = requests.objectAtIndex(i.toULong()) as? UNNotificationRequest
-                    request?.let {
-                        val requestIdentifier = it.identifier()
-                        if (requestIdentifier?.startsWith("${habitId}_") == true) {
-                            identifiersToCancel.add(requestIdentifier)
-                        }
-                    }
+            @Suppress("UNCHECKED_CAST")
+            val typedRequests = requests as? List<UNNotificationRequest>
+            val identifiersToCancel = typedRequests?.mapNotNull { request ->
+                val requestIdentifier = request.identifier
+                if (requestIdentifier.startsWith("${habitId}_")) {
+                    requestIdentifier
+                } else {
+                    null
                 }
-            }
+            } ?: emptyList()
             
             if (identifiersToCancel.isNotEmpty()) {
                 center.removePendingNotificationRequestsWithIdentifiers(identifiersToCancel)
@@ -139,14 +141,14 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     fun setupNotificationCategories() {
         // Create the complete action
         val completeAction = UNNotificationAction.actionWithIdentifier(
-            identifier = "COMPLETE_ACTION",
+            identifier = COMPLETE_ACTION,
             title = "Complete",
             options = UNNotificationActionOptionNone
         )
 
         // Create the category
         val category = UNNotificationCategory.categoryWithIdentifier(
-            identifier = "HABIT_REMINDER",
+            identifier = HABIT_REMINDER_CATEGORY,
             actions = listOf<UNNotificationAction>(completeAction),
             intentIdentifiers = listOf<String>(),
             options = UNNotificationCategoryOptionNone
@@ -157,7 +159,7 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     }
 
     fun handleNotificationResponse(response: UNNotificationResponse) {
-        if (response.actionIdentifier == "COMPLETE_ACTION") {
+        if (response.actionIdentifier == COMPLETE_ACTION) {
             val identifier = response.notification.request.identifier
             val parts = identifier.split("_")
             
