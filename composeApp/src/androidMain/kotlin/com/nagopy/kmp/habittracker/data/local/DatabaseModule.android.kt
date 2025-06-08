@@ -13,7 +13,8 @@ val androidDatabaseModule = module {
             androidContext(),
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration()
+        .build()
     }
     
     single<HabitDao> {

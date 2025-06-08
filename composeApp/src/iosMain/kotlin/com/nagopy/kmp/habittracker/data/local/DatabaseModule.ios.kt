@@ -19,6 +19,7 @@ val iosDatabaseModule = module {
             name = dbFile,
         )
         .setDriver(BundledSQLiteDriver())
+        .fallbackToDestructiveMigration()
         .build()
     }
     
