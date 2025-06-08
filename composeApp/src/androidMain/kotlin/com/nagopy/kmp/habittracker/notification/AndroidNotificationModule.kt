@@ -12,6 +12,7 @@ import org.koin.dsl.module
  */
 val androidNotificationModule = module {
     single<NotificationScheduler> { AndroidNotificationScheduler(androidContext()) }
-    single<NotificationPermissionManager> { AndroidNotificationPermissionManager(androidContext()) }
+    single { AndroidNotificationPermissionManager(androidContext()) }
+    single<NotificationPermissionManager> { get<AndroidNotificationPermissionManager>() }
     single<AppPreferences> { AndroidAppPreferences(androidContext()) }
 }
