@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.data.local
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.dsl.module
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -26,6 +27,7 @@ val iosDatabaseModule = module {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun documentDirectory(): String {
     val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
         directory = NSDocumentDirectory,

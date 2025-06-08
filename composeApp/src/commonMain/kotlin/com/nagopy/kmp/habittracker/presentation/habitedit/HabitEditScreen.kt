@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 
 /**
  * Compose screen for adding or editing a habit.
@@ -176,7 +177,7 @@ private fun ColorOption(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val parsedColor = Color(android.graphics.Color.parseColor(color))
+    val parsedColor = parseColor(color)
     
     Box(
         modifier = Modifier

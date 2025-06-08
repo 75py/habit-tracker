@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 
 /**
  * Compose screen for displaying the list of habits.
@@ -144,7 +145,7 @@ private fun HabitItem(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(Color(android.graphics.Color.parseColor(habit.color)))
+                    .background(parseColor(habit.color))
             )
             
             Spacer(modifier = Modifier.width(16.dp))

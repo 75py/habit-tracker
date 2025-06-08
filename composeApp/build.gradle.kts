@@ -48,6 +48,7 @@ kotlin {
             
             // Room
             implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
             
             // Koin
             implementation(libs.koin.core)
