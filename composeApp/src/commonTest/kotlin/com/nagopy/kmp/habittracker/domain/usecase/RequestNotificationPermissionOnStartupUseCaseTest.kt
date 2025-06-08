@@ -19,19 +19,20 @@ class RequestNotificationPermissionOnStartupUseCaseTest {
     @Test
     fun `should request permission on first startup when notifications disabled`() = runTest {
         // Arrange
-        val permissionManager = mockk<NotificationPermissionManager>()
-        val preferences = mockk<AppPreferences>()
+        val permissionManager = mockk<NotificationPermissionManager>(relaxed = true)
+        val preferences = mockk<AppPreferences>(relaxed = true)
         val useCase = RequestNotificationPermissionOnStartupUseCase(permissionManager, preferences)
         
         coEvery { preferences.getBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, false) } returns false
+        coEvery { permissionManager.areNotificationsEnabled() } returns false
         coEvery { permissionManager.requestNotificationPermission() } returns true
-        coEvery { preferences.setBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, true) } returns Unit
         
         // Act
         val result = useCase()
         
         // Assert
         assertTrue(result, "Should return true when permission granted")
+        coVerify { permissionManager.areNotificationsEnabled() }
         coVerify { permissionManager.requestNotificationPermission() }
         coVerify { preferences.setBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, true) }
     }
@@ -39,8 +40,8 @@ class RequestNotificationPermissionOnStartupUseCaseTest {
     @Test
     fun `should not request permission again after first startup`() = runTest {
         // Arrange
-        val permissionManager = mockk<NotificationPermissionManager>()
-        val preferences = mockk<AppPreferences>()
+        val permissionManager = mockk<NotificationPermissionManager>(relaxed = true)
+        val preferences = mockk<AppPreferences>(relaxed = true)
         val useCase = RequestNotificationPermissionOnStartupUseCase(permissionManager, preferences)
         
         coEvery { preferences.getBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, false) } returns true
@@ -56,21 +57,22 @@ class RequestNotificationPermissionOnStartupUseCaseTest {
     }
     
     @Test
-    fun `should return true immediately when notifications already enabled`() = runTest {
+    fun `should return true immediately when notifications already enabled on first startup`() = runTest {
         // Arrange
-        val permissionManager = mockk<NotificationPermissionManager>()
-        val preferences = mockk<AppPreferences>()
+        val permissionManager = mockk<NotificationPermissionManager>(relaxed = true)
+        val preferences = mockk<AppPreferences>(relaxed = true)
         val useCase = RequestNotificationPermissionOnStartupUseCase(permissionManager, preferences)
         
         coEvery { preferences.getBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, false) } returns false
-        coEvery { permissionManager.requestNotificationPermission() } returns true
-        coEvery { preferences.setBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, true) } returns Unit
+        coEvery { permissionManager.areNotificationsEnabled() } returns true
         
         // Act
         val result = useCase()
         
         // Assert
         assertTrue(result, "Should return true when notifications already enabled")
+        coVerify { permissionManager.areNotificationsEnabled() }
+        coVerify(exactly = 0) { permissionManager.requestNotificationPermission() }
         coVerify { preferences.setBoolean(AppPreferences.KEY_NOTIFICATION_PERMISSION_REQUESTED, true) }
     }
 }
