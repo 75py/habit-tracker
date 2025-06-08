@@ -367,3 +367,83 @@ Each layer has its own DI module:
 4. **Scalability**: Easy to add new features without breaking existing code
 5. **Platform Independence**: Business logic works on both Android and iOS
 6. **Clean Dependencies**: Clear dependency flow prevents circular dependencies
+
+## Notification Feature
+
+The notification system is implemented following the same clean architecture principles, with platform-specific implementations for Android and iOS.
+
+### Design Overview
+
+The notification feature separates the shared interface from platform-specific implementations:
+
+```
+┌─────────────────────────────────────┐
+│            Domain Layer             │
+│   NotificationScheduler Interface   │
+│   ManageNotificationsUseCase        │
+│   CompleteTaskFromNotificationUC    │
+└─────────────────────────────────────┘
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐
+│   Android Layer  │ │    iOS Layer     │
+│ AndroidNotif...  │ │ IOSNotif...      │
+│ NotificationAct..│ │ UNNotifications  │
+└──────────────────┘ └──────────────────┘
+```
+
+**Key Components:**
+
+**NotificationScheduler Interface** (Domain Layer):
+- Defines platform-agnostic contracts for notification operations
+- Methods for scheduling, canceling, and managing notification permissions
+- Ensures consistent behavior across platforms
+
+**Platform Implementations:**
+- **Android**: Uses `AlarmManager` and `NotificationManager` for precise scheduling
+- **iOS**: Uses `UserNotifications` framework for native iOS notification experience
+- Both implementations handle platform-specific permission models and UI patterns
+
+**Use Cases:**
+- `ManageNotificationsUseCase`: Orchestrates notification scheduling for tasks
+- `CompleteTaskFromNotificationUseCase`: Handles task completion from notification actions
+
+### Processing Flow for Interactive Notifications
+
+#### Scheduling Flow:
+1. **Task Generation**: `GetTodayTasksUseCase` creates task instances from habit schedules
+2. **Notification Scheduling**: `ManageNotificationsUseCase` filters pending tasks and schedules notifications
+3. **Platform Scheduling**: Platform-specific schedulers use native APIs to set up timed notifications
+4. **Permission Handling**: Each platform manages notification permissions according to OS requirements
+
+#### Completion Flow:
+1. **User Interaction**: User taps "Complete" action in notification
+2. **Platform Handler**: 
+   - **Android**: `NotificationActionReceiver` captures broadcast intent
+   - **iOS**: `UNUserNotificationCenterDelegate` handles notification response
+3. **Business Logic**: `CompleteTaskFromNotificationUseCase` executes completion logic
+4. **State Update**: Task marked as completed using existing `CompleteTaskUseCase`
+5. **Cleanup**: Notification automatically canceled to prevent duplication
+
+#### Architecture Benefits:
+
+**Separation of Concerns:**
+- Domain layer contains pure business logic for notification management
+- Platform layers handle OS-specific implementation details
+- UI components remain unaware of notification implementation
+
+**Cross-Platform Consistency:**
+- Same notification behavior across Android and iOS
+- Unified API through shared interface
+- Platform-specific optimizations while maintaining consistency
+
+**Testability:**
+- Domain logic fully testable with mocked notification scheduler
+- Platform implementations can be tested independently
+- Business rules isolated from platform-specific code
+
+**Maintainability:**
+- Easy to add new notification features without affecting other layers
+- Platform-specific changes contained to respective implementation layers
+- Clear dependency injection pattern for easy configuration
