@@ -17,5 +17,6 @@ data class HabitEntity(
     val createdAt: String, // Stored as ISO-8601 string
     val frequencyType: String = "ONCE_DAILY", // FrequencyType enum as string
     val intervalMinutes: Int = 1440, // For interval-based habits (default 24 hours = 1440 minutes)
-    val scheduledTimes: String = "09:00" // Comma-separated list of times in HH:mm format
+    val scheduledTimes: String = "09:00", // Comma-separated list of times in HH:mm format
+    val endTime: String? = null // End time for interval-based habits in HH:mm format
 )

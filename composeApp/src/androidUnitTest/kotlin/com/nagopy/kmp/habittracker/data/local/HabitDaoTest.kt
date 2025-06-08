@@ -28,7 +28,8 @@ class HabitDaoTest {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
-        ).build()
+        ).fallbackToDestructiveMigration()
+        .build()
         habitDao = database.habitDao()
     }
 

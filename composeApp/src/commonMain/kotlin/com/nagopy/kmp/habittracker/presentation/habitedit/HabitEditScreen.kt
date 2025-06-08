@@ -391,6 +391,68 @@ fun HabitEditScreen(
                                 }
                             )
                         }
+                        
+                        // End time picker for interval-based habits
+                        if (uiState.frequencyType == FrequencyType.HOURLY || uiState.frequencyType == FrequencyType.INTERVAL) {
+                            var showEndTimePicker by remember { mutableStateOf(false) }
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showEndTimePicker = true }
+                                ) {
+                                    Text(if (uiState.endTime != null) "Change End Time" else "Set End Time")
+                                }
+                                
+                                uiState.endTime?.let { endTime ->
+                                    Text(
+                                        text = "${endTime.hour.toString().padStart(2, '0')}:${endTime.minute.toString().padStart(2, '0')}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    TextButton(
+                                        onClick = { viewModel.updateEndTime(null) }
+                                    ) {
+                                        Text("Clear")
+                                    }
+                                }
+                            }
+                            
+                            if (showEndTimePicker) {
+                                val endTimePickerState = rememberTimePickerState(
+                                    initialHour = uiState.endTime?.hour ?: 17,
+                                    initialMinute = uiState.endTime?.minute ?: 0,
+                                    is24Hour = true
+                                )
+                                
+                                AlertDialog(
+                                    onDismissRequest = { showEndTimePicker = false },
+                                    title = { Text("Set End Time") },
+                                    text = {
+                                        TimePicker(state = endTimePickerState)
+                                    },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                viewModel.updateEndTime(
+                                                    LocalTime(endTimePickerState.hour, endTimePickerState.minute)
+                                                )
+                                                showEndTimePicker = false
+                                            }
+                                        ) {
+                                            Text("Set")
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { showEndTimePicker = false }) {
+                                            Text("Cancel")
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
