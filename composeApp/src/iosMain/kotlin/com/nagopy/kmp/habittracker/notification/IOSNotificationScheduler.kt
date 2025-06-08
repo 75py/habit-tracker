@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.notification
 
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
+import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     }
 
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
+    private val habitRepository: HabitRepository by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
@@ -37,10 +39,15 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
 
         val identifier = generateNotificationId(task)
         
+        // Fetch the actual habit to get current name and description
+        val habit = habitRepository.getHabit(task.habitId)
+        val habitName = habit?.name ?: task.habitName
+        val habitDescription = habit?.description ?: task.habitDescription
+        
         // Create notification content
         val content = UNMutableNotificationContent().apply {
-            setTitle(task.habitName)
-            setBody(task.habitDescription.ifEmpty { "Time to complete your habit!" })
+            setTitle(habitName)
+            setBody(habitDescription.ifEmpty { "Time to complete your habit!" })
             setSound(UNNotificationSound.defaultSound())
             setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
         }
