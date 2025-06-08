@@ -48,7 +48,11 @@ The presentation layer is responsible for handling user interface and user inter
 
 The presentation layer follows the **Model-View-ViewModel (MVVM)** architectural pattern:
 
-**Model**: Represented by domain entities (Habit, HabitLog) and use cases that encapsulate business logic.
+**Model**: Represented by domain entities (Habit, HabitLog, Task) and use cases that encapsulate business logic.
+
+**Habit vs Task Distinction**:
+- **Habit**: The rule or template that defines what should be done and when (e.g., "Drink water every hour")
+- **Task**: A specific instance of a habit at a scheduled time on a specific date (e.g., "Drink water at 10:00 AM on 2024-01-20")
 
 **View**: Compose UI screens that display data and capture user interactions. Views are stateless and declarative.
 
@@ -69,6 +73,16 @@ The presentation layer follows the **Model-View-ViewModel (MVVM)** architectural
   - `loadHabits()`: Fetches habits from the domain layer
   - `refresh()`: Reloads the habits list
 - **State Flow**: Exposes UI state as `StateFlow<HabitListUiState>`
+
+**TodayViewModel**:
+- **Purpose**: Manages the state of today's tasks screen
+- **Dependencies**: `GetTodayTasksUseCase`, `CompleteTaskUseCase`
+- **State**: `TodayUiState` containing task instances, loading state, and error state
+- **Key Functions**:
+  - `loadTasks()`: Fetches today's task instances from habits
+  - `completeTask(Task)`: Marks a specific task instance as completed
+  - `refresh()`: Reloads the tasks list
+- **State Flow**: Exposes UI state as `StateFlow<TodayUiState>`
 
 **HabitEditViewModel**:
 - **Purpose**: Manages the state of the habit add/edit form
@@ -96,6 +110,17 @@ The presentation layer follows the **Model-View-ViewModel (MVVM)** architectural
   - Material Design 3 components
   - Floating action button for adding habits
 - **Parameters**: Navigation callbacks and ViewModel injection
+
+**TodayScreen**:
+- **File**: `presentation/today/TodayScreen.kt`
+- **Purpose**: Displays today's scheduled task instances with time-based organization
+- **Features**:
+  - Time-sorted task list showing scheduled times
+  - Individual completion checkboxes for each task instance
+  - Visual indicators for habit colors and completion status
+  - Support for multiple instances of the same habit at different times
+  - Real-time task completion updates
+- **Parameters**: ViewModel injection for task management
 
 **HabitEditScreen**:
 - **File**: `presentation/habitedit/HabitEditScreen.kt`
@@ -147,10 +172,26 @@ Use cases are automatically injected through Koin's dependency resolution, maint
 
 The domain layer contains the core business logic and domain entities. It's completely independent of external frameworks and platforms. It includes:
 
-- **Entities**: Core business models (Habit, HabitLog, etc.)
+- **Entities**: Core business models (Habit, HabitLog, Task, etc.)
 - **Use Cases**: Encapsulate specific business operations and provide a clean interface for the presentation layer
 - **Repository Interfaces**: Define contracts for data access without implementation details
 - **Domain Services**: Complex business logic that doesn't belong to a specific entity
+
+**Key Domain Models:**
+
+**Habit**: Represents a habit template with scheduling information
+- Contains basic habit information (name, description, color, active status)
+- Includes scheduling configuration (frequency type, interval hours, scheduled times)
+- Supports different frequency types: ONCE_DAILY, HOURLY, INTERVAL
+
+**Task**: Represents a specific instance of a habit scheduled for a particular time
+- Generated dynamically from habit scheduling configuration
+- Contains habit details, scheduled date/time, and completion status
+- Provides the specific "what to do when" for the user interface
+
+**HabitLog**: Tracks completion status for habits by date
+- Currently stores completion by date (not by specific time)
+- Supports the task generation logic for determining completion status
 
 **Repository Pattern:**
 The Repository pattern provides an abstraction layer between the business logic and data access layers. The `HabitRepository` interface defines all operations needed for habit management without exposing implementation details. This allows for easy testing with mock implementations and flexibility to change data sources.
@@ -160,8 +201,14 @@ Use cases encapsulate specific business operations and ensure a single responsib
 
 - **GetAllHabitsUseCase**: Retrieves all habits from the repository
 - **AddHabitUseCase**: Creates a new habit with validation and business rules
-- **GetTodayTasksUseCase**: Returns active habits that represent today's tasks to be completed
-- **CompleteTaskUseCase**: Marks a habit as completed for a specific date by creating a habit log entry
+- **GetTodayTasksUseCase**: Generates task instances from active habits based on their scheduling configuration for today
+- **CompleteTaskUseCase**: Marks a task as completed (creates a habit log entry for the habit and date)
+
+**Task Generation Logic:**
+The `GetTodayTasksUseCase` implements sophisticated logic to generate task instances:
+- **ONCE_DAILY**: Creates one task per scheduled time
+- **HOURLY**: Creates tasks every hour starting from the first scheduled time
+- **INTERVAL**: Creates tasks every N hours based on the interval configuration
 
 **Key Principles:**
 - Pure Kotlin with no platform-specific dependencies
@@ -169,6 +216,7 @@ Use cases encapsulate specific business operations and ensure a single responsib
 - Defines interfaces that outer layers must implement
 - Independent and testable
 - Use cases provide clear business operations that can be easily tested in isolation
+- Clear separation between habit templates (rules) and task instances (execution)
 
 **Testing Infrastructure:**
 The domain layer uses a comprehensive testing approach with the following tools:

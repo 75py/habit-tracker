@@ -2,6 +2,66 @@
 
 This document describes the specifications for the habit tracking screens in the application.
 
+## Today's Tasks Screen
+
+### Purpose
+The Today's Tasks Screen displays all scheduled task instances for the current day, organized by time. It transforms habit rules into specific, actionable tasks that users can complete throughout the day. This screen supports habits that repeat multiple times per day by showing each scheduled instance as a separate, completable task.
+
+### Key Concepts
+- **Habit**: A rule that defines what should be done and when (e.g., "Drink water every hour")
+- **Task**: A specific instance of a habit scheduled for a particular time (e.g., "Drink water at 10:00 AM")
+
+### Displayed Items
+- **Task List**: All scheduled task instances for today, sorted by time
+- **Task Information**: For each task, the following information is shown:
+  - Scheduled time (e.g., "10:00") in a prominent format
+  - Habit color indicator (circular icon)
+  - Habit name (primary text)
+  - Habit description (secondary text, if provided)
+  - Individual completion checkbox for each task instance
+- **Time Organization**: Tasks are sorted chronologically from earliest to latest
+- **Multiple Instances**: The same habit can appear multiple times with different scheduled times
+- **Completion Status**: Each task can be marked complete independently
+- **Empty State**: When no tasks exist for today, displays appropriate message
+- **Loading State**: Progress indicator while tasks are being generated
+- **Error State**: Error message with retry option if loading fails
+
+### Task Generation Logic
+The screen generates task instances based on habit scheduling:
+
+**Once Daily Habits**:
+- Creates one task per configured scheduled time
+- Example: "Morning Exercise" at 7:00 AM
+
+**Hourly Habits**:
+- Creates tasks every hour starting from the configured start time
+- Example: "Drink Water" at 9:00, 10:00, 11:00, ..., 23:00
+
+**Interval Habits**:
+- Creates tasks every N hours based on the configured interval
+- Example: "Take Break" every 4 hours: 8:00, 12:00, 16:00, 20:00
+
+### User Interactions
+- **Complete Task**: Checkbox tap marks the specific task instance as completed
+- **Refresh**: Pull to refresh or error retry button reloads the task list
+- **Navigation**: Top app bar shows "Today's Tasks" title
+- **Real-time Updates**: Task completion updates the UI immediately
+
+### UI Components
+- `Scaffold` with top app bar
+- `LazyColumn` for efficient task list rendering
+- `Card` components for individual task items
+- `Checkbox` for task completion
+- `CircularProgressIndicator` for loading states
+- Material Design 3 components throughout
+
+### Behavior
+- **Task Completion**: Marking a task complete updates the underlying habit log
+- **Automatic Refresh**: Task list refreshes after completion to reflect current state
+- **Time Display**: 24-hour format with prominent styling
+- **Independent Completion**: Each task instance can be completed independently of other instances of the same habit
+- **Persistence**: Completed tasks remain marked when screen is refreshed or revisited
+
 ## Habit List Screen
 
 ### Purpose

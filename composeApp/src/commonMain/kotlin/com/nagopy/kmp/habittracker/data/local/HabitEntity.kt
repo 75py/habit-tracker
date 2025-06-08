@@ -14,5 +14,8 @@ data class HabitEntity(
     val description: String,
     val color: String,
     val isActive: Boolean,
-    val createdAt: String // Stored as ISO-8601 string
+    val createdAt: String, // Stored as ISO-8601 string
+    val frequencyType: String = "ONCE_DAILY", // FrequencyType enum as string
+    val intervalHours: Int = 24, // For interval-based habits
+    val scheduledTimes: String = "09:00" // Comma-separated list of times in HH:mm format
 )

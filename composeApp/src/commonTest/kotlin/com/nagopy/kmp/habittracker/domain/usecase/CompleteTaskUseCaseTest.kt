@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
@@ -76,6 +77,34 @@ class CompleteTaskUseCaseTest {
         assertEquals(habitId, capturedLog.habitId)
         assertEquals(specificDate, capturedLog.date)
         assertEquals(true, capturedLog.isCompleted)
+    }
+
+    @Test
+    fun `invoke with habitId, date and scheduledTime should create habit log`() = runTest {
+        // Given
+        val mockRepository = mockk<HabitRepository>()
+        val habitId = 3L
+        val specificDate = LocalDate.parse("2024-01-15")
+        val scheduledTime = LocalTime(14, 30)
+        val expectedLogId = 300L
+        val logSlot = slot<HabitLog>()
+        
+        coEvery { mockRepository.addHabitLog(capture(logSlot)) } returns expectedLogId
+        val useCase = CompleteTaskUseCase(mockRepository)
+
+        // When
+        val logId = useCase(habitId, specificDate, scheduledTime)
+
+        // Then
+        assertEquals(expectedLogId, logId)
+        coVerify(exactly = 1) { mockRepository.addHabitLog(any()) }
+        
+        // Verify the log has correct properties
+        val capturedLog = logSlot.captured
+        assertEquals(habitId, capturedLog.habitId)
+        assertEquals(specificDate, capturedLog.date)
+        assertEquals(true, capturedLog.isCompleted)
+        // Note: Currently we don't store the time in the log, but the method accepts it
     }
 
     @Test

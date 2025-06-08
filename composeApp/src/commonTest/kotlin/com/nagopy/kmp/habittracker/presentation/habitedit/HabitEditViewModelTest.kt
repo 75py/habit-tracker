@@ -1,6 +1,7 @@
 package com.nagopy.kmp.habittracker.presentation.habitedit
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -8,6 +9,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
+import kotlinx.datetime.LocalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -42,6 +44,9 @@ class HabitEditViewModelTest {
         assertEquals("", uiState.description)
         assertEquals("#2196F3", uiState.color)
         assertTrue(uiState.isActive)
+        assertEquals(FrequencyType.ONCE_DAILY, uiState.frequencyType)
+        assertEquals(24, uiState.intervalHours)
+        assertEquals(listOf(LocalTime(9, 0)), uiState.scheduledTimes)
         assertNull(uiState.nameError)
         assertNull(uiState.saveError)
         assertFalse(uiState.isSaving)
@@ -97,6 +102,39 @@ class HabitEditViewModelTest {
         // Then
         val uiState = viewModel.uiState.value
         assertFalse(uiState.isActive)
+    }
+
+    @Test
+    fun `updateFrequencyType should update frequency type`() {
+        // When
+        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
+    }
+
+    @Test
+    fun `updateIntervalHours should update interval hours`() {
+        // When
+        viewModel.updateIntervalHours(2)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(2, uiState.intervalHours)
+    }
+
+    @Test
+    fun `updateScheduledTimes should update scheduled times`() {
+        // Given
+        val newTimes = listOf(LocalTime(8, 0), LocalTime(12, 0), LocalTime(18, 0))
+
+        // When
+        viewModel.updateScheduledTimes(newTimes)
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(newTimes, uiState.scheduledTimes)
     }
 
     @Test

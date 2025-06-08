@@ -3,12 +3,14 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
@@ -42,6 +44,18 @@ class HabitEditViewModel(
         _uiState.value = _uiState.value.copy(isActive = isActive)
     }
 
+    fun updateFrequencyType(frequencyType: FrequencyType) {
+        _uiState.value = _uiState.value.copy(frequencyType = frequencyType)
+    }
+
+    fun updateIntervalHours(intervalHours: Int) {
+        _uiState.value = _uiState.value.copy(intervalHours = intervalHours)
+    }
+
+    fun updateScheduledTimes(scheduledTimes: List<LocalTime>) {
+        _uiState.value = _uiState.value.copy(scheduledTimes = scheduledTimes)
+    }
+
     fun saveHabit(onSuccess: (Long) -> Unit, onError: (String) -> Unit) {
         val currentState = _uiState.value
         
@@ -60,7 +74,10 @@ class HabitEditViewModel(
                     description = currentState.description.trim(),
                     color = currentState.color,
                     isActive = currentState.isActive,
-                    createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                    createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                    frequencyType = currentState.frequencyType,
+                    intervalHours = currentState.intervalHours,
+                    scheduledTimes = currentState.scheduledTimes
                 )
 
                 val habitId = addHabitUseCase(habit)
@@ -93,6 +110,9 @@ data class HabitEditUiState(
     val description: String = "",
     val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
+    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+    val intervalHours: Int = 24,
+    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
     val nameError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false

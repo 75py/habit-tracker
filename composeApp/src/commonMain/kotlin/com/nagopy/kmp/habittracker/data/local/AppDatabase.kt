@@ -10,7 +10,7 @@ import androidx.room.RoomDatabaseConstructor
  */
 @Database(
     entities = [HabitEntity::class, LogEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @ConstructedBy(AppDatabaseConstructor::class)
