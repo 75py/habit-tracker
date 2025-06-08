@@ -44,6 +44,18 @@ class HabitEditViewModel(
         _uiState.value = _uiState.value.copy(isActive = isActive)
     }
 
+    fun updateFrequencyType(frequencyType: FrequencyType) {
+        _uiState.value = _uiState.value.copy(frequencyType = frequencyType)
+    }
+
+    fun updateIntervalHours(intervalHours: Int) {
+        _uiState.value = _uiState.value.copy(intervalHours = intervalHours)
+    }
+
+    fun updateScheduledTimes(scheduledTimes: List<LocalTime>) {
+        _uiState.value = _uiState.value.copy(scheduledTimes = scheduledTimes)
+    }
+
     fun saveHabit(onSuccess: (Long) -> Unit, onError: (String) -> Unit) {
         val currentState = _uiState.value
         
@@ -63,10 +75,9 @@ class HabitEditViewModel(
                     color = currentState.color,
                     isActive = currentState.isActive,
                     createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-                    // Default scheduling - once daily at 9:00 AM
-                    frequencyType = FrequencyType.ONCE_DAILY,
-                    intervalHours = 24,
-                    scheduledTimes = listOf(LocalTime(9, 0))
+                    frequencyType = currentState.frequencyType,
+                    intervalHours = currentState.intervalHours,
+                    scheduledTimes = currentState.scheduledTimes
                 )
 
                 val habitId = addHabitUseCase(habit)
@@ -99,6 +110,9 @@ data class HabitEditUiState(
     val description: String = "",
     val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
+    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+    val intervalHours: Int = 24,
+    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
     val nameError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false
