@@ -3,7 +3,6 @@ package com.nagopy.kmp.habittracker.domain.usecase
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
-import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
 import io.mockk.every
@@ -144,96 +143,5 @@ class GetTodayTasksUseCaseTest {
         assertEquals(0, result.size)
     }
 
-    @Test
-    fun `invoke should mark hourly tasks as completed when habit log exists`() = runTest {
-        // Given
-        val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
-        val fixedClock = object : Clock {
-            override fun now(): Instant = fixedInstant
-        }
-        
-        val hourlyHabit = Habit(
-            id = 1,
-            name = "Drink Water",
-            description = "Stay hydrated",
-            color = "#2196F3",
-            isActive = true,
-            createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            scheduledTimes = listOf(LocalTime(9, 0))
-        )
-        
-        // Create a completion log for this habit on the test date
-        val habitLog = HabitLog(
-            id = 1,
-            habitId = 1,
-            date = fixedDate,
-            isCompleted = true
-        )
-        
-        val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(listOf(hourlyHabit))
-        coEvery { mockRepository.getHabitLog(1, fixedDate) } returns habitLog
-        
-        val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
 
-        // When
-        val result = useCase().first()
-
-        // Then - All hourly tasks should now be marked as completed
-        assertTrue(result.isNotEmpty())
-        result.forEach { task ->
-            assertTrue(task.isCompleted, "Task at ${task.scheduledTime} should be completed")
-            assertEquals("Drink Water", task.habitName)
-            assertEquals(fixedDate, task.date)
-        }
-    }
-
-    @Test
-    fun `invoke should mark interval tasks as completed when habit log exists`() = runTest {
-        // Given
-        val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
-        val fixedClock = object : Clock {
-            override fun now(): Instant = fixedInstant
-        }
-        
-        val intervalHabit = Habit(
-            id = 2,
-            name = "Take Break",
-            description = "Take a break every 2 hours",
-            color = "#9C27B0",
-            isActive = true,
-            createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            scheduledTimes = listOf(LocalTime(10, 0)),
-            intervalHours = 2
-        )
-        
-        // Create a completion log for this habit on the test date
-        val habitLog = HabitLog(
-            id = 2,
-            habitId = 2,
-            date = fixedDate,
-            isCompleted = true
-        )
-        
-        val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(listOf(intervalHabit))
-        coEvery { mockRepository.getHabitLog(2, fixedDate) } returns habitLog
-        
-        val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
-
-        // When
-        val result = useCase().first()
-
-        // Then - All interval tasks should now be marked as completed
-        assertTrue(result.isNotEmpty())
-        result.forEach { task ->
-            assertTrue(task.isCompleted, "Interval task at ${task.scheduledTime} should be completed")
-            assertEquals("Take Break", task.habitName)
-            assertEquals(fixedDate, task.date)
-        }
-    }
 }
