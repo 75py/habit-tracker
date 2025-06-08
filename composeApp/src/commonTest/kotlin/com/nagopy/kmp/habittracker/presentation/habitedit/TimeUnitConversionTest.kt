@@ -1,5 +1,8 @@
 package com.nagopy.kmp.habittracker.presentation.habitedit
 
+import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -25,9 +28,12 @@ class TimeUnitConversionTest {
 
     @Test
     fun `updateIntervalValue should convert minutes to minutes correctly`() {
+        val mockAddHabitUseCase = mockk<AddHabitUseCase>(relaxed = true)
+        val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+        
         val viewModel = HabitEditViewModel(
-            addHabitUseCase = MockAddHabitUseCase(),
-            manageNotificationsUseCase = MockManageNotificationsUseCase()
+            addHabitUseCase = mockAddHabitUseCase,
+            manageNotificationsUseCase = mockManageNotificationsUseCase
         )
         
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES)
@@ -40,9 +46,12 @@ class TimeUnitConversionTest {
 
     @Test
     fun `updateIntervalValue should convert hours to minutes correctly`() {
+        val mockAddHabitUseCase = mockk<AddHabitUseCase>(relaxed = true)
+        val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+        
         val viewModel = HabitEditViewModel(
-            addHabitUseCase = MockAddHabitUseCase(),
-            manageNotificationsUseCase = MockManageNotificationsUseCase()
+            addHabitUseCase = mockAddHabitUseCase,
+            manageNotificationsUseCase = mockManageNotificationsUseCase
         )
         
         viewModel.updateIntervalValue(3, TimeUnit.HOURS)
@@ -52,13 +61,4 @@ class TimeUnitConversionTest {
         assertEquals(TimeUnit.HOURS, state.intervalUnit)
         assertEquals(3, state.intervalValue)
     }
-}
-
-// Mock implementations for testing
-class MockAddHabitUseCase : com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase {
-    override suspend fun invoke(habit: com.nagopy.kmp.habittracker.domain.model.Habit): Long = 1L
-}
-
-class MockManageNotificationsUseCase : com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase {
-    override suspend fun scheduleNotificationsForTodayTasks() {}
 }
