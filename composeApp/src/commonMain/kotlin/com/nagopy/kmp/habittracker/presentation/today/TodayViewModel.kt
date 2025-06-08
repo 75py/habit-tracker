@@ -64,7 +64,16 @@ class TodayViewModel(
             try {
                 // Immediately update UI state to show task as completed
                 val taskKey = createTaskKey(task)
+                val updatedTasks = _uiState.value.tasks.map { existingTask ->
+                    if (createTaskKey(existingTask) == taskKey) {
+                        existingTask.copy(isCompleted = true)
+                    } else {
+                        existingTask
+                    }
+                }
+                
                 _uiState.value = _uiState.value.copy(
+                    tasks = updatedTasks,
                     completedTaskKeys = _uiState.value.completedTaskKeys + taskKey
                 )
                 
@@ -74,12 +83,19 @@ class TodayViewModel(
                 // Cancel the notification for the completed task
                 manageNotificationsUseCase.cancelTaskNotification(task)
                 
-                // No need to reload all tasks - UI state is already updated
-                // The completion is tracked both in the backend and UI state
             } catch (exception: Exception) {
                 // Revert the UI state change if backend call failed
                 val taskKey = createTaskKey(task)
+                val revertedTasks = _uiState.value.tasks.map { existingTask ->
+                    if (createTaskKey(existingTask) == taskKey) {
+                        existingTask.copy(isCompleted = false)
+                    } else {
+                        existingTask
+                    }
+                }
+                
                 _uiState.value = _uiState.value.copy(
+                    tasks = revertedTasks,
                     completedTaskKeys = _uiState.value.completedTaskKeys - taskKey,
                     error = "Failed to complete task: ${exception.message}"
                 )

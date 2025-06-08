@@ -123,7 +123,7 @@ class TodayViewModelTest {
     }
 
     @Test
-    fun `completeTask should call use case and update UI state`() = runTest {
+    fun `completeTask should call use case and update task completion in UI`() = runTest {
         // Given
         val task = Task(
             habitId = 1L,
@@ -140,12 +140,21 @@ class TodayViewModelTest {
         
         viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
         
+        // Verify initial state - task should not be completed
+        val initialState = viewModel.uiState.first()
+        assertFalse(initialState.tasks.first().isCompleted)
+        assertTrue(initialState.completedTaskKeys.isEmpty())
+        
         // When
         viewModel.completeTask(task)
         
         // Then
         coVerify { completeTaskUseCase(1L, LocalDate.parse("2024-01-20"), LocalTime(7, 0)) }
-        // Verify the use case is called - UI state updates are handled separately
+        
+        // Verify the UI state is updated immediately - both tasks list and completed keys
+        val updatedState = viewModel.uiState.first()
+        assertTrue(updatedState.tasks.first().isCompleted, "Task should be marked as completed in tasks list")
+        assertTrue(updatedState.completedTaskKeys.contains("1_2024-01-20_07:00"), "Task key should be in completed set")
     }
 
     @Test
