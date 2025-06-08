@@ -8,6 +8,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.GetAllHabitsUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.RequestNotificationPermissionOnStartupUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import org.koin.dsl.module
 
@@ -30,4 +31,5 @@ val domainModule = module {
     single { CompleteTaskUseCase(get()) }
     single { ManageNotificationsUseCase(get(), get()) }
     single { CompleteTaskFromNotificationUseCase(get(), get()) }
+    single { RequestNotificationPermissionOnStartupUseCase(get(), get()) }
 }

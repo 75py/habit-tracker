@@ -51,7 +51,7 @@ class HabitEditViewModelTest {
         assertEquals("#2196F3", uiState.color)
         assertTrue(uiState.isActive)
         assertEquals(FrequencyType.ONCE_DAILY, uiState.frequencyType)
-        assertEquals(24, uiState.intervalHours)
+        assertEquals(1440, uiState.intervalMinutes) // 24 hours = 1440 minutes
         assertEquals(listOf(LocalTime(9, 0)), uiState.scheduledTimes)
         assertNull(uiState.nameError)
         assertNull(uiState.saveError)
@@ -121,10 +121,10 @@ class HabitEditViewModelTest {
     }
 
     @Test
-    fun `updateFrequencyType should set intervalHours to 1 when HOURLY is selected`() {
+    fun `updateFrequencyType should set intervalMinutes to 60 when HOURLY is selected`() {
         // Given - start with a different interval
-        viewModel.updateIntervalHours(4)
-        assertEquals(4, viewModel.uiState.value.intervalHours)
+        viewModel.updateIntervalMinutes(240) // 4 hours
+        assertEquals(240, viewModel.uiState.value.intervalMinutes)
 
         // When
         viewModel.updateFrequencyType(FrequencyType.HOURLY)
@@ -132,14 +132,14 @@ class HabitEditViewModelTest {
         // Then
         val uiState = viewModel.uiState.value
         assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
-        assertEquals(1, uiState.intervalHours)
+        assertEquals(60, uiState.intervalMinutes) // 1 hour = 60 minutes
     }
 
     @Test
-    fun `updateFrequencyType should not change intervalHours when non-HOURLY is selected`() {
+    fun `updateFrequencyType should not change intervalMinutes when non-HOURLY is selected`() {
         // Given - start with a custom interval
-        viewModel.updateIntervalHours(3)
-        assertEquals(3, viewModel.uiState.value.intervalHours)
+        viewModel.updateIntervalMinutes(180) // 3 hours
+        assertEquals(180, viewModel.uiState.value.intervalMinutes)
 
         // When
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
@@ -147,17 +147,17 @@ class HabitEditViewModelTest {
         // Then
         val uiState = viewModel.uiState.value
         assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
-        assertEquals(3, uiState.intervalHours) // Should preserve the existing value
+        assertEquals(180, uiState.intervalMinutes) // Should preserve the existing value
     }
 
     @Test
-    fun `updateIntervalHours should update interval hours`() {
+    fun `updateIntervalMinutes should update interval minutes`() {
         // When
-        viewModel.updateIntervalHours(2)
+        viewModel.updateIntervalMinutes(120) // 2 hours
 
         // Then
         val uiState = viewModel.uiState.value
-        assertEquals(2, uiState.intervalHours)
+        assertEquals(120, uiState.intervalMinutes)
     }
 
     @Test

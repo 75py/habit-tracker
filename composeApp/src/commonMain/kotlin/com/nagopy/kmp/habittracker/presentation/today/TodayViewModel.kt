@@ -41,9 +41,17 @@ class TodayViewModel(
                         error = exception.message ?: "Unknown error occurred"
                     )
                 }
-                .collect { tasks ->
+                .collect { tasksFromDatabase ->
+                    // Merge database state with UI completion state
+                    val currentCompletedKeys = _uiState.value.completedTaskKeys
+                    val mergedTasks = tasksFromDatabase.map { task ->
+                        val taskKey = createTaskKey(task)
+                        val isCompletedInUI = currentCompletedKeys.contains(taskKey)
+                        task.copy(isCompleted = task.isCompleted || isCompletedInUI)
+                    }
+                    
                     _uiState.value = _uiState.value.copy(
-                        tasks = tasks,
+                        tasks = mergedTasks,
                         isLoading = false,
                         error = null
                     )
@@ -54,13 +62,41 @@ class TodayViewModel(
     fun completeTask(task: Task) {
         viewModelScope.launch {
             try {
+                // Immediately update UI state to show task as completed
+                val taskKey = createTaskKey(task)
+                val updatedTasks = _uiState.value.tasks.map { existingTask ->
+                    if (createTaskKey(existingTask) == taskKey) {
+                        existingTask.copy(isCompleted = true)
+                    } else {
+                        existingTask
+                    }
+                }
+                
+                _uiState.value = _uiState.value.copy(
+                    tasks = updatedTasks,
+                    completedTaskKeys = _uiState.value.completedTaskKeys + taskKey
+                )
+                
+                // Complete the task in the backend
                 completeTaskUseCase(task.habitId, task.date, task.scheduledTime)
+                
                 // Cancel the notification for the completed task
                 manageNotificationsUseCase.cancelTaskNotification(task)
-                // Refresh tasks to show updated completion status
-                loadTasks()
+                
             } catch (exception: Exception) {
+                // Revert the UI state change if backend call failed
+                val taskKey = createTaskKey(task)
+                val revertedTasks = _uiState.value.tasks.map { existingTask ->
+                    if (createTaskKey(existingTask) == taskKey) {
+                        existingTask.copy(isCompleted = false)
+                    } else {
+                        existingTask
+                    }
+                }
+                
                 _uiState.value = _uiState.value.copy(
+                    tasks = revertedTasks,
+                    completedTaskKeys = _uiState.value.completedTaskKeys - taskKey,
                     error = "Failed to complete task: ${exception.message}"
                 )
             }
@@ -68,6 +104,8 @@ class TodayViewModel(
     }
 
     fun refresh() {
+        // Clear UI completion state when refreshing to start fresh
+        _uiState.value = _uiState.value.copy(completedTaskKeys = emptySet())
         loadTasks()
         scheduleNotifications()
     }
@@ -87,6 +125,13 @@ class TodayViewModel(
             }
         }
     }
+    
+    /**
+     * Creates a unique key for a task instance to track individual completion status
+     */
+    private fun createTaskKey(task: Task): String {
+        return "${task.habitId}_${task.date}_${task.scheduledTime}"
+    }
 }
 
 /**
@@ -95,5 +140,6 @@ class TodayViewModel(
 data class TodayUiState(
     val tasks: List<Task> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val completedTaskKeys: Set<String> = emptySet()
 )

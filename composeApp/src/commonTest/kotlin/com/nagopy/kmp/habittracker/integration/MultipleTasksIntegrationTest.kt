@@ -44,7 +44,7 @@ class MultipleTasksIntegrationTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.ONCE_DAILY,
-            intervalHours = 24,
+            intervalMinutes = 1440, // 24 hours = 1440 minutes
             scheduledTimes = listOf(LocalTime(7, 0))
         )
         
@@ -56,7 +56,7 @@ class MultipleTasksIntegrationTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.HOURLY,
-            intervalHours = 1,
+            intervalMinutes = 60, // 1 hour = 60 minutes
             scheduledTimes = listOf(LocalTime(9, 0)) // Start at 9 AM
         )
         
@@ -68,7 +68,7 @@ class MultipleTasksIntegrationTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            intervalHours = 4, // Every 4 hours
+            intervalMinutes = 240, // Every 4 hours = 240 minutes
             scheduledTimes = listOf(LocalTime(8, 0)) // Start at 8 AM
         )
         

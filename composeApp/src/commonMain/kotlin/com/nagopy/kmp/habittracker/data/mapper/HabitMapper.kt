@@ -26,7 +26,7 @@ fun HabitEntity.toDomainModel(): Habit {
         } catch (e: IllegalArgumentException) {
             FrequencyType.ONCE_DAILY
         },
-        intervalHours = intervalHours,
+        intervalMinutes = intervalMinutes,
         scheduledTimes = parseScheduledTimes(scheduledTimes)
     )
 }
@@ -40,7 +40,7 @@ fun Habit.toEntity(): HabitEntity {
         isActive = isActive,
         createdAt = createdAt.toString(),
         frequencyType = frequencyType.name,
-        intervalHours = intervalHours,
+        intervalMinutes = intervalMinutes,
         scheduledTimes = formatScheduledTimes(scheduledTimes)
     )
 }

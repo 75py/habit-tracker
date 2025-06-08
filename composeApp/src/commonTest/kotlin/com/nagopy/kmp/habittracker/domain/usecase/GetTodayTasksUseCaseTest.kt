@@ -18,6 +18,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GetTodayTasksUseCaseTest {
@@ -142,4 +143,44 @@ class GetTodayTasksUseCaseTest {
         // Then
         assertEquals(0, result.size)
     }
+
+    @Test
+    fun `invoke should mark hourly and interval tasks as not completed by default`() = runTest {
+        // Given
+        val fixedDate = LocalDate.parse("2024-01-20")
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedClock = object : Clock {
+            override fun now(): Instant = fixedInstant
+        }
+        
+        val hourlyHabit = Habit(
+            id = 1,
+            name = "Drink Water",
+            description = "Stay hydrated",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.HOURLY,
+            scheduledTimes = listOf(LocalTime(9, 0))
+        )
+        
+        val mockRepository = mockk<HabitRepository>()
+        every { mockRepository.getActiveHabits() } returns flowOf(listOf(hourlyHabit))
+        coEvery { mockRepository.getHabitLog(1, fixedDate) } returns null // No completion log
+        
+        val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
+
+        // When
+        val result = useCase().first()
+
+        // Then - All hourly tasks should be marked as not completed
+        assertTrue(result.isNotEmpty())
+        result.forEach { task ->
+            assertFalse(task.isCompleted, "Task at ${task.scheduledTime} should not be completed by default")
+            assertEquals("Drink Water", task.habitName)
+            assertEquals(fixedDate, task.date)
+        }
+    }
+
+
 }
