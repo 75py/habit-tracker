@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -50,6 +51,7 @@ class HabitEditViewModel(
                         description = habit.description,
                         color = habit.color,
                         isActive = habit.isActive,
+                        createdAt = habit.createdAt,
                         frequencyType = habit.frequencyType,
                         intervalHours = habit.intervalHours,
                         scheduledTimes = habit.scheduledTimes,
@@ -130,7 +132,7 @@ class HabitEditViewModel(
                         description = currentState.description.trim(),
                         color = currentState.color,
                         isActive = currentState.isActive,
-                        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()), // Keep original date in real implementation
+                        createdAt = currentState.createdAt ?: Clock.System.todayIn(TimeZone.currentSystemDefault()),
                         frequencyType = currentState.frequencyType,
                         intervalHours = currentState.intervalHours,
                         scheduledTimes = currentState.scheduledTimes
@@ -205,6 +207,7 @@ data class HabitEditUiState(
     val description: String = "",
     val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
+    val createdAt: LocalDate? = null, // Original creation date for editing
     val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
     val intervalHours: Int = 24,
     val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
