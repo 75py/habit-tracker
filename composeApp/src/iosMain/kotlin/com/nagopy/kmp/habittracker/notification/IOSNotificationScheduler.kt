@@ -87,7 +87,9 @@ class IOSNotificationScheduler : NotificationScheduler, KoinComponent {
     override suspend fun cancelHabitNotifications(habitId: Long) {
         // Get all pending notifications and filter by habit ID
         center.getPendingNotificationRequestsWithCompletionHandler { requests ->
-            val identifiersToCancel = requests?.mapNotNull { request ->
+            @Suppress("UNCHECKED_CAST")
+            val typedRequests = requests as? List<UNNotificationRequest>
+            val identifiersToCancel = typedRequests?.mapNotNull { request ->
                 val requestIdentifier = request.identifier
                 if (requestIdentifier.startsWith("${habitId}_")) {
                     requestIdentifier
