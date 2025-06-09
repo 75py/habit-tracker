@@ -212,13 +212,7 @@ open class AndroidNotificationScheduler(
      */
     private fun canScheduleExactAlarms(): Boolean {
         return if (Build.VERSION.SDK_INT >= 31) { // API 31 = Android 12
-            try {
-                alarmManager.canScheduleExactAlarms()
-            } catch (e: NoSuchMethodError) {
-                // Method not available in test environment or older versions
-                Logger.w("canScheduleExactAlarms method not available, assuming false", "AndroidNotificationScheduler")
-                false
-            }
+            alarmManager.canScheduleExactAlarms()
         } else {
             // On Android < 12, exact alarms don't require special permission
             true
