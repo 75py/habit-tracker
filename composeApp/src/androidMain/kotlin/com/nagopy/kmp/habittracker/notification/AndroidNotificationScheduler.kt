@@ -62,26 +62,9 @@ open class AndroidNotificationScheduler(
         
         Logger.d("Generated notification ID: $notificationId, trigger time: $triggerTime", "AndroidNotificationScheduler")
 
-        // Fetch the actual habit to get current name and description
-        val habit = habitRepository.getHabit(task.habitId)
-        val habitName = habit?.name ?: task.habitName
-        val habitDescription = habit?.description ?: task.habitDescription
-
-        Logger.d("Using habit name: '$habitName', description: '$habitDescription'", "AndroidNotificationScheduler")
-
-        // Create the notification
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(habitName)
-            .setContentText(habitDescription.ifEmpty { "Time to complete your habit!" })
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon as fallback
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .addAction(createCompleteAction(task))
-            .build()
-
-        // Create pending intent for the notification
-        val notificationIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = COMPLETE_ACTION
+        // Create pending intent for the alarm to trigger AlarmReceiver
+        val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+            action = AlarmReceiver.SHOW_NOTIFICATION_ACTION
             putExtra("habitId", task.habitId)
             putExtra("date", task.date.toString())
             putExtra("scheduledTime", task.scheduledTime.toString())
@@ -91,7 +74,7 @@ open class AndroidNotificationScheduler(
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             notificationId,
-            notificationIntent,
+            alarmIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -141,7 +124,9 @@ open class AndroidNotificationScheduler(
         val notificationId = generateNotificationId(task)
         
         // Cancel the scheduled alarm
-        val intent = Intent(context, NotificationActionReceiver::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            action = AlarmReceiver.SHOW_NOTIFICATION_ACTION
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             notificationId,
@@ -236,29 +221,6 @@ open class AndroidNotificationScheduler(
             }
             notificationManager.createNotificationChannel(channel)
         }
-    }
-
-    private fun createCompleteAction(task: Task): NotificationCompat.Action {
-        val intent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = COMPLETE_ACTION
-            putExtra("habitId", task.habitId)
-            putExtra("date", task.date.toString())
-            putExtra("scheduledTime", task.scheduledTime.toString())
-            putExtra("notificationId", generateNotificationId(task))
-        }
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            generateNotificationId(task) + 1000, // Different ID for action
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        return NotificationCompat.Action.Builder(
-            android.R.drawable.ic_menu_save, // Using system icon as fallback
-            "Complete",
-            pendingIntent
-        ).build()
     }
 
     private fun calculateTriggerTime(task: Task): Long {

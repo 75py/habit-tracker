@@ -27,6 +27,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Receiver for alarm broadcasts to display notifications -->
+        <receiver
+            android:name=".notification.AlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.nagopy.kmp.habittracker.SHOW_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
         <!-- Receiver for notification actions -->
         <receiver
             android:name=".notification.NotificationActionReceiver"
