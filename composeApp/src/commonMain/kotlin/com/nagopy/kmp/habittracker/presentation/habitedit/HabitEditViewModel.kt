@@ -8,6 +8,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,8 @@ class HabitEditViewModel(
     private val addHabitUseCase: AddHabitUseCase,
     private val updateHabitUseCase: UpdateHabitUseCase,
     private val getHabitUseCase: GetHabitUseCase,
-    private val manageNotificationsUseCase: ManageNotificationsUseCase
+    private val manageNotificationsUseCase: ManageNotificationsUseCase,
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HabitEditUiState())
@@ -164,7 +166,7 @@ class HabitEditViewModel(
                     
                     // Schedule notifications for the updated habit
                     try {
-                        manageNotificationsUseCase.scheduleNotificationsForTodayTasks()
+                        scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
                     } catch (notificationException: Exception) {
                         // Notifications are not critical, so we don't fail the save operation
                         Logger.e(notificationException, "Failed to schedule notifications for updated habit", tag = "HabitEdit")
@@ -191,7 +193,7 @@ class HabitEditViewModel(
                     
                     // Schedule notifications for the new habit
                     try {
-                        manageNotificationsUseCase.scheduleNotificationsForTodayTasks()
+                        scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
                     } catch (notificationException: Exception) {
                         // Notifications are not critical, so we don't fail the save operation
                         Logger.e(notificationException, "Failed to schedule notifications for new habit", tag = "HabitEdit")

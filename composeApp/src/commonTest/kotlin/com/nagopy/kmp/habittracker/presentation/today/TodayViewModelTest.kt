@@ -4,6 +4,7 @@ import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,6 +35,7 @@ class TodayViewModelTest {
     private lateinit var getTodayTasksUseCase: GetTodayTasksUseCase
     private lateinit var completeTaskUseCase: CompleteTaskUseCase
     private lateinit var manageNotificationsUseCase: ManageNotificationsUseCase
+    private lateinit var scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
     private lateinit var viewModel: TodayViewModel
 
     @BeforeTest
@@ -44,6 +46,7 @@ class TodayViewModelTest {
         getTodayTasksUseCase = mockk<GetTodayTasksUseCase>()
         completeTaskUseCase = mockk<CompleteTaskUseCase>()
         manageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+        scheduleNextNotificationUseCase = mockk<ScheduleNextNotificationUseCase>(relaxed = true)
     }
 
     @AfterTest
@@ -78,7 +81,7 @@ class TodayViewModelTest {
         every { getTodayTasksUseCase() } returns flowOf(tasks)
         
         // When
-        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
+        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase, scheduleNextNotificationUseCase)
         
         // Then
         val uiState = viewModel.uiState.first()
@@ -95,7 +98,7 @@ class TodayViewModelTest {
         every { getTodayTasksUseCase() } returns flowOf(emptyList())
         
         // When
-        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
+        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase, scheduleNextNotificationUseCase)
         
         // Then
         val uiState = viewModel.uiState.first()
@@ -113,7 +116,7 @@ class TodayViewModelTest {
         }
         
         // When
-        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
+        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase, scheduleNextNotificationUseCase)
         
         // Then
         val uiState = viewModel.uiState.first()
@@ -138,7 +141,7 @@ class TodayViewModelTest {
         every { getTodayTasksUseCase() } returns flowOf(listOf(task))
         coEvery { completeTaskUseCase(any(), any(), any()) } returns 1L
         
-        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
+        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase, scheduleNextNotificationUseCase)
         
         // Verify initial state - task should not be completed
         val initialState = viewModel.uiState.first()
@@ -173,7 +176,7 @@ class TodayViewModelTest {
         every { getTodayTasksUseCase() } returns flowOf(listOf(task))
         coEvery { completeTaskUseCase(any(), any(), any()) } throws RuntimeException("Failed to complete")
         
-        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase)
+        viewModel = TodayViewModel(getTodayTasksUseCase, completeTaskUseCase, manageNotificationsUseCase, scheduleNextNotificationUseCase)
         
         // When
         viewModel.completeTask(task)

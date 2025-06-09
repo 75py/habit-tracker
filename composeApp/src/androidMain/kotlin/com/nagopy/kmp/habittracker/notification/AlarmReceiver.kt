@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ import org.koin.core.component.inject
 class AlarmReceiver : BroadcastReceiver(), KoinComponent {
 
     private val habitRepository: HabitRepository by inject()
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase by inject()
 
     companion object {
         const val SHOW_NOTIFICATION_ACTION = "com.nagopy.kmp.habittracker.SHOW_NOTIFICATION"
@@ -106,6 +108,18 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     notificationManager.notify(notificationId, notification)
                     
                     Logger.i("Successfully displayed notification for habitId: $habitId, notificationId: $notificationId", "AlarmReceiver")
+                    
+                    // Schedule the next notification for this habit
+                    try {
+                        val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                        if (wasScheduled) {
+                            Logger.i("Successfully scheduled next notification for habitId: $habitId", "AlarmReceiver")
+                        } else {
+                            Logger.d("No next notification to schedule for habitId: $habitId", "AlarmReceiver")
+                        }
+                    } catch (e: Exception) {
+                        Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "AlarmReceiver")
+                    }
                 } catch (e: Exception) {
                     Logger.e(e, "Failed to display notification for habitId: $habitId", "AlarmReceiver")
                 }

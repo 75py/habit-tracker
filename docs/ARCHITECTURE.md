@@ -534,6 +534,85 @@ The notification feature separates the shared interface from platform-specific i
 
 The notification system ensures that push notifications always display current, up-to-date habit information, even when habit details have changed since tasks were originally scheduled.
 
+### Sequential Notification Scheduling Architecture
+
+The application implements a **sequential notification scheduling** system that replaces traditional batch scheduling with a more efficient, chain-based approach.
+
+#### Architecture Overview
+
+The sequential notification system follows this pattern:
+```
+Initial Schedule → Alarm → Receiver (Display & Re-schedule) → Next Alarm → ...
+```
+
+**Key Components:**
+
+1. **ScheduleNextNotificationUseCase**: Finds and schedules only the next upcoming notification for a habit
+2. **GetNextTasksUseCase**: Locates the next upcoming task across all active habits
+3. **Enhanced BroadcastReceivers**: After displaying a notification, automatically schedule the next one
+4. **Boot Completion Handling**: Reschedules notifications after device restart
+
+#### Implementation Flow
+
+**Initial Scheduling:**
+1. When app starts or habits are created/edited
+2. `ScheduleNextNotificationUseCase.rescheduleAllHabitNotifications()` is called
+3. Only the next upcoming notification for each habit is scheduled
+4. No past notifications are scheduled
+
+**Notification Chain:**
+1. `AlarmManager` triggers notification at scheduled time
+2. `AlarmReceiver` displays the notification
+3. Immediately calls `ScheduleNextNotificationUseCase.scheduleNextNotificationForHabit()`
+4. Next notification in sequence is scheduled
+5. Chain continues automatically
+
+**Device Restart Handling:**
+1. `BootCompletedReceiver` detects system boot completion
+2. Calls `ScheduleNextNotificationUseCase.rescheduleAllHabitNotifications()`
+3. Notification chains are restored for all active habits
+
+#### Key Benefits
+
+**Efficiency:**
+- Only one notification per habit scheduled at any time
+- No wasted resources on past notifications
+- Automatic scheduling without user intervention
+
+**Reliability:**
+- Notifications continue across day boundaries automatically
+- Device restart protection ensures continuous operation
+- No dependency on app being opened daily
+
+**Scalability:**
+- Memory usage constant regardless of habit frequency
+- System alarm slots used efficiently
+- Performance remains consistent as habits grow
+
+#### Platform-Specific Implementation
+
+**Android:**
+- `AlarmReceiver` enhanced with sequential scheduling logic
+- `BootCompletedReceiver` handles device restart scenarios
+- Uses existing `AlarmManager` infrastructure
+
+**iOS:**
+- `IOSNotificationScheduler.handleNotificationResponse()` enhanced
+- Leverages `UNUserNotificationCenter` for scheduling
+- App launch after restart triggers rescheduling
+
+#### Testing Strategy
+
+**Unit Tests:**
+- `GetNextTasksUseCaseTest`: Verifies next task finding logic
+- `ScheduleNextNotificationUseCaseTest`: Tests sequential scheduling behavior
+- Mock-based testing ensures isolation from platform specifics
+
+**Integration Considerations:**
+- Existing notification tests updated to verify sequential behavior
+- ViewModel tests confirm proper use of new scheduling approach
+- End-to-end testing validates complete notification chains
+
 #### Implementation Details
 
 **Data Fetching Pattern:**

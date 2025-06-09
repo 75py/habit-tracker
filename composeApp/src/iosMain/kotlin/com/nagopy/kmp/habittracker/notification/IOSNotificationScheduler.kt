@@ -4,6 +4,7 @@ import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ class IOSNotificationScheduler(
     }
 
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
@@ -182,8 +184,16 @@ class IOSNotificationScheduler(
                     CoroutineScope(Dispatchers.Default).launch {
                         try {
                             completeTaskFromNotificationUseCase(habitId, date, time)
+                            
+                            // Schedule the next notification for this habit
+                            try {
+                                val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                                // Log success or no next notification - iOS doesn't have a general logger like Android
+                            } catch (e: Exception) {
+                                // Handle error scheduling next notification
+                            }
                         } catch (e: Exception) {
-                            // Handle error
+                            // Handle error completing task
                         }
                     }
                 } catch (e: Exception) {
