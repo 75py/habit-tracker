@@ -108,21 +108,11 @@ open class AndroidNotificationScheduler(
                 )
             } else {
                 Logger.d("Scheduling exact alarm with setExactAndAllowWhileIdle for task: ${task.habitName}", "AndroidNotificationScheduler")
-                try {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                } catch (e: NoSuchMethodError) {
-                    // Method not available, fall back to regular set()
-                    Logger.w("setExactAndAllowWhileIdle method not available, falling back to set() for task: ${task.habitName}", "AndroidNotificationScheduler")
-                    alarmManager.set(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTime,
-                        pendingIntent
-                    )
-                }
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
             }
             Logger.i("Successfully scheduled notification for task: ${task.habitName} at ${task.scheduledTime}", "AndroidNotificationScheduler")
         } catch (e: SecurityException) {
