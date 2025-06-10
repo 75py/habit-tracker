@@ -7,12 +7,14 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -24,6 +26,7 @@ import org.koin.core.component.inject
 class AlarmReceiver : BroadcastReceiver(), KoinComponent {
 
     private val habitRepository: HabitRepository by inject()
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase by inject()
 
     companion object {
         const val SHOW_NOTIFICATION_ACTION = "com.nagopy.kmp.habittracker.SHOW_NOTIFICATION"
@@ -106,12 +109,29 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     notificationManager.notify(notificationId, notification)
                     
                     Logger.i("Successfully displayed notification for habitId: $habitId, notificationId: $notificationId", "AlarmReceiver")
+                    
+                    // Schedule the next notification for this habit
+                    // This is critical for maintaining the notification chain, but should not fail the current notification
+                    try {
+                        val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                        if (wasScheduled) {
+                            Logger.i("Successfully scheduled next notification for habitId: $habitId", "AlarmReceiver")
+                        } else {
+                            Logger.d("No next notification to schedule for habitId: $habitId", "AlarmReceiver")
+                        }
+                    } catch (e: Exception) {
+                        // Log and continue - failing to schedule next notification shouldn't affect current notification
+                        Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "AlarmReceiver")
+                    }
                 } catch (e: Exception) {
+                    // This catches database exceptions, notification system failures, and other unexpected errors
                     Logger.e(e, "Failed to display notification for habitId: $habitId", "AlarmReceiver")
                 }
             }
+        } catch (e: IllegalArgumentException) {
+            Logger.e(e, "Invalid date/time format in alarm intent: date=$dateString, time=$timeString", "AlarmReceiver")
         } catch (e: Exception) {
-            Logger.e(e, "Failed to parse date/time from alarm intent: date=$dateString, time=$timeString", "AlarmReceiver")
+            Logger.e(e, "Unexpected error processing alarm intent for habitId: $habitId", "AlarmReceiver")
         }
     }
 }

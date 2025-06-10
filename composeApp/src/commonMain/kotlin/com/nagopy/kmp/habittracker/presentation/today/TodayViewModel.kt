@@ -6,6 +6,7 @@ import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,8 @@ import kotlinx.coroutines.launch
 class TodayViewModel(
     private val getTodayTasksUseCase: GetTodayTasksUseCase,
     private val completeTaskUseCase: CompleteTaskUseCase,
-    private val manageNotificationsUseCase: ManageNotificationsUseCase
+    private val manageNotificationsUseCase: ManageNotificationsUseCase,
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TodayUiState())
@@ -116,8 +118,8 @@ class TodayViewModel(
                 // Ensure notifications are enabled first
                 val notificationsEnabled = manageNotificationsUseCase.ensureNotificationsEnabled()
                 if (notificationsEnabled) {
-                    // Schedule notifications for today's tasks
-                    manageNotificationsUseCase.scheduleNotificationsForTodayTasks()
+                    // Use sequential scheduling instead of batch scheduling
+                    scheduleNextNotificationUseCase.rescheduleAllHabitNotifications()
                 }
             } catch (exception: Exception) {
                 // Notifications are not critical, so we don't show an error to the user

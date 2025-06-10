@@ -4,12 +4,15 @@ import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toNSDate
 import org.koin.core.component.KoinComponent
@@ -32,6 +35,7 @@ class IOSNotificationScheduler(
     }
 
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
@@ -178,17 +182,41 @@ class IOSNotificationScheduler(
                     val date = kotlinx.datetime.LocalDate.parse(parts[1])
                     val time = kotlinx.datetime.LocalTime.parse(parts[2])
                     
+                    Logger.d("Processing notification response for habitId: $habitId, date: $date, time: $time", "IOSNotificationScheduler")
+                    
                     // Handle completion in background
                     CoroutineScope(Dispatchers.Default).launch {
                         try {
                             completeTaskFromNotificationUseCase(habitId, date, time)
+                            Logger.i("Successfully completed task for habitId: $habitId", "IOSNotificationScheduler")
+                            
+                            // Schedule the next notification for this habit
+                            // This is critical for maintaining the notification chain, but should not fail the current completion
+                            try {
+                                val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                                if (wasScheduled) {
+                                    Logger.i("Successfully scheduled next notification for habitId: $habitId", "IOSNotificationScheduler")
+                                } else {
+                                    Logger.d("No next notification to schedule for habitId: $habitId", "IOSNotificationScheduler")
+                                }
+                            } catch (e: Exception) {
+                                // Log and continue - failing to schedule next notification shouldn't affect current completion
+                                Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "IOSNotificationScheduler")
+                            }
                         } catch (e: Exception) {
-                            // Handle error
+                            // This catches database exceptions and other unexpected errors during task completion
+                            Logger.e(e, "Failed to complete task for habitId: $habitId", "IOSNotificationScheduler")
                         }
                     }
+                } catch (e: NumberFormatException) {
+                    Logger.e(e, "Invalid habitId format in notification identifier: $identifier", "IOSNotificationScheduler")
+                } catch (e: IllegalArgumentException) {
+                    Logger.e(e, "Invalid date/time format in notification identifier: $identifier", "IOSNotificationScheduler")
                 } catch (e: Exception) {
-                    // Handle parsing error
+                    Logger.e(e, "Unexpected error parsing notification identifier: $identifier", "IOSNotificationScheduler")
                 }
+            } else {
+                Logger.w("Invalid notification identifier format (expected at least 3 parts): $identifier", "IOSNotificationScheduler")
             }
         }
     }

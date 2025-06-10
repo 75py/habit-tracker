@@ -4,6 +4,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,12 +35,14 @@ class TimeUnitConversionTest {
         val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>(relaxed = true)
         val mockGetHabitUseCase = mockk<GetHabitUseCase>(relaxed = true)
         val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+        val mockScheduleNextNotificationUseCase = mockk<ScheduleNextNotificationUseCase>(relaxed = true)
         
         val viewModel = HabitEditViewModel(
             addHabitUseCase = mockAddHabitUseCase,
             updateHabitUseCase = mockUpdateHabitUseCase,
             getHabitUseCase = mockGetHabitUseCase,
-            manageNotificationsUseCase = mockManageNotificationsUseCase
+            manageNotificationsUseCase = mockManageNotificationsUseCase,
+            scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
         )
         
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES)
@@ -56,12 +59,14 @@ class TimeUnitConversionTest {
         val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>(relaxed = true)
         val mockGetHabitUseCase = mockk<GetHabitUseCase>(relaxed = true)
         val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+        val mockScheduleNextNotificationUseCase = mockk<ScheduleNextNotificationUseCase>(relaxed = true)
         
         val viewModel = HabitEditViewModel(
             addHabitUseCase = mockAddHabitUseCase,
             updateHabitUseCase = mockUpdateHabitUseCase,
             getHabitUseCase = mockGetHabitUseCase,
-            manageNotificationsUseCase = mockManageNotificationsUseCase
+            manageNotificationsUseCase = mockManageNotificationsUseCase,
+            scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
         )
         
         viewModel.updateIntervalValue(3, TimeUnit.HOURS)

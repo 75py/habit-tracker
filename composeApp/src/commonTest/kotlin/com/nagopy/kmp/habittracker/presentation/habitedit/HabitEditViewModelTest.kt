@@ -6,6 +6,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -28,13 +29,14 @@ class HabitEditViewModelTest {
     private val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>()
     private val mockGetHabitUseCase = mockk<GetHabitUseCase>()
     private val mockManageNotificationsUseCase = mockk<ManageNotificationsUseCase>(relaxed = true)
+    private val mockScheduleNextNotificationUseCase = mockk<ScheduleNextNotificationUseCase>(relaxed = true)
     private lateinit var viewModel: HabitEditViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = HabitEditViewModel(mockAddHabitUseCase, mockUpdateHabitUseCase, mockGetHabitUseCase, mockManageNotificationsUseCase)
+        viewModel = HabitEditViewModel(mockAddHabitUseCase, mockUpdateHabitUseCase, mockGetHabitUseCase, mockManageNotificationsUseCase, mockScheduleNextNotificationUseCase)
     }
 
     @AfterTest
@@ -341,7 +343,7 @@ class HabitEditViewModelTest {
         assertTrue(navigationCompleted, "Navigation should complete after save operation")
         assertFalse(viewModel.uiState.value.isSaving, "isSaving should be false after completion")
         
-        // Verify notification scheduling was called
-        coVerify(exactly = 1) { mockManageNotificationsUseCase.scheduleNotificationsForTodayTasks() }
+        // Verify notification scheduling was called for the new habit
+        coVerify(exactly = 1) { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(expectedHabitId) }
     }
 }

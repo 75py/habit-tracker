@@ -44,6 +44,15 @@
                 <action android:name="com.nagopy.kmp.habittracker.COMPLETE_TASK" />
             </intent-filter>
         </receiver>
+
+        <!-- Receiver for device boot completion to reschedule notifications -->
+        <receiver
+            android:name=".notification.BootCompletedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
