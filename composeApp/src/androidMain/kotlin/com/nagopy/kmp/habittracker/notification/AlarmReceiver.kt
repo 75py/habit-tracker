@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.format.DateTimeParseException
+
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -128,7 +128,7 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     Logger.e(e, "Failed to display notification for habitId: $habitId", "AlarmReceiver")
                 }
             }
-        } catch (e: DateTimeParseException) {
+        } catch (e: IllegalArgumentException) {
             Logger.e(e, "Invalid date/time format in alarm intent: date=$dateString, time=$timeString", "AlarmReceiver")
         } catch (e: Exception) {
             Logger.e(e, "Unexpected error processing alarm intent for habitId: $habitId", "AlarmReceiver")

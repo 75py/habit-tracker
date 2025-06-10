@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.DateTimeParseException
+
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toNSDate
 import org.koin.core.component.KoinComponent
@@ -210,7 +210,7 @@ class IOSNotificationScheduler(
                     }
                 } catch (e: NumberFormatException) {
                     Logger.e(e, "Invalid habitId format in notification identifier: $identifier", "IOSNotificationScheduler")
-                } catch (e: DateTimeParseException) {
+                } catch (e: IllegalArgumentException) {
                     Logger.e(e, "Invalid date/time format in notification identifier: $identifier", "IOSNotificationScheduler")
                 } catch (e: Exception) {
                     Logger.e(e, "Unexpected error parsing notification identifier: $identifier", "IOSNotificationScheduler")
