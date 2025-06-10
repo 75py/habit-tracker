@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.format.DateTimeParseException
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -110,6 +111,7 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     Logger.i("Successfully displayed notification for habitId: $habitId, notificationId: $notificationId", "AlarmReceiver")
                     
                     // Schedule the next notification for this habit
+                    // This is critical for maintaining the notification chain, but should not fail the current notification
                     try {
                         val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
                         if (wasScheduled) {
@@ -118,14 +120,18 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                             Logger.d("No next notification to schedule for habitId: $habitId", "AlarmReceiver")
                         }
                     } catch (e: Exception) {
+                        // Log and continue - failing to schedule next notification shouldn't affect current notification
                         Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "AlarmReceiver")
                     }
                 } catch (e: Exception) {
+                    // This catches database exceptions, notification system failures, and other unexpected errors
                     Logger.e(e, "Failed to display notification for habitId: $habitId", "AlarmReceiver")
                 }
             }
+        } catch (e: DateTimeParseException) {
+            Logger.e(e, "Invalid date/time format in alarm intent: date=$dateString, time=$timeString", "AlarmReceiver")
         } catch (e: Exception) {
-            Logger.e(e, "Failed to parse date/time from alarm intent: date=$dateString, time=$timeString", "AlarmReceiver")
+            Logger.e(e, "Unexpected error processing alarm intent for habitId: $habitId", "AlarmReceiver")
         }
     }
 }

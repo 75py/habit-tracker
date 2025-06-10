@@ -343,7 +343,7 @@ class HabitEditViewModelTest {
         assertTrue(navigationCompleted, "Navigation should complete after save operation")
         assertFalse(viewModel.uiState.value.isSaving, "isSaving should be false after completion")
         
-        // Verify notification scheduling was called
-        coVerify(exactly = 1) { mockManageNotificationsUseCase.scheduleNotificationsForTodayTasks() }
+        // Verify notification scheduling was called for the new habit
+        coVerify(exactly = 1) { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(expectedHabitId) }
     }
 }
