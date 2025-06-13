@@ -3,8 +3,22 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'composeApp/**'
+      - 'iosApp/**'
+      - '*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
   pull_request:
     types: [ opened, reopened, synchronize ]
+    paths:
+      - 'composeApp/**'
+      - 'iosApp/**'
+      - '*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
 
 jobs:
   test:
