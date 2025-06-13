@@ -3,24 +3,28 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - 'LICENSE'
-      - '*.png'
-      - '*.jpg'
-      - '*.jpeg'
-      - '*.gif'
+    paths:
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.swift'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
   pull_request:
     types: [ opened, reopened, synchronize ]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - 'LICENSE'
-      - '*.png'
-      - '*.jpg'
-      - '*.jpeg'
-      - '*.gif'
+    paths:
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.swift'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
 
 jobs:
   test:
