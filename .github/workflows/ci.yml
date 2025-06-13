@@ -3,22 +3,24 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'composeApp/**'
-      - 'iosApp/**'
-      - '*.gradle*'
-      - 'gradle/**'
-      - 'gradlew*'
-      - '.github/workflows/**'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'LICENSE'
+      - '*.png'
+      - '*.jpg'
+      - '*.jpeg'
+      - '*.gif'
   pull_request:
     types: [ opened, reopened, synchronize ]
-    paths:
-      - 'composeApp/**'
-      - 'iosApp/**'
-      - '*.gradle*'
-      - 'gradle/**'
-      - 'gradlew*'
-      - '.github/workflows/**'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'LICENSE'
+      - '*.png'
+      - '*.jpg'
+      - '*.jpeg'
+      - '*.gif'
 
 jobs:
   test:
