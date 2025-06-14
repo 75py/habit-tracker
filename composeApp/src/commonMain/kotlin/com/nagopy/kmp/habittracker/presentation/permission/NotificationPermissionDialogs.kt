@@ -13,8 +13,8 @@ fun NotificationPermissionExplanationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("通知の許可について") },
-        text = { Text("プッシュ通知を送るために許可が必要です。この後表示される画面でプッシュ通知を許可してください。") },
+        title = { Text("Notification Permission") },
+        text = { Text("Permission is required to send push notifications. Please allow push notifications in the next screen.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("OK")
@@ -22,7 +22,7 @@ fun NotificationPermissionExplanationDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("キャンセル")
+                Text("Cancel")
             }
         }
     )
@@ -38,8 +38,8 @@ fun ExactAlarmPermissionExplanationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("リマインダーの許可について") },
-        text = { Text("正確な時刻にリマインダーを送るため、次の画面でリマインダーの許可をしてください。") },
+        title = { Text("Reminder Permission") },
+        text = { Text("Please allow reminders in the next screen to send reminders at exact times.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("OK")
@@ -47,7 +47,7 @@ fun ExactAlarmPermissionExplanationDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("スキップ")
+                Text("Skip")
             }
         }
     )
@@ -62,8 +62,8 @@ fun NotificationPermissionDeniedDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("通知の許可が得られませんでした") },
-        text = { Text("通知の許可を得られませんでした。アプリは引き続き使用できますが、リマインダー通知は届きません。") },
+        title = { Text("Notification Permission Denied") },
+        text = { Text("Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.") },
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("OK")
