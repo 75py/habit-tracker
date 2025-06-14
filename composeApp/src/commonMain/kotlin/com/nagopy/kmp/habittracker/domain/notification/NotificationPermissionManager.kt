@@ -20,4 +20,21 @@ interface NotificationPermissionManager {
      * @return true if permission was granted or already enabled, false otherwise
      */
     suspend fun requestNotificationPermission(): Boolean
+    
+    /**
+     * Checks if exact alarm permission is available and granted.
+     * Only relevant on Android SDK 31+ where SCHEDULE_EXACT_ALARM permission is required.
+     * 
+     * @return true if exact alarm permission is granted or not required, false otherwise
+     */
+    suspend fun canScheduleExactAlarms(): Boolean
+    
+    /**
+     * Requests exact alarm permission from the user.
+     * Only relevant on Android SDK 31+ where SCHEDULE_EXACT_ALARM permission is required.
+     * On platforms that don't require this permission, this returns true immediately.
+     * 
+     * @return true if permission was granted or already enabled, false otherwise
+     */
+    suspend fun requestExactAlarmPermission(): Boolean
 }

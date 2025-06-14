@@ -38,4 +38,14 @@ class IOSNotificationPermissionManager : NotificationPermissionManager {
             }
         }
     }
+    
+    override suspend fun canScheduleExactAlarms(): Boolean {
+        // iOS doesn't require special permission for scheduling notifications
+        return true
+    }
+    
+    override suspend fun requestExactAlarmPermission(): Boolean {
+        // iOS doesn't require special permission for scheduling notifications
+        return true
+    }
 }
