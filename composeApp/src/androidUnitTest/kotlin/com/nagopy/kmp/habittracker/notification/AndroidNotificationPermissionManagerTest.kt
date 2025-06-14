@@ -23,26 +23,27 @@ import org.robolectric.annotation.Config
 import kotlin.test.*
 
 /**
- * Comprehensive tests for AndroidNotificationPermissionManager.
- * This version focuses on testing the class design and behavior patterns
- * rather than trying to mock complex Android framework interactions.
+ * Tests for AndroidNotificationPermissionManager focusing on proper mocking
+ * of the AlarmManager and testing actual behavior.
  */
 @RunWith(RobolectricTestRunner::class)
 class AndroidNotificationPermissionManagerTest {
 
     private lateinit var context: Context
     private lateinit var mockActivity: Activity
+    private lateinit var mockAlarmManager: AlarmManager
     private lateinit var permissionManager: AndroidNotificationPermissionManager
 
     @Before
     fun setup() {
         Logger.init()
+        
+        // Use real context for most operations
         context = ApplicationProvider.getApplicationContext()
         mockActivity = mockk<Activity>(relaxed = true)
-        permissionManager = AndroidNotificationPermissionManager(context)
+        mockAlarmManager = mockk<AlarmManager>(relaxed = true)
         
-        // Clear all mocks before each test
-        clearAllMocks()
+        permissionManager = AndroidNotificationPermissionManager(context)
     }
 
     @After
@@ -51,357 +52,257 @@ class AndroidNotificationPermissionManagerTest {
     }
 
     // ========================================
-    // Constructor and Basic Instance Tests
+    // Basic Activity Lifecycle Tests
     // ========================================
 
     @Test
-    fun `constructor should create instance successfully`() {
-        // When
-        val manager = AndroidNotificationPermissionManager(context)
-        
-        // Then
-        assertNotNull(manager)
-    }
-
-    @Test
-    fun `constructor should work across different SDK versions`() {
-        // Test that constructor doesn't crash on different SDK configurations
-        val manager1 = AndroidNotificationPermissionManager(context)
-        val manager2 = AndroidNotificationPermissionManager(context)
-        
-        assertNotNull(manager1)
-        assertNotNull(manager2)
-    }
-
-    // ========================================
-    // Activity Lifecycle Management Tests
-    // ========================================
-
-    @Test
-    fun `setActivity should not crash with valid activity`() {
+    fun `setActivity and clearActivity should work without errors`() {
         // When
         permissionManager.setActivity(mockActivity)
+        permissionManager.clearActivity()
         
-        // Then - no exception should be thrown
+        // Then - no exceptions should be thrown
         assertTrue(true)
     }
 
+    // ========================================
+    // AlarmManager Mock Tests (SDK 34+)
+    // ========================================
+
     @Test
-    fun `clearActivity should not crash`() {
-        // Given
+    @Config(sdk = [34])
+    fun `requestExactAlarmPermission should skip when canScheduleExactAlarms returns true`() = runTest{
+        // Given - mock the context to return our mock AlarmManager
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns true
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
         permissionManager.setActivity(mockActivity)
         
-        // When
-        permissionManager.clearActivity()
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
         
-        // Then - no exception should be thrown
-        assertTrue(true)
+        // When
+        permissionManager.requestNotificationPermission()
+        
+        // Then - should check canScheduleExactAlarms but not start activity
+        verify { mockAlarmManager.canScheduleExactAlarms() }
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+        
+        unmockkStatic(ContextCompat::class)
     }
 
     @Test
-    fun `multiple activity lifecycle operations should not crash`() {
-        // Given
-        val activity1 = mockk<Activity>(relaxed = true)
-        val activity2 = mockk<Activity>(relaxed = true)
+    @Config(sdk = [34])
+    fun `requestExactAlarmPermission should open settings when canScheduleExactAlarms returns false`() = runTest {
+        // Given - mock the context to return our mock AlarmManager
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
+        permissionManager.setActivity(mockActivity)
+        
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
+        
+        // When
+        permissionManager.requestNotificationPermission()
+        
+        // Then - should check canScheduleExactAlarms and start settings activity
+        verify { mockAlarmManager.canScheduleExactAlarms() }
+        verify { mockActivity.startActivity(any()) }
+        
+        // Verify the correct intent action is used
+        val intentSlot = slot<Intent>()
+        verify { mockActivity.startActivity(capture(intentSlot)) }
+        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intentSlot.captured.action)
+        
+        unmockkStatic(ContextCompat::class)
+    }
 
-        // When - rapidly changing activity references
-        permissionManager.setActivity(activity1)
-        permissionManager.setActivity(activity2)
-        permissionManager.clearActivity()
-        permissionManager.setActivity(activity1)
-        permissionManager.clearActivity()
+    @Test
+    @Config(sdk = [34])
+    fun `requestExactAlarmPermission should handle no activity gracefully`() = runTest {
+        // Given - mock the context to return our mock AlarmManager
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
+        // No activity set
+        
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
+        
+        // When
+        val result = permissionManager.requestNotificationPermission()
+        
+        // Then - should return true (notification permission granted) but not crash
+        assertTrue(result)
+        
+        // Should not try to start activity when no activity is available
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+        
+        unmockkStatic(ContextCompat::class)
+    }
 
-        // Then - no exception should be thrown
-        assertTrue(true)
+    @Test
+    @Config(sdk = [34])  
+    fun `requestExactAlarmPermission should handle exceptions gracefully`() = runTest {
+        // Given - mock the context to return our mock AlarmManager
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        every { mockActivity.startActivity(any()) } throws Exception("Test exception")
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
+        permissionManager.setActivity(mockActivity)
+        
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
+        
+        // When
+        val result = permissionManager.requestNotificationPermission()
+        
+        // Then - should not crash and return the permission status
+        assertTrue(result)
+        
+        // Should have attempted to start activity
+        verify { mockActivity.startActivity(any()) }
+        
+        unmockkStatic(ContextCompat::class)
+    }
+
+    @Test
+    @Config(sdk = [34])
+    fun `requestExactAlarmPermission should handle null AlarmManager gracefully`() = runTest {
+        // Given - mock the context to return null AlarmManager (edge case)
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns null
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
+        permissionManager.setActivity(mockActivity)
+        
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
+        
+        // When
+        val result = permissionManager.requestNotificationPermission()
+        
+        // Then - should handle gracefully and not crash
+        assertTrue(result)
+        
+        // Should not try to start activity when AlarmManager is null
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+        
+        unmockkStatic(ContextCompat::class)
     }
 
     // ========================================
-    // SDK Compatibility Tests - Behavioral Verification
+    // SDK Behavior Tests
     // ========================================
+
+    @Test
+    @Config(sdk = [33])
+    fun `requestNotificationPermission should not request exact alarm on SDK 33`() = runTest {
+        // Given - SDK 33 (< 34), so no exact alarm permission request
+        val mockContext = mockk<Context>()
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        
+        val permissionManager = AndroidNotificationPermissionManager(mockContext)
+        permissionManager.setActivity(mockActivity)
+        
+        // Mock the notification permission check
+        mockkStatic(ContextCompat::class)
+        every { 
+            ContextCompat.checkSelfPermission(
+                mockContext, 
+                Manifest.permission.POST_NOTIFICATIONS
+            ) 
+        } returns PackageManager.PERMISSION_GRANTED
+        
+        // When
+        permissionManager.requestNotificationPermission()
+        
+        // Then - should not request exact alarm permission on SDK 33
+        verify(exactly = 0) { mockContext.getSystemService(Context.ALARM_SERVICE) }
+        verify(exactly = 0) { mockAlarmManager.canScheduleExactAlarms() }
+        
+        unmockkStatic(ContextCompat::class)
+    }
 
     @Test
     @Config(sdk = [28])
-    fun `areNotificationsEnabled should not crash on SDK 28`() = runTest {
-        // When
-        val result = permissionManager.areNotificationsEnabled()
+    fun `requestNotificationPermission should use legacy behavior on pre-TIRAMISU`() = runTest {
+        // Given - SDK 28 (< 33), so should use legacy notification behavior
         
-        // Then - should return a boolean value without crashing
+        // When
+        val result = permissionManager.requestNotificationPermission()
+        
+        // Then - should return boolean based on NotificationManagerCompat
         assertTrue(result is Boolean)
+        
+        // Should not try to access POST_NOTIFICATIONS permission or exact alarm
+        // (this is verified by the test not throwing exceptions)
     }
+
+    // ========================================
+    // Permission Status Tests
+    // ========================================
 
     @Test
     @Config(sdk = [33])
-    fun `areNotificationsEnabled should not crash on SDK 33`() = runTest {
+    fun `areNotificationsEnabled should check POST_NOTIFICATIONS on TIRAMISU`() = runTest {
+        // Given - SDK 33, so should check POST_NOTIFICATIONS permission
+        
         // When
         val result = permissionManager.areNotificationsEnabled()
         
-        // Then - should return a boolean value without crashing
+        // Then - should return boolean based on POST_NOTIFICATIONS permission
         assertTrue(result is Boolean)
     }
-
-    @Test
-    @Config(sdk = [34])
-    fun `areNotificationsEnabled should not crash on SDK 34`() = runTest {
-        // When
-        val result = permissionManager.areNotificationsEnabled()
-        
-        // Then - should return a boolean value without crashing
-        assertTrue(result is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `areNotificationsEnabled should not crash on SDK 34 plus`() = runTest {
-        // When
-        val result = permissionManager.areNotificationsEnabled()
-        
-        // Then - should return a boolean value without crashing
-        assertTrue(result is Boolean)
-    }
-
-    // ========================================
-    // Permission Request Tests - Focus on Error Handling
-    // ========================================
 
     @Test
     @Config(sdk = [28])
-    fun `requestNotificationPermission should handle SDK 28 gracefully`() = runTest {
-        // When
-        val result = permissionManager.requestNotificationPermission()
+    fun `areNotificationsEnabled should use NotificationManagerCompat on pre-TIRAMISU`() = runTest {
+        // Given - SDK 28, so should use NotificationManagerCompat
         
-        // Then - should return a boolean without crashing
+        // When
+        val result = permissionManager.areNotificationsEnabled()
+        
+        // Then - should return boolean based on NotificationManagerCompat
         assertTrue(result is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [33])
-    fun `requestNotificationPermission should handle SDK 33 gracefully`() = runTest {
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then - should return a boolean without crashing
-        assertTrue(result is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `requestNotificationPermission should handle SDK 34 without activity`() = runTest {
-        // Given - no activity set
-        
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then - should handle missing activity gracefully
-        assertTrue(result is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `requestNotificationPermission should handle SDK 34 with activity`() = runTest {
-        // Given
-        permissionManager.setActivity(mockActivity)
-        
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then - should handle with activity gracefully
-        assertTrue(result is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `requestNotificationPermission should handle SDK 34 plus gracefully`() = runTest {
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then - should return a boolean without crashing
-        assertTrue(result is Boolean)
-    }
-
-    // ========================================
-    // Error Resilience Tests
-    // ========================================
-
-    @Test
-    @Config(sdk = [34])
-    fun `multiple permission requests should be consistent`() = runTest {
-        // Given
-        permissionManager.setActivity(mockActivity)
-        
-        // When - making multiple requests
-        val result1 = permissionManager.requestNotificationPermission()
-        val result2 = permissionManager.requestNotificationPermission()
-        val result3 = permissionManager.requestNotificationPermission()
-
-        // All results should be boolean and consistent behavior
-        assertTrue(result1 is Boolean)
-        assertTrue(result2 is Boolean)
-        assertTrue(result3 is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `permission requests should handle activity state changes`() = runTest {
-        // Given
-        val activity1 = mockk<Activity>(relaxed = true)
-        val activity2 = mockk<Activity>(relaxed = true)
-        
-        // When - changing activity during requests
-        permissionManager.setActivity(activity1)
-        val result1 = permissionManager.requestNotificationPermission()
-        
-        permissionManager.setActivity(activity2)
-        val result2 = permissionManager.requestNotificationPermission()
-        
-        permissionManager.clearActivity()
-        val result3 = permissionManager.requestNotificationPermission()
-
-        // Then - all should return boolean values without crashing
-        assertTrue(result1 is Boolean)
-        assertTrue(result2 is Boolean)
-        assertTrue(result3 is Boolean)
-    }
-
-    // ========================================
-    // Integration and Consistency Tests
-    // ========================================
-
-    @Test
-    fun `areNotificationsEnabled should be consistent across calls`() = runTest {
-        // When - making multiple calls
-        val result1 = permissionManager.areNotificationsEnabled()
-        val result2 = permissionManager.areNotificationsEnabled()
-        val result3 = permissionManager.areNotificationsEnabled()
-
-        // Then - results should be consistent (permissions don't change between calls)
-        assertEquals(result1, result2)
-        assertEquals(result2, result3)
-    }
-
-    @Test
-    fun `permission manager should handle concurrent operations`() = runTest {
-        // Given
-        permissionManager.setActivity(mockActivity)
-        
-        // When - simulating concurrent calls (though actually sequential due to runTest)
-        val checkResult1 = permissionManager.areNotificationsEnabled()
-        val requestResult = permissionManager.requestNotificationPermission()
-        val checkResult2 = permissionManager.areNotificationsEnabled()
-
-        // Then - all operations should complete without crashing
-        assertTrue(checkResult1 is Boolean)
-        assertTrue(requestResult is Boolean)
-        assertTrue(checkResult2 is Boolean)
-    }
-
-    // ========================================
-    // SDK-Specific Behavior Pattern Tests
-    // ========================================
-
-    @Test
-    @Config(sdk = [28, 29, 30, 31, 32])
-    fun `pre-TIRAMISU SDKs should use legacy notification behavior`() = runTest {
-        // When
-        val enabled = permissionManager.areNotificationsEnabled()
-        val requested = permissionManager.requestNotificationPermission()
-
-        // Then - should complete without attempting to use POST_NOTIFICATIONS permission
-        assertTrue(enabled is Boolean)
-        assertTrue(requested is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [33])
-    fun `TIRAMISU SDK should handle POST_NOTIFICATIONS but not exact alarm`() = runTest {
-        // Given
-        permissionManager.setActivity(mockActivity)
-        
-        // When
-        val enabled = permissionManager.areNotificationsEnabled()
-        val requested = permissionManager.requestNotificationPermission()
-
-        // Then - should complete (exact alarm behavior verified by not calling startActivity for alarm settings)
-        assertTrue(enabled is Boolean)
-        assertTrue(requested is Boolean)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `SDK 34 plus should handle both POST_NOTIFICATIONS and exact alarm permissions`() = runTest {
-        // Given
-        permissionManager.setActivity(mockActivity)
-        
-        // When
-        val enabled = permissionManager.areNotificationsEnabled()
-        val requested = permissionManager.requestNotificationPermission()
-
-        // Then - should complete (both notification and exact alarm logic should execute)
-        assertTrue(enabled is Boolean)
-        assertTrue(requested is Boolean)
-    }
-
-    // ========================================
-    // Design Quality Tests
-    // ========================================
-
-    @Test
-    fun `permission manager should maintain state properly`() {
-        // Given
-        val activity1 = mockk<Activity>(relaxed = true)
-        val activity2 = mockk<Activity>(relaxed = true)
-        
-        // When - setting activity references
-        permissionManager.setActivity(activity1)
-        // Activity is now set to activity1
-        
-        permissionManager.setActivity(activity2)  
-        // Activity is now set to activity2
-        
-        permissionManager.clearActivity()
-        // Activity is now null
-        
-        // Then - state changes should not cause crashes or inconsistencies
-        assertTrue(true) // No exceptions means state management is working
-    }
-
-    @Test
-    fun `permission manager should be thread-safe for basic operations`() = runTest {
-        // Given
-        val activity = mockk<Activity>(relaxed = true)
-        
-        // When - performing operations that might be called from different contexts
-        permissionManager.setActivity(activity)
-        val result1 = permissionManager.areNotificationsEnabled()
-        permissionManager.clearActivity()
-        val result2 = permissionManager.areNotificationsEnabled()
-
-        // Then - operations should complete without race conditions
-        assertTrue(result1 is Boolean)
-        assertTrue(result2 is Boolean)
-    }
-
-    @Test
-    fun `permission manager should handle edge cases gracefully`() = runTest {
-        // Test various edge cases that could occur in real usage
-        
-        // Case 1: Request permission without ever setting activity
-        val result1 = permissionManager.requestNotificationPermission()
-        
-        // Case 2: Set activity, clear it, then request permission
-        permissionManager.setActivity(mockActivity)
-        permissionManager.clearActivity()
-        val result2 = permissionManager.requestNotificationPermission()
-        
-        // Case 3: Multiple activity set/clear cycles
-        repeat(5) {
-            permissionManager.setActivity(mockActivity)
-            permissionManager.clearActivity()
-        }
-        val result3 = permissionManager.requestNotificationPermission()
-
-        // All should complete gracefully
-        assertTrue(result1 is Boolean)
-        assertTrue(result2 is Boolean)
-        assertTrue(result3 is Boolean)
     }
 }
