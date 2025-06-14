@@ -11,7 +11,6 @@ import com.nagopy.kmp.habittracker.presentation.permission.*
 import com.nagopy.kmp.habittracker.presentation.today.TodayScreen
 import com.nagopy.kmp.habittracker.presentation.today.TodayViewModel
 import com.nagopy.kmp.habittracker.util.Logger
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 sealed class Screen {
