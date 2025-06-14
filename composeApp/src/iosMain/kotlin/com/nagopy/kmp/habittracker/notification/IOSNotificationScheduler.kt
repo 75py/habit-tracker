@@ -148,7 +148,10 @@ class IOSNotificationScheduler(
     }
 
     private fun generateNotificationId(task: Task): String {
-        return "${task.habitId}_${task.date}_${task.scheduledTime}"
+        // Generate an ID based on habit ID and date only
+        // This ensures all tasks for the same habit on the same day share the same notification ID,
+        // causing new notifications to replace existing ones instead of creating multiple notifications
+        return "${task.habitId}_${task.date}"
     }
 
     fun setupNotificationCategories() {
@@ -176,13 +179,14 @@ class IOSNotificationScheduler(
             val identifier = response.notification.request.identifier
             val parts = identifier.split("_")
             
-            if (parts.size >= 3) {
+            if (parts.size >= 2) {
                 try {
                     val habitId = parts[0].toLong()
                     val date = kotlinx.datetime.LocalDate.parse(parts[1])
-                    val time = kotlinx.datetime.LocalTime.parse(parts[2])
+                    // Use default time since we're now using habit-level notifications
+                    val time = kotlinx.datetime.LocalTime(9, 0)
                     
-                    Logger.d("Processing notification response for habitId: $habitId, date: $date, time: $time", "IOSNotificationScheduler")
+                    Logger.d("Processing notification response for habitId: $habitId, date: $date", "IOSNotificationScheduler")
                     
                     // Handle completion in background
                     CoroutineScope(Dispatchers.Default).launch {
@@ -216,7 +220,7 @@ class IOSNotificationScheduler(
                     Logger.e(e, "Unexpected error parsing notification identifier: $identifier", "IOSNotificationScheduler")
                 }
             } else {
-                Logger.w("Invalid notification identifier format (expected at least 3 parts): $identifier", "IOSNotificationScheduler")
+                Logger.w("Invalid notification identifier format (expected at least 2 parts): $identifier", "IOSNotificationScheduler")
             }
         }
     }

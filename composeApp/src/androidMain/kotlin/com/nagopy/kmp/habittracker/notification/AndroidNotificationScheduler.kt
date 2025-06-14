@@ -229,8 +229,9 @@ open class AndroidNotificationScheduler(
     }
 
     private fun generateNotificationId(task: Task): Int {
-        // Generate a unique ID based on habit ID, date, and time
-        // This ensures each task has a unique notification ID
-        return "${task.habitId}_${task.date}_${task.scheduledTime}".hashCode()
+        // Generate an ID based on habit ID and date only
+        // This ensures all tasks for the same habit on the same day share the same notification ID,
+        // causing new notifications to replace existing ones instead of creating multiple notifications
+        return "${task.habitId}_${task.date}".hashCode()
     }
 }
