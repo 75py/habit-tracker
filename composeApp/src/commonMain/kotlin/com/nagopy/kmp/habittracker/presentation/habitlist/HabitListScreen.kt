@@ -21,6 +21,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
+import habittracker.composeapp.generated.resources.Res
+import habittracker.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Compose screen for displaying the list of habits.
@@ -39,12 +42,12 @@ fun HabitListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Habits") },
+                title = { Text(stringResource(Res.string.my_habits)) },
                 actions = {
                     IconButton(onClick = onTodayClick) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
-                            contentDescription = "Today's Tasks"
+                            contentDescription = stringResource(Res.string.todays_tasks_content_description)
                         )
                     }
                 }
@@ -54,7 +57,7 @@ fun HabitListScreen(
             FloatingActionButton(
                 onClick = onAddHabitClick
             ) {
-                Text("+")
+                Text(stringResource(Res.string.add_button))
             }
         }
     ) { paddingValues ->
@@ -80,13 +83,13 @@ fun HabitListScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Error: ${uiState.error}",
+                        text = stringResource(Res.string.error_prefix, uiState.error),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { viewModel.refresh() }) {
-                        Text("Retry")
+                        Text(stringResource(Res.string.retry))
                     }
                 }
             }
@@ -102,13 +105,13 @@ fun HabitListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "No habits yet",
+                            text = stringResource(Res.string.no_habits_yet),
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Tap the + button to add your first habit",
+                            text = stringResource(Res.string.add_first_habit),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -192,7 +195,7 @@ private fun HabitItem(
             if (!habit.isActive) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Inactive",
+                    text = stringResource(Res.string.inactive),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -204,7 +207,7 @@ private fun HabitItem(
             IconButton(onClick = onEdit) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit habit",
+                    contentDescription = stringResource(Res.string.edit_habit_content_description),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -213,7 +216,7 @@ private fun HabitItem(
             IconButton(onClick = { showDeleteConfirmation = true }) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete habit",
+                    contentDescription = stringResource(Res.string.delete_habit_content_description),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -224,8 +227,8 @@ private fun HabitItem(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Habit") },
-            text = { Text("Are you sure you want to delete \"${habit.name}\"? This action cannot be undone.") },
+            title = { Text(stringResource(Res.string.delete_habit)) },
+            text = { Text(stringResource(Res.string.delete_habit_confirmation, habit.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -233,12 +236,12 @@ private fun HabitItem(
                         showDeleteConfirmation = false
                     }
                 ) {
-                    Text("Delete")
+                    Text(stringResource(Res.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )

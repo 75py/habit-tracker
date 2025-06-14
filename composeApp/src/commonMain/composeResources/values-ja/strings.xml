@@ -51,4 +51,30 @@
     <string name="failed_to_save_habit">習慣の保存に失敗しました</string>
     <string name="habit_not_found">習慣が見つかりません</string>
     <string name="failed_to_complete_task">タスクの完了に失敗しました: %s</string>
+    
+    <!-- Habit List Screen -->
+    <string name="my_habits">マイ習慣</string>
+    <string name="todays_tasks_content_description">今日のタスク</string>
+    <string name="no_habits_yet">習慣がまだありません</string>
+    <string name="add_first_habit">+ ボタンをタップして最初の習慣を追加しましょう</string>
+    <string name="inactive">無効</string>
+    <string name="edit_habit_content_description">習慣を編集</string>
+    <string name="delete_habit_content_description">習慣を削除</string>
+    <string name="delete_habit">習慣を削除</string>
+    <string name="delete_habit_confirmation">「%s」を削除してもよろしいですか？この操作は取り消せません。</string>
+    <string name="delete">削除</string>
+    
+    <!-- Permission Dialogs -->
+    <string name="notification_permission">通知許可</string>
+    <string name="notification_permission_explanation">プッシュ通知を送信するには許可が必要です。次の画面でプッシュ通知を許可してください。</string>
+    <string name="ok">OK</string>
+    <string name="reminder_permission">リマインダー許可</string>
+    <string name="reminder_permission_explanation">正確な時刻にリマインダーを送信するため、次の画面でリマインダーを許可してください。</string>
+    <string name="skip">スキップ</string>
+    <string name="notification_permission_denied">通知許可が拒否されました</string>
+    <string name="notification_permission_denied_explanation">通知許可が付与されませんでした。アプリは引き続き使用できますが、リマインダー通知は受信できません。</string>
+    
+    <!-- Misc -->
+    <string name="hello_platform">こんにちは、%s！</string>
+    <string name="add_button">+</string>
 </resources>

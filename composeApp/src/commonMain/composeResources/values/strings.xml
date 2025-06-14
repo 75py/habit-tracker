@@ -51,4 +51,30 @@
     <string name="failed_to_save_habit">Failed to save habit</string>
     <string name="habit_not_found">Habit not found</string>
     <string name="failed_to_complete_task">Failed to complete task: %s</string>
+    
+    <!-- Habit List Screen -->
+    <string name="my_habits">My Habits</string>
+    <string name="todays_tasks_content_description">Today's Tasks</string>
+    <string name="no_habits_yet">No habits yet</string>
+    <string name="add_first_habit">Tap the + button to add your first habit</string>
+    <string name="inactive">Inactive</string>
+    <string name="edit_habit_content_description">Edit habit</string>
+    <string name="delete_habit_content_description">Delete habit</string>
+    <string name="delete_habit">Delete Habit</string>
+    <string name="delete_habit_confirmation">Are you sure you want to delete "%s"? This action cannot be undone.</string>
+    <string name="delete">Delete</string>
+    
+    <!-- Permission Dialogs -->
+    <string name="notification_permission">Notification Permission</string>
+    <string name="notification_permission_explanation">Permission is required to send push notifications. Please allow push notifications in the next screen.</string>
+    <string name="ok">OK</string>
+    <string name="reminder_permission">Reminder Permission</string>
+    <string name="reminder_permission_explanation">Please allow reminders in the next screen to send reminders at exact times.</string>
+    <string name="skip">Skip</string>
+    <string name="notification_permission_denied">Notification Permission Denied</string>
+    <string name="notification_permission_denied_explanation">Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.</string>
+    
+    <!-- Misc -->
+    <string name="hello_platform">Hello, %s!</string>
+    <string name="add_button">+</string>
 </resources>
