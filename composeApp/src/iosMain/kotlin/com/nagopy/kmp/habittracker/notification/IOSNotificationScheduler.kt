@@ -39,11 +39,15 @@ class IOSNotificationScheduler(
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
+        Logger.d("Attempting to schedule notification for task: ${task.habitName} at ${task.scheduledTime}", "IOSNotificationScheduler")
+        
         if (!areNotificationsEnabled()) {
+            Logger.w("Notifications are not enabled, skipping notification for task: ${task.habitName}", "IOSNotificationScheduler")
             return
         }
 
         val identifier = generateNotificationId(task)
+        Logger.d("Generated notification ID: $identifier", "IOSNotificationScheduler")
         
         // Fetch the actual habit to get current name and description
         val habit = habitRepository.getHabit(task.habitId)
@@ -85,12 +89,15 @@ class IOSNotificationScheduler(
         // Schedule notification
         center.addNotificationRequest(request) { error ->
             if (error != null) {
-                // Handle error - in production you might want to log this
+                Logger.e(Exception("Notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule notification for task: ${task.habitName}", "IOSNotificationScheduler")
+            } else {
+                Logger.i("Successfully scheduled notification for task: ${task.habitName} at ${task.scheduledTime}", "IOSNotificationScheduler")
             }
         }
     }
 
     override suspend fun scheduleTaskNotifications(tasks: List<Task>) {
+        Logger.d("Scheduling ${tasks.size} task notifications", "IOSNotificationScheduler")
         tasks.forEach { task ->
             scheduleTaskNotification(task)
         }
@@ -98,11 +105,14 @@ class IOSNotificationScheduler(
 
     override suspend fun cancelTaskNotification(task: Task) {
         val identifier = generateNotificationId(task)
+        Logger.d("Canceling notification for task: ${task.habitName} with identifier: $identifier", "IOSNotificationScheduler")
         center.removePendingNotificationRequestsWithIdentifiers(listOf(identifier))
         center.removeDeliveredNotificationsWithIdentifiers(listOf(identifier))
+        Logger.i("Successfully canceled notification for task: ${task.habitName}", "IOSNotificationScheduler")
     }
 
     override suspend fun cancelHabitNotifications(habitId: Long) {
+        Logger.d("Canceling notifications for habitId: $habitId", "IOSNotificationScheduler")
         // Get all pending notifications and filter by habit ID
         center.getPendingNotificationRequestsWithCompletionHandler { requests ->
             @Suppress("UNCHECKED_CAST")
@@ -116,32 +126,46 @@ class IOSNotificationScheduler(
                 }
             } ?: emptyList()
             
+            Logger.d("Found ${identifiersToCancel.size} notifications to cancel for habitId: $habitId", "IOSNotificationScheduler")
+            
             if (identifiersToCancel.isNotEmpty()) {
                 center.removePendingNotificationRequestsWithIdentifiers(identifiersToCancel)
                 center.removeDeliveredNotificationsWithIdentifiers(identifiersToCancel)
+                Logger.i("Successfully canceled ${identifiersToCancel.size} notifications for habitId: $habitId", "IOSNotificationScheduler")
+            } else {
+                Logger.d("No notifications found to cancel for habitId: $habitId", "IOSNotificationScheduler")
             }
         }
     }
 
     override suspend fun cancelAllNotifications() {
+        Logger.d("Canceling all notifications", "IOSNotificationScheduler")
         center.removeAllPendingNotificationRequests()
         center.removeAllDeliveredNotifications()
+        Logger.i("Successfully canceled all notifications", "IOSNotificationScheduler")
     }
 
     override suspend fun areNotificationsEnabled(): Boolean {
         return kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
             center.getNotificationSettingsWithCompletionHandler { settings ->
                 val isEnabled = settings?.authorizationStatus == UNAuthorizationStatusAuthorized
+                Logger.d("Notification authorization status check: enabled=$isEnabled", "IOSNotificationScheduler")
                 continuation.resumeWith(Result.success(isEnabled))
             }
         }
     }
 
     override suspend fun requestNotificationPermission(): Boolean {
+        Logger.d("Requesting notification permission", "IOSNotificationScheduler")
         return kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
             center.requestAuthorizationWithOptions(
                 UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
-            ) { granted, _ ->
+            ) { granted, error ->
+                if (error != null) {
+                    Logger.e(Exception("Permission request failed: ${error.localizedDescription}"), "Failed to request notification permission", "IOSNotificationScheduler")
+                } else {
+                    Logger.i("Notification permission request result: granted=$granted", "IOSNotificationScheduler")
+                }
                 continuation.resumeWith(Result.success(granted))
             }
         }
@@ -155,6 +179,7 @@ class IOSNotificationScheduler(
     }
 
     fun setupNotificationCategories() {
+        Logger.d("Setting up notification categories", "IOSNotificationScheduler")
         // Create the complete action
         val completeAction = UNNotificationAction.actionWithIdentifier(
             identifier = COMPLETE_ACTION,
@@ -172,6 +197,7 @@ class IOSNotificationScheduler(
 
         // Register the category
         center.setNotificationCategories(setOf(category))
+        Logger.i("Successfully set up notification categories", "IOSNotificationScheduler")
     }
 
     fun handleNotificationResponse(response: UNNotificationResponse) {
