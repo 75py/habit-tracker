@@ -251,16 +251,14 @@ class AndroidNotificationPermissionManagerTest {
 
     @Test
     @Config(sdk = [34])
-    fun `requestNotificationPermission should also request exact alarm when permission granted on SDK 34`() = runTest {
-        // Given - SDK 34, POST_NOTIFICATIONS granted, exact alarm not granted
+    fun `requestNotificationPermission should only request notification permission when granted on SDK 34`() = runTest {
+        // Given - SDK 34, POST_NOTIFICATIONS granted
         every { 
             ContextCompat.checkSelfPermission(
                 mockContext, 
                 Manifest.permission.POST_NOTIFICATIONS
             ) 
         } returns PackageManager.PERMISSION_GRANTED
-        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
-        every { mockAlarmManager.canScheduleExactAlarms() } returns false
         
         permissionManager.setActivity(mockActivity)
         
@@ -269,52 +267,20 @@ class AndroidNotificationPermissionManagerTest {
         
         // Then
         assertTrue(result)
-        verify { mockAlarmManager.canScheduleExactAlarms() }
-        verify { mockActivity.startActivity(any()) }
-        
-        // Verify the correct intent action is used
-        val intentSlot = slot<Intent>()
-        verify { mockActivity.startActivity(capture(intentSlot)) }
-        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intentSlot.captured.action)
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `requestNotificationPermission should skip exact alarm request when already granted on SDK 34`() = runTest {
-        // Given - SDK 34, POST_NOTIFICATIONS granted, exact alarm already granted
-        every { 
-            ContextCompat.checkSelfPermission(
-                mockContext, 
-                Manifest.permission.POST_NOTIFICATIONS
-            ) 
-        } returns PackageManager.PERMISSION_GRANTED
-        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
-        every { mockAlarmManager.canScheduleExactAlarms() } returns true
-        
-        permissionManager.setActivity(mockActivity)
-        
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then
-        assertTrue(result)
-        verify { mockAlarmManager.canScheduleExactAlarms() }
-        // Should not start activity if exact alarm permission already granted
+        // Should not request exact alarm permission automatically
         verify(exactly = 0) { mockActivity.startActivity(any()) }
     }
 
     @Test
     @Config(sdk = [34])
-    fun `requestNotificationPermission should request both permissions when notification not granted on SDK 34`() = runTest {
-        // Given - SDK 34, POST_NOTIFICATIONS not granted, exact alarm not granted
+    fun `requestNotificationPermission should only request notification permission on SDK 34`() = runTest {
+        // Given - SDK 34, POST_NOTIFICATIONS not granted
         every { 
             ContextCompat.checkSelfPermission(
                 mockContext, 
                 Manifest.permission.POST_NOTIFICATIONS
             ) 
         } returns PackageManager.PERMISSION_DENIED
-        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
-        every { mockAlarmManager.canScheduleExactAlarms() } returns false
         
         permissionManager.setActivity(mockActivity)
         
@@ -331,23 +297,20 @@ class AndroidNotificationPermissionManagerTest {
                 AndroidNotificationPermissionManager.NOTIFICATION_PERMISSION_REQUEST_CODE
             )
         }
-        // Should also request exact alarm permission
-        verify { mockAlarmManager.canScheduleExactAlarms() }
-        verify { mockActivity.startActivity(any()) }
+        // Should not request exact alarm permission automatically
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
     }
 
     @Test
     @Config(sdk = [34])
     fun `requestNotificationPermission should handle no activity gracefully on SDK 34`() = runTest {
-        // Given - SDK 34, no activity, exact alarm not granted
+        // Given - SDK 34, no activity
         every { 
             ContextCompat.checkSelfPermission(
                 mockContext, 
                 Manifest.permission.POST_NOTIFICATIONS
             ) 
         } returns PackageManager.PERMISSION_GRANTED
-        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
-        every { mockAlarmManager.canScheduleExactAlarms() } returns false
         
         // No activity set
         
@@ -362,14 +325,154 @@ class AndroidNotificationPermissionManagerTest {
 
     @Test
     @Config(sdk = [34])
-    fun `requestNotificationPermission should handle exact alarm exception gracefully on SDK 34`() = runTest {
-        // Given - SDK 34, exact alarm request throws exception
+    fun `requestNotificationPermission should not request exact alarm on SDK 34`() = runTest {
+        // Given - SDK 34, POST_NOTIFICATIONS granted
         every { 
             ContextCompat.checkSelfPermission(
                 mockContext, 
                 Manifest.permission.POST_NOTIFICATIONS
             ) 
         } returns PackageManager.PERMISSION_GRANTED
+        
+        permissionManager.setActivity(mockActivity)
+        
+        // When
+        val result = permissionManager.requestNotificationPermission()
+        
+        // Then - should not request exact alarm automatically
+        assertTrue(result)
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+    }
+
+    // ========================================
+    // canScheduleExactAlarms Tests
+    // ========================================
+
+    @Test
+    @Config(sdk = [31])
+    fun `canScheduleExactAlarms should return true when permission granted on SDK 31+`() = runTest {
+        // Given - SDK 31+, exact alarm permission granted
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns true
+        
+        // When
+        val result = permissionManager.canScheduleExactAlarms()
+        
+        // Then
+        assertTrue(result)
+        verify { mockAlarmManager.canScheduleExactAlarms() }
+    }
+
+    @Test
+    @Config(sdk = [31])
+    fun `canScheduleExactAlarms should return false when permission not granted on SDK 31+`() = runTest {
+        // Given - SDK 31+, exact alarm permission not granted
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        
+        // When
+        val result = permissionManager.canScheduleExactAlarms()
+        
+        // Then
+        assertFalse(result)
+        verify { mockAlarmManager.canScheduleExactAlarms() }
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `canScheduleExactAlarms should return true on SDK 30 and below`() = runTest {
+        // Given - SDK 30 (below 31)
+        
+        // When
+        val result = permissionManager.canScheduleExactAlarms()
+        
+        // Then
+        assertTrue(result)
+        // Should not check AlarmManager on older SDK versions
+        verify(exactly = 0) { mockContext.getSystemService(Context.ALARM_SERVICE) }
+    }
+
+    // ========================================
+    // requestExactAlarmPermission Tests
+    // ========================================
+
+    @Test
+    @Config(sdk = [31])
+    fun `requestExactAlarmPermission should request permission when not granted on SDK 31+`() = runTest {
+        // Given - SDK 31+, permission not granted
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        
+        permissionManager.setActivity(mockActivity)
+        
+        // When
+        val result = permissionManager.requestExactAlarmPermission()
+        
+        // Then
+        assertFalse(result)
+        verify { mockActivity.startActivity(any()) }
+        
+        // Verify the correct intent action is used
+        val intentSlot = slot<Intent>()
+        verify { mockActivity.startActivity(capture(intentSlot)) }
+        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intentSlot.captured.action)
+    }
+
+    @Test
+    @Config(sdk = [31])
+    fun `requestExactAlarmPermission should return true when permission already granted on SDK 31+`() = runTest {
+        // Given - SDK 31+, permission already granted
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns true
+        
+        permissionManager.setActivity(mockActivity)
+        
+        // When
+        val result = permissionManager.requestExactAlarmPermission()
+        
+        // Then
+        assertTrue(result)
+        // Should not start activity if permission already granted
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `requestExactAlarmPermission should return true on SDK 30 and below`() = runTest {
+        // Given - SDK 30 (below 31)
+        
+        // When
+        val result = permissionManager.requestExactAlarmPermission()
+        
+        // Then
+        assertTrue(result)
+        // Should not check AlarmManager or start activity on older SDK versions
+        verify(exactly = 0) { mockContext.getSystemService(Context.ALARM_SERVICE) }
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+    }
+
+    @Test
+    @Config(sdk = [31])
+    fun `requestExactAlarmPermission should handle no activity gracefully on SDK 31+`() = runTest {
+        // Given - SDK 31+, no activity set
+        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
+        every { mockAlarmManager.canScheduleExactAlarms() } returns false
+        
+        // No activity set
+        
+        // When
+        val result = permissionManager.requestExactAlarmPermission()
+        
+        // Then
+        assertFalse(result)
+        // Should not try to start activity when no activity is available
+        verify(exactly = 0) { mockActivity.startActivity(any()) }
+    }
+
+    @Test
+    @Config(sdk = [31])
+    fun `requestExactAlarmPermission should handle exception gracefully on SDK 31+`() = runTest {
+        // Given - SDK 31+, startActivity throws exception
         every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns mockAlarmManager
         every { mockAlarmManager.canScheduleExactAlarms() } returns false
         every { mockActivity.startActivity(any()) } throws Exception("Test exception")
@@ -377,34 +480,11 @@ class AndroidNotificationPermissionManagerTest {
         permissionManager.setActivity(mockActivity)
         
         // When
-        val result = permissionManager.requestNotificationPermission()
+        val result = permissionManager.requestExactAlarmPermission()
         
         // Then - should not crash
-        assertTrue(result)
+        assertFalse(result)
         verify { mockActivity.startActivity(any()) }
-    }
-
-    @Test
-    @Config(sdk = [34])
-    fun `requestNotificationPermission should handle null AlarmManager gracefully on SDK 34`() = runTest {
-        // Given - SDK 34, null AlarmManager
-        every { 
-            ContextCompat.checkSelfPermission(
-                mockContext, 
-                Manifest.permission.POST_NOTIFICATIONS
-            ) 
-        } returns PackageManager.PERMISSION_GRANTED
-        every { mockContext.getSystemService(Context.ALARM_SERVICE) } returns null
-        
-        permissionManager.setActivity(mockActivity)
-        
-        // When
-        val result = permissionManager.requestNotificationPermission()
-        
-        // Then - should handle gracefully
-        assertTrue(result)
-        // Should not crash when AlarmManager is null
-        verify(exactly = 0) { mockActivity.startActivity(any()) }
     }
 
     // ========================================
