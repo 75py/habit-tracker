@@ -73,7 +73,7 @@ fun TodayScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error),
+                        text = stringResource(Res.string.error_prefix, uiState.error ?: "Unknown error"),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )

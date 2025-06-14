@@ -80,11 +80,13 @@ class HabitEditViewModel(
         }
     }
 
-    suspend fun updateName(name: String) {
-        _uiState.value = _uiState.value.copy(
-            name = name,
-            nameError = if (name.isBlank()) getString(Res.string.name_is_required) else null
-        )
+    fun updateName(name: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                name = name,
+                nameError = if (name.isBlank()) getString(Res.string.name_is_required) else null
+            )
+        }
     }
 
     fun updateDescription(description: String) {
@@ -138,7 +140,9 @@ class HabitEditViewModel(
         
         // Validate form
         if (currentState.name.isBlank()) {
-            _uiState.value = currentState.copy(nameError = getString(Res.string.name_is_required))
+            viewModelScope.launch {
+                _uiState.value = currentState.copy(nameError = getString(Res.string.name_is_required))
+            }
             return
         }
 

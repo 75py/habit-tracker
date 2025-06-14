@@ -83,7 +83,7 @@ fun HabitListScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error),
+                        text = stringResource(Res.string.error_prefix, uiState.error ?: "Unknown error"),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyLarge
                     )
