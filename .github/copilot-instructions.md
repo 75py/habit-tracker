@@ -26,6 +26,7 @@ This is a cross-platform habit tracking application built with Kotlin Multiplatf
 2. **Follow the established patterns** documented in the architecture and coding standards
 3. **Maintain consistency** with existing code structure and naming conventions as documented in the coding standards
 4. **Refer to specifications** when implementing UI components or business logic
+5. **Update documentation proactively** when making code changes - always consider and update relevant documentation in `/docs` to keep it synchronized with code modifications, even without explicit instructions
 
 ## Communication Guidelines
 
