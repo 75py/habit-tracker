@@ -34,6 +34,18 @@
 			path = Configuration;
 			sourceTree = "<group>";
 		};
+		E21035972DFD58EB000E92C8 /* commonMain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = commonMain;
+			path = ../composeApp/src/commonMain;
+			sourceTree = SOURCE_ROOT;
+		};
+		E21035AF2DFD58EB000E92C8 /* iosMain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = iosMain;
+			path = ../composeApp/src/iosMain;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +62,7 @@
 		B9DA97A82DC1472C00A4DA20 = {
 			isa = PBXGroup;
 			children = (
+				E21035502DFD58CA000E92C8 /* composeApp */,
 				B9DA98002DC14AA900A4DA20 /* Configuration */,
 				B9DA97B32DC1472C00A4DA20 /* iosApp */,
 				B9DA97B22DC1472C00A4DA20 /* Products */,
@@ -62,6 +75,15 @@
 				B9DA97B12DC1472C00A4DA20 /* HabitTracker.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E21035502DFD58CA000E92C8 /* composeApp */ = {
+			isa = PBXGroup;
+			children = (
+				E21035972DFD58EB000E92C8 /* commonMain */,
+				E21035AF2DFD58EB000E92C8 /* iosMain */,
+			);
+			path = composeApp;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
