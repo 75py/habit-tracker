@@ -19,7 +19,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
+import habittracker.composeapp.generated.resources.Res
+import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Compose screen for displaying today's tasks.
@@ -36,12 +39,12 @@ fun TodayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Today's Tasks") },
+                title = { Text(stringResource(Res.string.todays_tasks)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 }
@@ -70,7 +73,7 @@ fun TodayScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Error: ${uiState.error}",
+                        text = stringResource(Res.string.error_prefix, uiState.error ?: "Unknown error"),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -78,7 +81,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Button(onClick = viewModel::refresh) {
-                        Text("Retry")
+                        Text(stringResource(Res.string.retry))
                     }
                 }
             }
@@ -91,7 +94,7 @@ fun TodayScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No tasks scheduled for today",
+                        text = stringResource(Res.string.no_tasks_scheduled),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

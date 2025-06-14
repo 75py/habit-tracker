@@ -7,11 +7,14 @@ import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
+import habittracker.composeapp.generated.resources.Res
+import habittracker.composeapp.generated.resources.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 
 /**
  * ViewModel for the Today screen.
@@ -99,7 +102,7 @@ class TodayViewModel(
                 _uiState.value = _uiState.value.copy(
                     tasks = revertedTasks,
                     completedTaskKeys = _uiState.value.completedTaskKeys - taskKey,
-                    error = "Failed to complete task: ${exception.message}"
+                    error = getString(Res.string.failed_to_complete_task, exception.message ?: "Unknown error")
                 )
             }
         }
