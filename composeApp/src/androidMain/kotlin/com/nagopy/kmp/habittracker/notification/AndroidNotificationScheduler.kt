@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.nagopy.kmp.habittracker.domain.model.Task
+import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.util.Logger
@@ -20,6 +21,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.plus
 import java.time.ZoneId
 
 /**
@@ -146,10 +150,29 @@ open class AndroidNotificationScheduler(
     }
 
     override suspend fun cancelHabitNotifications(habitId: Long) {
-        // This is a simplified implementation
-        // In a production app, you might want to store scheduled notification IDs
-        // and cancel them individually
-        cancelAllNotifications()
+        Logger.d("Cancelling notifications for habitId: $habitId", "AndroidNotificationScheduler")
+        
+        val habit = habitRepository.getHabit(habitId)
+        if (habit == null) {
+            Logger.w("Habit not found for habitId: $habitId", "AndroidNotificationScheduler")
+            return
+        }
+        
+        // Cancel notifications for the next few days to cover potential scheduled tasks
+        val today = kotlinx.datetime.Clock.System.now()
+            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
+        
+        // Cancel notifications for today and the next 7 days
+        for (dayOffset in 0..7) {
+            val date = today.plus(kotlinx.datetime.DatePeriod(days = dayOffset))
+            val tasks = generateTasksForHabit(habit, date)
+            
+            tasks.forEach { task ->
+                cancelTaskNotification(task)
+            }
+        }
+        
+        Logger.i("Cancelled all notifications for habitId: $habitId", "AndroidNotificationScheduler")
     }
 
     override suspend fun cancelAllNotifications() {
@@ -232,5 +255,81 @@ open class AndroidNotificationScheduler(
         // Generate a unique ID based on habit ID, date, and time
         // This ensures each task has a unique notification ID
         return "${task.habitId}_${task.date}_${task.scheduledTime}".hashCode()
+    }
+    
+    /**
+     * Generates task instances for a specific habit on a given date.
+     * This is used for cancelling notifications for specific habits.
+     */
+    private suspend fun generateTasksForHabit(habit: Habit, date: kotlinx.datetime.LocalDate): List<Task> {
+        return when (habit.frequencyType) {
+            com.nagopy.kmp.habittracker.domain.model.FrequencyType.ONCE_DAILY -> {
+                habit.scheduledTimes.map { time ->
+                    createTaskForCancellation(habit, date, time)
+                }
+            }
+            com.nagopy.kmp.habittracker.domain.model.FrequencyType.HOURLY -> {
+                generateHourlyTasksForCancellation(habit, date)
+            }
+            com.nagopy.kmp.habittracker.domain.model.FrequencyType.INTERVAL -> {
+                generateIntervalTasksForCancellation(habit, date)
+            }
+        }
+    }
+    
+    private fun generateHourlyTasksForCancellation(habit: Habit, date: kotlinx.datetime.LocalDate): List<Task> {
+        val tasks = mutableListOf<Task>()
+        val startTime = habit.scheduledTimes.firstOrNull() ?: kotlinx.datetime.LocalTime(9, 0)
+        val intervalMinutes = 60 // Hourly = every 60 minutes
+        
+        var currentTime = startTime
+        val endTime = habit.endTime ?: kotlinx.datetime.LocalTime(23, 59)
+        
+        while (currentTime <= endTime) {
+            tasks.add(createTaskForCancellation(habit, date, currentTime))
+            
+            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+            val newHour = totalMinutes / 60
+            val newMinute = totalMinutes % 60
+            
+            if (newHour >= 24) break
+            currentTime = kotlinx.datetime.LocalTime(newHour, newMinute)
+        }
+        
+        return tasks
+    }
+    
+    private fun generateIntervalTasksForCancellation(habit: Habit, date: kotlinx.datetime.LocalDate): List<Task> {
+        val tasks = mutableListOf<Task>()
+        val startTime = habit.scheduledTimes.firstOrNull() ?: kotlinx.datetime.LocalTime(9, 0)
+        val intervalMinutes = habit.intervalMinutes.coerceAtLeast(1)
+        
+        var currentTime = startTime
+        val endTime = habit.endTime ?: kotlinx.datetime.LocalTime(23, 59)
+        
+        while (currentTime <= endTime) {
+            tasks.add(createTaskForCancellation(habit, date, currentTime))
+            
+            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+            val newHour = totalMinutes / 60
+            val newMinute = totalMinutes % 60
+            
+            if (newHour >= 24) break
+            currentTime = kotlinx.datetime.LocalTime(newHour, newMinute)
+        }
+        
+        return tasks
+    }
+    
+    private fun createTaskForCancellation(habit: Habit, date: kotlinx.datetime.LocalDate, time: kotlinx.datetime.LocalTime): Task {
+        return Task(
+            habitId = habit.id,
+            habitName = habit.name,
+            habitDescription = habit.description,
+            habitColor = habit.color,
+            date = date,
+            scheduledTime = time,
+            isCompleted = false // For cancellation purposes, completion status doesn't matter
+        )
     }
 }

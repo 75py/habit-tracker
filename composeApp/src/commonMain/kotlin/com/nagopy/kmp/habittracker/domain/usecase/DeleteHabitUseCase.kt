@@ -7,7 +7,8 @@ import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
  * This encapsulates the business logic for deleting habits.
  */
 class DeleteHabitUseCase(
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val manageNotificationsUseCase: ManageNotificationsUseCase
 ) {
     
     /**
@@ -15,6 +16,10 @@ class DeleteHabitUseCase(
      * @param habitId The ID of the habit to be deleted
      */
     suspend operator fun invoke(habitId: Long) {
+        // Cancel all notifications for this habit before deleting
+        manageNotificationsUseCase.cancelHabitNotifications(habitId)
+        
+        // Delete the habit
         habitRepository.deleteHabit(habitId)
     }
 }

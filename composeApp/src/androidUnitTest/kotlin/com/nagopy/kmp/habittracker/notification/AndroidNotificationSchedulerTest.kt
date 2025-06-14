@@ -74,4 +74,35 @@ class AndroidNotificationSchedulerTest {
         // Then - should return a boolean without crashing
         assertTrue(result is Boolean)
     }
+
+    @Test
+    fun `cancelHabitNotifications should handle case when habit not found`() = runTest {
+        // Given
+        val habitId = 999L
+        coEvery { mockHabitRepository.getHabit(habitId) } returns null
+
+        // When & Then - should not throw exception
+        scheduler.cancelHabitNotifications(habitId)
+    }
+
+    @Test
+    fun `cancelHabitNotifications should handle habit with valid data`() = runTest {
+        // Given
+        val habitId = 1L
+        val habit = com.nagopy.kmp.habittracker.domain.model.Habit(
+            id = habitId,
+            name = "Test Habit",
+            description = "Test Description",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = LocalDate(2024, 1, 1),
+            frequencyType = com.nagopy.kmp.habittracker.domain.model.FrequencyType.ONCE_DAILY,
+            intervalMinutes = 1440,
+            scheduledTimes = listOf(LocalTime(9, 0))
+        )
+        coEvery { mockHabitRepository.getHabit(habitId) } returns habit
+
+        // When & Then - should not throw exception
+        scheduler.cancelHabitNotifications(habitId)
+    }
 }
