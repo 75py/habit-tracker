@@ -3,8 +3,28 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths:
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.swift'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
   pull_request:
     types: [ opened, reopened, synchronize ]
+    paths:
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.swift'
+      - '**/*.gradle*'
+      - 'gradle/**'
+      - 'gradlew*'
+      - '.github/workflows/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
 
 jobs:
   test:
