@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.domain.usecase.GetNextTasksUseCase
 import io.mockk.mockk
 import io.mockk.coEvery
 import kotlinx.coroutines.test.runTest
@@ -26,6 +27,7 @@ class AndroidNotificationSchedulerTest {
 
     private lateinit var context: Context
     private lateinit var mockHabitRepository: HabitRepository
+    private lateinit var mockGetNextTasksUseCase: GetNextTasksUseCase
     private lateinit var scheduler: AndroidNotificationScheduler
 
     @Before
@@ -35,7 +37,8 @@ class AndroidNotificationSchedulerTest {
         
         context = ApplicationProvider.getApplicationContext()
         mockHabitRepository = mockk()
-        scheduler = AndroidNotificationScheduler(context, mockHabitRepository)
+        mockGetNextTasksUseCase = mockk()
+        scheduler = AndroidNotificationScheduler(context, mockHabitRepository, mockGetNextTasksUseCase)
     }
 
     @Test
@@ -73,5 +76,43 @@ class AndroidNotificationSchedulerTest {
 
         // Then - should return a boolean without crashing
         assertTrue(result is Boolean)
+    }
+
+    @Test
+    fun `cancelHabitNotifications should handle case when habit not found`() = runTest {
+        // Given
+        val habitId = 999L
+        coEvery { mockGetNextTasksUseCase.getNextTaskForHabit(habitId) } returns null
+
+        // When & Then - should not throw exception
+        scheduler.cancelHabitNotifications(habitId)
+    }
+
+    @Test
+    fun `cancelHabitNotifications should cancel next task when found`() = runTest {
+        // Given
+        val habitId = 1L
+        val nextTask = Task(
+            habitId = habitId,
+            habitName = "Test Habit",
+            habitDescription = "Test Description",
+            date = LocalDate(2024, 1, 20),
+            scheduledTime = LocalTime(9, 0),
+            isCompleted = false
+        )
+        coEvery { mockGetNextTasksUseCase.getNextTaskForHabit(habitId) } returns nextTask
+
+        // When & Then - should not throw exception
+        scheduler.cancelHabitNotifications(habitId)
+    }
+
+    @Test
+    fun `cancelHabitNotifications should handle no scheduled tasks`() = runTest {
+        // Given
+        val habitId = 1L
+        coEvery { mockGetNextTasksUseCase.getNextTaskForHabit(habitId) } returns null
+
+        // When & Then - should not throw exception
+        scheduler.cancelHabitNotifications(habitId)
     }
 }

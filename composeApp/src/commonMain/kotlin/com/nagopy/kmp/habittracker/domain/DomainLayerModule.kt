@@ -26,8 +26,8 @@ import org.koin.dsl.module
 val domainModule = module {
     single { GetAllHabitsUseCase(get()) }
     single { AddHabitUseCase(get()) }
-    single { UpdateHabitUseCase(get()) }
-    single { DeleteHabitUseCase(get()) }
+    single { UpdateHabitUseCase(get(), get()) }
+    single { DeleteHabitUseCase(get(), get()) }
     single { GetHabitUseCase(get()) }
     single { GetTodayTasksUseCase(get()) }
     single { GetNextTasksUseCase(get()) }

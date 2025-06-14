@@ -13,13 +13,18 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.nagopy.kmp.habittracker.domain.model.Task
+import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.domain.usecase.GetNextTasksUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.plus
 import java.time.ZoneId
 
 /**
@@ -27,7 +32,8 @@ import java.time.ZoneId
  */
 open class AndroidNotificationScheduler(
     private val context: Context,
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val getNextTasksUseCase: GetNextTasksUseCase
 ) : NotificationScheduler {
 
     companion object {
@@ -146,10 +152,18 @@ open class AndroidNotificationScheduler(
     }
 
     override suspend fun cancelHabitNotifications(habitId: Long) {
-        // This is a simplified implementation
-        // In a production app, you might want to store scheduled notification IDs
-        // and cancel them individually
-        cancelAllNotifications()
+        Logger.d("Cancelling notifications for habitId: $habitId", "AndroidNotificationScheduler")
+        
+        // Find the next scheduled task for this habit and cancel its notification
+        // Since we typically only schedule one notification at a time per habit,
+        // we only need to cancel the next upcoming one
+        val nextTask = getNextTasksUseCase.getNextTaskForHabit(habitId)
+        if (nextTask != null) {
+            cancelTaskNotification(nextTask)
+            Logger.i("Cancelled next notification for habitId: $habitId", "AndroidNotificationScheduler")
+        } else {
+            Logger.d("No scheduled notifications found for habitId: $habitId", "AndroidNotificationScheduler")
+        }
     }
 
     override suspend fun cancelAllNotifications() {
@@ -234,4 +248,6 @@ open class AndroidNotificationScheduler(
         // causing new notifications to replace existing ones instead of creating multiple notifications
         return "${task.habitId}_${task.date}".hashCode()
     }
+    
+
 }
