@@ -24,7 +24,15 @@ This is a cross-platform habit tracking application built with Kotlin Multiplatf
 
 1. **Always reference `/docs` first** before providing any code suggestions or architectural advice
 2. **Follow the established patterns** documented in the architecture and coding standards
-3. **Maintain consistency** with existing code structure and conventions
+3. **Maintain consistency** with existing code structure and naming conventions as documented in the coding standards
 4. **Refer to specifications** when implementing UI components or business logic
+
+## Communication Guidelines
+
+When creating PR titles, descriptions, and comments for reviewers:
+
+- **Use Japanese** for all PR-related content (titles, descriptions, review comments) to ensure clear communication with project maintainers
+- **Use English** for code, comments within code, and technical documentation
+- **Follow established terminology** and conventions used in existing Japanese documentation
 
 The `/docs` directory serves as the single source of truth for all project information.
