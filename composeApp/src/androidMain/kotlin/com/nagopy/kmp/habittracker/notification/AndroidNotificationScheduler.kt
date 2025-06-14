@@ -16,6 +16,7 @@ import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
+import com.nagopy.kmp.habittracker.domain.usecase.GetNextTasksUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -31,7 +32,8 @@ import java.time.ZoneId
  */
 open class AndroidNotificationScheduler(
     private val context: Context,
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val getNextTasksUseCase: GetNextTasksUseCase
 ) : NotificationScheduler {
 
     companion object {
@@ -152,27 +154,16 @@ open class AndroidNotificationScheduler(
     override suspend fun cancelHabitNotifications(habitId: Long) {
         Logger.d("Cancelling notifications for habitId: $habitId", "AndroidNotificationScheduler")
         
-        val habit = habitRepository.getHabit(habitId)
-        if (habit == null) {
-            Logger.w("Habit not found for habitId: $habitId", "AndroidNotificationScheduler")
-            return
+        // Find the next scheduled task for this habit and cancel its notification
+        // Since we typically only schedule one notification at a time per habit,
+        // we only need to cancel the next upcoming one
+        val nextTask = getNextTasksUseCase.getNextTaskForHabit(habitId)
+        if (nextTask != null) {
+            cancelTaskNotification(nextTask)
+            Logger.i("Cancelled next notification for habitId: $habitId", "AndroidNotificationScheduler")
+        } else {
+            Logger.d("No scheduled notifications found for habitId: $habitId", "AndroidNotificationScheduler")
         }
-        
-        // Cancel notifications for the next few days to cover potential scheduled tasks
-        val today = kotlinx.datetime.Clock.System.now()
-            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
-        
-        // Cancel notifications for today and the next 7 days
-        for (dayOffset in 0..7) {
-            val date = today.plus(kotlinx.datetime.DatePeriod(days = dayOffset))
-            val tasks = generateTasksForHabit(habit, date)
-            
-            tasks.forEach { task ->
-                cancelTaskNotification(task)
-            }
-        }
-        
-        Logger.i("Cancelled all notifications for habitId: $habitId", "AndroidNotificationScheduler")
     }
 
     override suspend fun cancelAllNotifications() {

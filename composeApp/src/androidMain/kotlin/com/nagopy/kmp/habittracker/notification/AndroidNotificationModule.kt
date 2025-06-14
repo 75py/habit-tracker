@@ -11,7 +11,7 @@ import org.koin.dsl.module
  * Android notification module providing platform-specific notification scheduler
  */
 val androidNotificationModule = module {
-    single<NotificationScheduler> { AndroidNotificationScheduler(androidContext(), get()) }
+    single<NotificationScheduler> { AndroidNotificationScheduler(androidContext(), get(), get()) }
     single { AndroidNotificationPermissionManager(androidContext()) }
     single<NotificationPermissionManager> { get<AndroidNotificationPermissionManager>() }
     single<AppPreferences> { AndroidAppPreferences(androidContext()) }
