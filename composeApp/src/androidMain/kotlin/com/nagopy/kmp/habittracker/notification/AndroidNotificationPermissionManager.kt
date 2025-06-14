@@ -2,13 +2,17 @@ package com.nagopy.kmp.habittracker.notification
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlarmManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.nagopy.kmp.habittracker.domain.notification.NotificationPermissionManager
+import com.nagopy.kmp.habittracker.util.Logger
 
 /**
  * Android implementation of NotificationPermissionManager.
@@ -57,6 +61,10 @@ class AndroidNotificationPermissionManager(
             
             // Check if permission is already granted
             if (areNotificationsEnabled()) {
+                // For SDK 34+, also request exact alarm permission after notification permission is granted
+                if (Build.VERSION.SDK_INT >= 34) { // API 34 = Android 14
+                    requestExactAlarmPermission()
+                }
                 return true
             }
             
@@ -68,12 +76,43 @@ class AndroidNotificationPermissionManager(
                 NOTIFICATION_PERMISSION_REQUEST_CODE
             )
             
+            // For SDK 34+, also request exact alarm permission after requesting notification permission
+            if (Build.VERSION.SDK_INT >= 34) { // API 34 = Android 14
+                requestExactAlarmPermission()
+            }
+            
             // Return current status - the permission dialog will appear
             // but we don't wait for the result
             return areNotificationsEnabled()
         } else {
             // For Android < 13, notifications are enabled by default
             return NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
+    }
+    
+    /**
+     * Requests exact alarm permission for SDK 34+ by opening the settings screen.
+     * This is required for SCHEDULE_EXACT_ALARM permission on Android 14+.
+     */
+    private fun requestExactAlarmPermission() {
+        try {
+            val activity = activityRef
+            if (activity == null) {
+                Logger.w("No activity available for exact alarm permission request", "AndroidNotificationPermissionManager")
+                return
+            }
+            
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (alarmManager.canScheduleExactAlarms()) {
+                Logger.d("Exact alarm permission already granted", "AndroidNotificationPermissionManager") 
+                return
+            }
+            
+            Logger.d("Requesting exact alarm permission for SDK 34+", "AndroidNotificationPermissionManager")
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+            activity.startActivity(intent)
+        } catch (e: Exception) {
+            Logger.e(e, "Failed to request exact alarm permission", "AndroidNotificationPermissionManager")
         }
     }
     
