@@ -61,25 +61,16 @@ class AndroidNotificationPermissionManager(
             
             // Check if permission is already granted
             if (areNotificationsEnabled()) {
-                // For SDK 34+, also request exact alarm permission after notification permission is granted
-                if (Build.VERSION.SDK_INT >= 34) { // API 34 = Android 14
-                    requestExactAlarmPermission()
-                }
                 return true
             }
             
-            // For now, just request permission and return current status
+            // Request permission and return current status
             // This avoids the deprecated onRequestPermissionsResult callback
             ActivityCompat.requestPermissions(
                 activity,
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                 NOTIFICATION_PERMISSION_REQUEST_CODE
             )
-            
-            // For SDK 34+, also request exact alarm permission after requesting notification permission
-            if (Build.VERSION.SDK_INT >= 34) { // API 34 = Android 14
-                requestExactAlarmPermission()
-            }
             
             // Return current status - the permission dialog will appear
             // but we don't wait for the result
@@ -90,29 +81,42 @@ class AndroidNotificationPermissionManager(
         }
     }
     
-    /**
-     * Requests exact alarm permission for SDK 34+ by opening the settings screen.
-     * This is required for SCHEDULE_EXACT_ALARM permission on Android 14+.
-     */
-    private fun requestExactAlarmPermission() {
-        try {
-            val activity = activityRef
-            if (activity == null) {
-                Logger.w("No activity available for exact alarm permission request", "AndroidNotificationPermissionManager")
-                return
-            }
-            
+    override suspend fun canScheduleExactAlarms(): Boolean {
+        return if (Build.VERSION.SDK_INT >= 31) { // API 31 = Android 12
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (alarmManager.canScheduleExactAlarms()) {
-                Logger.d("Exact alarm permission already granted", "AndroidNotificationPermissionManager") 
-                return
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            // For Android < 12, exact alarms don't require special permission
+            true
+        }
+    }
+    
+    override suspend fun requestExactAlarmPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= 31) { // API 31 = Android 12
+            if (canScheduleExactAlarms()) {
+                return true
             }
             
-            Logger.d("Requesting exact alarm permission for SDK 34+", "AndroidNotificationPermissionManager")
-            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-            activity.startActivity(intent)
-        } catch (e: Exception) {
-            Logger.e(e, "Failed to request exact alarm permission", "AndroidNotificationPermissionManager")
+            try {
+                val activity = activityRef
+                if (activity == null) {
+                    Logger.w("No activity available for exact alarm permission request", "AndroidNotificationPermissionManager")
+                    return canScheduleExactAlarms()
+                }
+                
+                Logger.d("Requesting exact alarm permission for SDK 31+", "AndroidNotificationPermissionManager")
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                activity.startActivity(intent)
+                
+                // Return current status - the settings screen will appear
+                return canScheduleExactAlarms()
+            } catch (e: Exception) {
+                Logger.e(e, "Failed to request exact alarm permission", "AndroidNotificationPermissionManager")
+                return canScheduleExactAlarms()
+            }
+        } else {
+            // For Android < 12, exact alarms don't require special permission
+            true
         }
     }
     
