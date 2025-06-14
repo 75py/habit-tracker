@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">習慣トラッカー</string>
+    
+    <!-- Navigation -->
+    <string name="back">戻る</string>
+    <string name="cancel">キャンセル</string>
+    <string name="save">保存</string>
+    <string name="retry">再試行</string>
+    <string name="add">追加</string>
+    <string name="set">設定</string>
+    <string name="remove">削除</string>
+    <string name="clear">クリア</string>
+    
+    <!-- Today Screen -->
+    <string name="todays_tasks">今日のタスク</string>
+    <string name="no_tasks_scheduled">今日予定されているタスクはありません</string>
+    <string name="error_prefix">エラー: %s</string>
+    
+    <!-- Habit Edit Screen -->
+    <string name="add_habit">習慣を追加</string>
+    <string name="edit_habit">習慣を編集</string>
+    <string name="habit_name_required">習慣名 *</string>
+    <string name="description_optional">説明（任意）</string>
+    <string name="choose_color">色を選択</string>
+    <string name="schedule">スケジュール</string>
+    <string name="frequency">頻度</string>
+    <string name="once_daily">1日1回</string>
+    <string name="hourly">毎時</string>
+    <string name="custom_interval">カスタム間隔</string>
+    <string name="every">毎</string>
+    <string name="interval">間隔:</string>
+    <string name="minutes">分</string>
+    <string name="hours">時間</string>
+    <string name="hour">時間</string>
+    <string name="scheduled_times">予定時刻</string>
+    <string name="start_time">開始時刻</string>
+    <string name="add_time">時刻を追加</string>
+    <string name="change_start_time">開始時刻を変更</string>
+    <string name="set_start_time">開始時刻を設定</string>
+    <string name="change_end_time">終了時刻を変更</string>
+    <string name="set_end_time">終了時刻を設定</string>
+    <string name="active">有効</string>
+    <string name="enable_tracking">この習慣のトラッキングを有効にする</string>
+    <string name="selected">選択済み</string>
+    
+    <!-- Error Messages -->
+    <string name="name_is_required">名前は必須です</string>
+    <string name="failed_to_load_habit">習慣の読み込みに失敗しました</string>
+    <string name="failed_to_save_habit">習慣の保存に失敗しました</string>
+    <string name="habit_not_found">習慣が見つかりません</string>
+    <string name="failed_to_complete_task">タスクの完了に失敗しました: %s</string>
+</resources>
