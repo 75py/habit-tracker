@@ -12,7 +12,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
@@ -238,27 +241,28 @@ fun HabitEditScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         
-                        OutlinedTextField(
-                            value = uiState.intervalValue.toString(),
-                            onValueChange = { 
-                                val value = it.toIntOrNull()
-                                if (value != null && value > 0) {
-                                    viewModel.updateIntervalValue(value, uiState.intervalUnit)
-                                }
-                            },
+                        // Interval value selector button
+                        var showIntervalPicker by remember { mutableStateOf(false) }
+                        
+                        OutlinedButton(
+                            onClick = { showIntervalPicker = true },
                             modifier = Modifier.width(80.dp),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    focusManager.clearFocus()
-                                }
-                            ),
-                            singleLine = true,
                             enabled = uiState.frequencyType != FrequencyType.HOURLY
-                        )
+                        ) {
+                            Text(uiState.intervalValue.toString())
+                        }
+                        
+                        // Interval picker dialog
+                        if (showIntervalPicker) {
+                            IntervalPickerDialog(
+                                currentValue = uiState.intervalValue,
+                                unit = uiState.intervalUnit,
+                                onValueChange = { value ->
+                                    viewModel.updateIntervalValue(value, uiState.intervalUnit)
+                                },
+                                onDismiss = { showIntervalPicker = false }
+                            )
+                        }
                         
                         // Unit selector dropdown
                         if (uiState.frequencyType != FrequencyType.HOURLY) {
@@ -584,4 +588,121 @@ private fun ColorOption(
             )
         }
     }
+}
+
+@Composable
+private fun IntervalPickerDialog(
+    currentValue: Int,
+    unit: TimeUnit,
+    onValueChange: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Calculate reasonable min/max values based on unit
+    val minValue = 1
+    val maxValue = when (unit) {
+        TimeUnit.MINUTES -> 1440 // 24 hours in minutes
+        TimeUnit.HOURS -> 24 // 24 hours
+    }
+    
+    var tempValue by remember { mutableIntStateOf(currentValue.coerceIn(minValue, maxValue)) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.select_interval)) },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Current value display
+                Text(
+                    text = "$tempValue ${when (unit) {
+                        TimeUnit.MINUTES -> stringResource(Res.string.minutes)
+                        TimeUnit.HOURS -> stringResource(Res.string.hours)
+                    }}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+                
+                // Increment/Decrement controls
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Decrease button
+                    FilledIconButton(
+                        onClick = { 
+                            if (tempValue > minValue) {
+                                tempValue--
+                            }
+                        },
+                        enabled = tempValue > minValue
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = stringResource(Res.string.decrease)
+                        )
+                    }
+                    
+                    // Current value
+                    Text(
+                        text = tempValue.toString(),
+                        style = MaterialTheme.typography.displayMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(80.dp)
+                    )
+                    
+                    // Increase button
+                    FilledIconButton(
+                        onClick = { 
+                            if (tempValue < maxValue) {
+                                tempValue++
+                            }
+                        },
+                        enabled = tempValue < maxValue
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(Res.string.increase)
+                        )
+                    }
+                }
+                
+                // Quick value buttons for common intervals
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val quickValues = when (unit) {
+                        TimeUnit.MINUTES -> listOf(1, 5, 10, 15, 30, 60)
+                        TimeUnit.HOURS -> listOf(1, 2, 3, 4, 6, 8, 12, 24)
+                    }
+                    
+                    items(quickValues) { value ->
+                        if (value <= maxValue) {
+                            FilterChip(
+                                onClick = { tempValue = value },
+                                label = { Text(value.toString()) },
+                                selected = tempValue == value
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onValueChange(tempValue)
+                    onDismiss()
+                }
+            ) {
+                Text(stringResource(Res.string.set))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
 }

@@ -74,6 +74,11 @@
     <string name="notification_permission_denied">Notification Permission Denied</string>
     <string name="notification_permission_denied_explanation">Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.</string>
     
+    <!-- Number Picker Dialog -->
+    <string name="select_interval">Select Interval</string>
+    <string name="increase">Increase</string>
+    <string name="decrease">Decrease</string>
+    
     <!-- Misc -->
     <string name="add_button">+</string>
 </resources>
