@@ -90,8 +90,7 @@ fun HabitEditDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .navigationBarsPadding()
         ) {
             // Title
             Text(
@@ -101,11 +100,14 @@ fun HabitEditDialog(
                 modifier = Modifier.fillMaxWidth()
             )
             
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Scrollable content area with weight to take available space
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -114,6 +116,7 @@ fun HabitEditDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .verticalScroll(rememberScrollState())
                 ) {
                     HabitEditForm(
@@ -126,7 +129,9 @@ fun HabitEditDialog(
                 }
             }
             
-            // Action buttons
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Action buttons - fixed at bottom
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
