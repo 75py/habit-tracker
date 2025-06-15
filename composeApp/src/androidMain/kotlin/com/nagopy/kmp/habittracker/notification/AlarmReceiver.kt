@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import com.nagopy.kmp.habittracker.R
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
@@ -97,7 +98,7 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                         .setContentTitle(habitName)
                         .setContentText(habitDescription.ifEmpty { "Time to complete your habit!" })
-                        .setSmallIcon(android.R.drawable.ic_dialog_info) // Using system icon as fallback
+                        .setSmallIcon(R.drawable.ic_notification_check)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                         .setAutoCancel(true)
                         .addAction(completeAction)

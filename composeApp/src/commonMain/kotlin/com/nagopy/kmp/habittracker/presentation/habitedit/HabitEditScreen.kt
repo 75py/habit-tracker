@@ -3,11 +3,13 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,8 +20,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +50,10 @@ fun HabitEditScreen(
     viewModel: HabitEditViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Focus management
+    val focusManager = LocalFocusManager.current
+    val descriptionFocusRequester = remember { FocusRequester() }
     
     // Load habit for editing if habitId is provided
     LaunchedEffect(habitId) {
@@ -112,7 +122,13 @@ fun HabitEditScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        focusManager.clearFocus()
+                    },
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
             // Name field
@@ -123,7 +139,14 @@ fun HabitEditScreen(
                     label = { Text(stringResource(Res.string.habit_name_required)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = uiState.nameError != null,
-                    supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } }
+                    supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            descriptionFocusRequester.requestFocus()
+                        }
+                    )
                 )
             }
 
@@ -132,9 +155,17 @@ fun HabitEditScreen(
                 value = uiState.description,
                 onValueChange = { viewModel.updateDescription(it) },
                 label = { Text(stringResource(Res.string.description_optional)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(descriptionFocusRequester),
                 minLines = 3,
-                maxLines = 5
+                maxLines = 5,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                    }
+                )
             )
 
             // Color selection
