@@ -74,6 +74,11 @@
     <string name="notification_permission_denied">通知許可が拒否されました</string>
     <string name="notification_permission_denied_explanation">通知許可が付与されませんでした。アプリは引き続き使用できますが、リマインダー通知は受信できません。</string>
     
+    <!-- Number Picker Dialog -->
+    <string name="select_interval">間隔を選択</string>
+    <string name="increase">増加</string>
+    <string name="decrease">減少</string>
+    
     <!-- Misc -->
     <string name="add_button">+</string>
 </resources>
