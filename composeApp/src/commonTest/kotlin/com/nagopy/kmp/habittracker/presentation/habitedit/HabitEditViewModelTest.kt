@@ -434,4 +434,37 @@ class HabitEditViewModelTest {
         assertEquals(TimeUnit.HOURS, uiState.intervalUnit) // Should be HOURS for 60-minute interval
         assertEquals(1, uiState.intervalValue) // Should display 1 hour
     }
+
+    @Test
+    fun `loadHabitForEdit should reproduce original issue scenario - 5 minute interval`() = runTest {
+        // Given - reproducing the exact scenario described in issue #75
+        // A habit with 5-minute custom interval that was previously showing as "0時間"
+        val habit = Habit(
+            id = 1L,
+            name = "カスタム間隔テスト",
+            description = "5分間隔のテスト",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 5, // The problematic 5-minute interval
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = null
+        )
+        
+        coEvery { mockGetHabitUseCase(1L) } returns habit
+
+        // When
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then - Should now show correctly as "5分" instead of "0時間"
+        val uiState = viewModel.uiState.value
+        assertEquals(5, uiState.intervalMinutes)
+        assertEquals(TimeUnit.MINUTES, uiState.intervalUnit) // Should be MINUTES, not HOURS
+        assertEquals(5, uiState.intervalValue) // Should display 5, not 0
+        
+        // Verify the fix: This would have been 0 before the fix (5 / 60 = 0 with integer division)
+        // Now it correctly shows 5 with MINUTES unit
+    }
 }
