@@ -467,4 +467,22 @@ class HabitEditViewModelTest {
         // Verify the fix: This would have been 0 before the fix (5 / 60 = 0 with integer division)
         // Now it correctly shows 5 with MINUTES unit
     }
+
+    @Test
+    fun `updateIntervalValue should handle unit changes from IntervalPickerDialog correctly`() {
+        // Given - initial state with hours
+        viewModel.updateIntervalValue(2, TimeUnit.HOURS)
+        assertEquals(120, viewModel.uiState.value.intervalMinutes) // 2 hours = 120 minutes
+        assertEquals(TimeUnit.HOURS, viewModel.uiState.value.intervalUnit)
+        assertEquals(2, viewModel.uiState.value.intervalValue)
+
+        // When - user changes to 90 minutes via dialog
+        viewModel.updateIntervalValue(90, TimeUnit.MINUTES)
+
+        // Then - should update both value and unit correctly
+        val state = viewModel.uiState.value
+        assertEquals(90, state.intervalMinutes)
+        assertEquals(TimeUnit.MINUTES, state.intervalUnit)
+        assertEquals(90, state.intervalValue)
+    }
 }
