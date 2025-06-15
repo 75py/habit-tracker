@@ -59,7 +59,7 @@ fun HabitEditDialog(
     val descriptionFocusRequester = remember { FocusRequester() }
     
     // Bottom sheet state
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     // Load habit for editing if habitId is provided
     LaunchedEffect(habitId) {
@@ -89,6 +89,7 @@ fun HabitEditDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)

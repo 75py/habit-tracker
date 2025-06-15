@@ -80,8 +80,8 @@ fun App() {
                     )
                 }
                 
-                else -> {
-                    // For non-supported screens, show HabitList as fallback
+                // For modal screens (AddHabit, EditHabit), show the base HabitListScreen
+                Screen.AddHabit, is Screen.EditHabit -> {
                     val viewModel: HabitListViewModel = koinInject()
                     HabitListScreen(
                         onAddHabitClick = { currentScreen = Screen.AddHabit },
