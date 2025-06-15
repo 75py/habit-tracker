@@ -47,6 +47,13 @@ class HabitEditViewModel(
             try {
                 val habit = getHabitUseCase(habitId)
                 if (habit != null) {
+                    // Determine the appropriate time unit based on interval minutes
+                    val intervalUnit = if (habit.intervalMinutes % 60 == 0) {
+                        TimeUnit.HOURS
+                    } else {
+                        TimeUnit.MINUTES
+                    }
+                    
                     _uiState.value = _uiState.value.copy(
                         editHabitId = habitId,
                         name = habit.name,
@@ -56,6 +63,7 @@ class HabitEditViewModel(
                         createdAt = habit.createdAt,
                         frequencyType = habit.frequencyType,
                         intervalMinutes = habit.intervalMinutes,
+                        intervalUnit = intervalUnit,
                         scheduledTimes = habit.scheduledTimes,
                         endTime = habit.endTime,
                         isLoading = false
