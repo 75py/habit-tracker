@@ -257,8 +257,8 @@ fun HabitEditScreen(
                             IntervalPickerDialog(
                                 currentValue = uiState.intervalValue,
                                 unit = uiState.intervalUnit,
-                                onValueChange = { value ->
-                                    viewModel.updateIntervalValue(value, uiState.intervalUnit)
+                                onValueAndUnitChange = { value, unit ->
+                                    viewModel.updateIntervalValue(value, unit)
                                 },
                                 onDismiss = { showIntervalPicker = false }
                             )
@@ -594,17 +594,27 @@ private fun ColorOption(
 private fun IntervalPickerDialog(
     currentValue: Int,
     unit: TimeUnit,
-    onValueChange: (Int) -> Unit,
+    onValueAndUnitChange: (Int, TimeUnit) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Calculate reasonable min/max values based on unit
+    var tempUnit by remember { mutableStateOf(unit) }
+    
+    // Calculate reasonable min/max values based on current unit
     val minValue = 1
-    val maxValue = when (unit) {
+    val maxValue = when (tempUnit) {
         TimeUnit.MINUTES -> 1440 // 24 hours in minutes
         TimeUnit.HOURS -> 24 // 24 hours
     }
     
-    var tempValue by remember { mutableIntStateOf(currentValue.coerceIn(minValue, maxValue)) }
+    // Convert initial value if needed based on current unit
+    val initialValue = when {
+        unit == tempUnit -> currentValue
+        unit == TimeUnit.MINUTES && tempUnit == TimeUnit.HOURS -> currentValue / 60
+        unit == TimeUnit.HOURS && tempUnit == TimeUnit.MINUTES -> currentValue * 60
+        else -> currentValue
+    }
+    
+    var tempValue by remember { mutableIntStateOf(initialValue.coerceIn(minValue, maxValue)) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -614,9 +624,39 @@ private fun IntervalPickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Unit selector
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        onClick = { 
+                            if (tempUnit != TimeUnit.MINUTES) {
+                                // Convert current value from hours to minutes
+                                val convertedValue = (tempValue * 60).coerceIn(1, 1440)
+                                tempValue = convertedValue
+                                tempUnit = TimeUnit.MINUTES
+                            }
+                        },
+                        label = { Text(stringResource(Res.string.minutes)) },
+                        selected = tempUnit == TimeUnit.MINUTES
+                    )
+                    FilterChip(
+                        onClick = { 
+                            if (tempUnit != TimeUnit.HOURS) {
+                                // Convert current value from minutes to hours
+                                val convertedValue = (tempValue / 60).coerceAtLeast(1).coerceAtMost(24)
+                                tempValue = convertedValue
+                                tempUnit = TimeUnit.HOURS
+                            }
+                        },
+                        label = { Text(stringResource(Res.string.hours)) },
+                        selected = tempUnit == TimeUnit.HOURS
+                    )
+                }
+                
                 // Current value display
                 Text(
-                    text = "$tempValue ${when (unit) {
+                    text = "$tempValue ${when (tempUnit) {
                         TimeUnit.MINUTES -> stringResource(Res.string.minutes)
                         TimeUnit.HOURS -> stringResource(Res.string.hours)
                     }}",
@@ -655,11 +695,18 @@ private fun IntervalPickerDialog(
                     // Increase button
                     FilledIconButton(
                         onClick = { 
-                            if (tempValue < maxValue) {
+                            val currentMaxValue = when (tempUnit) {
+                                TimeUnit.MINUTES -> 1440
+                                TimeUnit.HOURS -> 24
+                            }
+                            if (tempValue < currentMaxValue) {
                                 tempValue++
                             }
                         },
-                        enabled = tempValue < maxValue
+                        enabled = tempValue < when (tempUnit) {
+                            TimeUnit.MINUTES -> 1440
+                            TimeUnit.HOURS -> 24
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -672,13 +719,17 @@ private fun IntervalPickerDialog(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val quickValues = when (unit) {
+                    val quickValues = when (tempUnit) {
                         TimeUnit.MINUTES -> listOf(1, 5, 10, 15, 30, 60)
                         TimeUnit.HOURS -> listOf(1, 2, 3, 4, 6, 8, 12, 24)
                     }
                     
                     items(quickValues) { value ->
-                        if (value <= maxValue) {
+                        val currentMaxValue = when (tempUnit) {
+                            TimeUnit.MINUTES -> 1440
+                            TimeUnit.HOURS -> 24
+                        }
+                        if (value <= currentMaxValue) {
                             FilterChip(
                                 onClick = { tempValue = value },
                                 label = { Text(value.toString()) },
@@ -692,7 +743,7 @@ private fun IntervalPickerDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    onValueChange(tempValue)
+                    onValueAndUnitChange(tempValue, tempUnit)
                     onDismiss()
                 }
             ) {
