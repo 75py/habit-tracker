@@ -39,7 +39,7 @@ import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Modal dialog for adding or editing a habit.
+ * Modal bottom sheet for adding or editing a habit.
  * Provides form fields for name, description, color selection, and active status.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +55,9 @@ fun HabitEditDialog(
     // Focus management
     val focusManager = LocalFocusManager.current
     val descriptionFocusRequester = remember { FocusRequester() }
+    
+    // Bottom sheet state
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     // Load habit for editing if habitId is provided
     LaunchedEffect(habitId) {
@@ -77,17 +80,30 @@ fun HabitEditDialog(
         "#E91E63"  // Pink
     )
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { 
-            Text(if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit)) 
-        },
-        text = {
+        sheetState = bottomSheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Title
+            Text(
+                text = if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp),
+                        .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
@@ -101,33 +117,45 @@ fun HabitEditDialog(
                     colorOptions = colorOptions
                 )
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    viewModel.saveHabit(
-                        onSuccess = { onSaveSuccess() },
-                        onError = { /* Error handled in UI state */ }
-                    )
-                },
-                enabled = !uiState.isSaving
+            
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(stringResource(Res.string.save))
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+                
+                Button(
+                    onClick = {
+                        viewModel.saveHabit(
+                            onSuccess = { onSaveSuccess() },
+                            onError = { /* Error handled in UI state */ }
+                        )
+                    },
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(stringResource(Res.string.save))
+                    }
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
+            
+            // Add some bottom padding for gesture navigation
+            Spacer(modifier = Modifier.height(16.dp))
         }
-    )
+    }
 }
 
 @Composable
@@ -141,7 +169,6 @@ private fun HabitEditDialogContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(400.dp)
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
