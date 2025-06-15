@@ -75,6 +75,5 @@
     <string name="notification_permission_denied_explanation">Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.</string>
     
     <!-- Misc -->
-    <string name="hello_platform">Hello, %s!</string>
     <string name="add_button">+</string>
 </resources>
