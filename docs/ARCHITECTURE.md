@@ -143,15 +143,17 @@ The presentation layer follows the **Model-View-ViewModel (MVVM)** architectural
   - Real-time task completion updates
 - **Parameters**: ViewModel injection for task management
 
-**HabitEditScreen**:
+**HabitEditDialog**:
 - **File**: `presentation/habitedit/HabitEditScreen.kt`
-- **Purpose**: Form interface for creating and editing habits
+- **Purpose**: Modal dialog interface for creating and editing habits
 - **Features**:
   - Form validation with inline error messages
   - Color selection palette
+  - Frequency configuration (daily, hourly, custom intervals)
+  - Scheduling time management
   - Real-time input validation
-  - Save/cancel navigation
-  - Loading states during save operations
+  - Save/cancel actions with loading states
+  - Modal bottom sheet presentation for better UX
 - **Parameters**: Navigation callbacks and ViewModel injection
 
 #### State Management

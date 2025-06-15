@@ -166,6 +166,7 @@ fun HabitEditDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HabitEditForm(
     uiState: HabitEditUiState,
@@ -333,7 +334,7 @@ private fun HabitEditForm(
                                 onValueChange = { },
                                 readOnly = true,
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                modifier = Modifier.menuAnchor()
+                                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable)
                             )
                             
                             ExposedDropdownMenu(
@@ -598,105 +599,7 @@ private fun HabitEditForm(
     }
 }
 
-/**
- * Compose screen for adding or editing a habit.
- * Provides form fields for name, description, color selection, and active status.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HabitEditScreen(
-    habitId: Long? = null,
-    onSaveSuccess: () -> Unit,
-    onNavigateBack: () -> Unit,
-    viewModel: HabitEditViewModel
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    
-    // Focus management
-    val focusManager = LocalFocusManager.current
-    val descriptionFocusRequester = remember { FocusRequester() }
-    
-    // Load habit for editing if habitId is provided
-    LaunchedEffect(habitId) {
-        if (habitId != null) {
-            viewModel.loadHabitForEdit(habitId)
-        }
-    }
-    
-    // Predefined color options
-    val colorOptions = listOf(
-        "#2196F3", // Blue
-        "#4CAF50", // Green
-        "#FF9800", // Orange
-        "#9C27B0", // Purple
-        "#F44336", // Red
-        "#00BCD4", // Cyan
-        "#FFEB3B", // Yellow
-        "#795548", // Brown
-        "#607D8B", // Blue Grey
-        "#E91E63"  // Pink
-    )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit)) },
-                navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
-                        Text(stringResource(Res.string.cancel))
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            viewModel.saveHabit(
-                                onSuccess = { onSaveSuccess() },
-                                onError = { /* Error handled in UI state */ }
-                            )
-                        },
-                        enabled = !uiState.isSaving
-                    ) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(stringResource(Res.string.save))
-                        }
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                HabitEditForm(
-                    uiState = uiState,
-                    viewModel = viewModel,
-                    focusManager = focusManager,
-                    descriptionFocusRequester = descriptionFocusRequester,
-                    colorOptions = colorOptions
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun ColorOption(
