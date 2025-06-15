@@ -2,6 +2,9 @@ package com.nagopy.kmp.habittracker.presentation.permission
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import habittracker.composeapp.generated.resources.Res
+import habittracker.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dialog explaining why notification permissions are needed before requesting them.
@@ -13,16 +16,16 @@ fun NotificationPermissionExplanationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Notification Permission") },
-        text = { Text("Permission is required to send push notifications. Please allow push notifications in the next screen.") },
+        title = { Text(stringResource(Res.string.notification_permission)) },
+        text = { Text(stringResource(Res.string.notification_permission_explanation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -38,16 +41,16 @@ fun ExactAlarmPermissionExplanationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Reminder Permission") },
-        text = { Text("Please allow reminders in the next screen to send reminders at exact times.") },
+        title = { Text(stringResource(Res.string.reminder_permission)) },
+        text = { Text(stringResource(Res.string.reminder_permission_explanation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Skip")
+                Text(stringResource(Res.string.skip))
             }
         }
     )
@@ -62,11 +65,11 @@ fun NotificationPermissionDeniedDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Notification Permission Denied") },
-        text = { Text("Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.") },
+        title = { Text(stringResource(Res.string.notification_permission_denied)) },
+        text = { Text(stringResource(Res.string.notification_permission_denied_explanation)) },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         }
     )

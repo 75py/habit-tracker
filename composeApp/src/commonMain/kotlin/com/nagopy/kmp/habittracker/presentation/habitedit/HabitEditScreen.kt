@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
+import habittracker.composeapp.generated.resources.Res
+import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Compose screen for adding or editing a habit.
@@ -63,10 +66,10 @@ fun HabitEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.editHabitId != null) "Edit Habit" else "Add Habit") },
+                title = { Text(if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit)) },
                 navigationIcon = {
                     TextButton(onClick = onNavigateBack) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.cancel))
                     }
                 },
                 actions = {
@@ -85,7 +88,7 @@ fun HabitEditScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Save")
+                            Text(stringResource(Res.string.save))
                         }
                     }
                 }
@@ -114,10 +117,10 @@ fun HabitEditScreen(
                 OutlinedTextField(
                     value = uiState.name,
                     onValueChange = { viewModel.updateName(it) },
-                    label = { Text("Habit Name *") },
+                    label = { Text(stringResource(Res.string.habit_name_required)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = uiState.nameError != null,
-                    supportingText = uiState.nameError?.let { { Text(it) } }
+                    supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } }
                 )
             }
 
@@ -125,7 +128,7 @@ fun HabitEditScreen(
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = { viewModel.updateDescription(it) },
-                label = { Text("Description (Optional)") },
+                label = { Text(stringResource(Res.string.description_optional)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5
@@ -134,7 +137,7 @@ fun HabitEditScreen(
             // Color selection
             Column {
                 Text(
-                    text = "Choose Color",
+                    text = stringResource(Res.string.choose_color),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -155,7 +158,7 @@ fun HabitEditScreen(
             // Scheduling configuration
             Column {
                 Text(
-                    text = "Schedule",
+                    text = stringResource(Res.string.schedule),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -164,7 +167,7 @@ fun HabitEditScreen(
                 // Frequency Type selection
                 Column {
                     Text(
-                        text = "Frequency",
+                        text = stringResource(Res.string.frequency),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -179,9 +182,9 @@ fun HabitEditScreen(
                                 onClick = { viewModel.updateFrequencyType(frequency) },
                                 label = { 
                                     Text(when(frequency) {
-                                        FrequencyType.ONCE_DAILY -> "Once Daily"
-                                        FrequencyType.HOURLY -> "Hourly"
-                                        FrequencyType.INTERVAL -> "Custom Interval"
+                                        FrequencyType.ONCE_DAILY -> stringResource(Res.string.once_daily)
+                                        FrequencyType.HOURLY -> stringResource(Res.string.hourly)
+                                        FrequencyType.INTERVAL -> stringResource(Res.string.custom_interval)
                                     })
                                 },
                                 selected = uiState.frequencyType == frequency
@@ -199,7 +202,7 @@ fun HabitEditScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = if (uiState.frequencyType == FrequencyType.HOURLY) "Every" else "Interval:",
+                            text = if (uiState.frequencyType == FrequencyType.HOURLY) stringResource(Res.string.every) else stringResource(Res.string.interval),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -229,8 +232,8 @@ fun HabitEditScreen(
                             ) {
                                 OutlinedTextField(
                                     value = when (uiState.intervalUnit) {
-                                        TimeUnit.MINUTES -> "minutes"
-                                        TimeUnit.HOURS -> "hours"
+                                        TimeUnit.MINUTES -> stringResource(Res.string.minutes)
+                                        TimeUnit.HOURS -> stringResource(Res.string.hours)
                                     },
                                     onValueChange = { },
                                     readOnly = true,
@@ -243,14 +246,14 @@ fun HabitEditScreen(
                                     onDismissRequest = { expanded = false }
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text("minutes") },
+                                        text = { Text(stringResource(Res.string.minutes)) },
                                         onClick = {
                                             viewModel.updateIntervalUnit(TimeUnit.MINUTES)
                                             expanded = false
                                         }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("hours") },
+                                        text = { Text(stringResource(Res.string.hours)) },
                                         onClick = {
                                             viewModel.updateIntervalUnit(TimeUnit.HOURS)
                                             expanded = false
@@ -260,7 +263,7 @@ fun HabitEditScreen(
                             }
                         } else {
                             Text(
-                                text = "hour",
+                                text = stringResource(Res.string.hour),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -273,7 +276,7 @@ fun HabitEditScreen(
                 // Scheduled Times
                 Column {
                     Text(
-                        text = if (uiState.frequencyType == FrequencyType.ONCE_DAILY) "Scheduled Times" else "Start Time",
+                        text = if (uiState.frequencyType == FrequencyType.ONCE_DAILY) stringResource(Res.string.scheduled_times) else stringResource(Res.string.start_time),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -298,7 +301,7 @@ fun HabitEditScreen(
                                         )
                                     }
                                 ) {
-                                    Text("Remove")
+                                    Text(stringResource(Res.string.remove))
                                 }
                             }
                         }
@@ -311,7 +314,7 @@ fun HabitEditScreen(
                         OutlinedButton(
                             onClick = { showTimePicker = true }
                         ) {
-                            Text("Add Time")
+                            Text(stringResource(Res.string.add_time))
                         }
                         
                         if (showTimePicker) {
@@ -323,7 +326,7 @@ fun HabitEditScreen(
                             
                             AlertDialog(
                                 onDismissRequest = { showTimePicker = false },
-                                title = { Text("Add Time") },
+                                title = { Text(stringResource(Res.string.add_time)) },
                                 text = {
                                     TimePicker(state = timePickerState)
                                 },
@@ -339,12 +342,12 @@ fun HabitEditScreen(
                                             showTimePicker = false
                                         }
                                     ) {
-                                        Text("Add")
+                                        Text(stringResource(Res.string.add))
                                     }
                                 },
                                 dismissButton = {
                                     TextButton(onClick = { showTimePicker = false }) {
-                                        Text("Cancel")
+                                        Text(stringResource(Res.string.cancel))
                                     }
                                 }
                             )
@@ -356,7 +359,7 @@ fun HabitEditScreen(
                         OutlinedButton(
                             onClick = { showTimePicker = true }
                         ) {
-                            Text("Change Start Time")
+                            Text(stringResource(Res.string.change_start_time))
                         }
                         
                         if (showTimePicker) {
@@ -368,7 +371,7 @@ fun HabitEditScreen(
                             
                             AlertDialog(
                                 onDismissRequest = { showTimePicker = false },
-                                title = { Text("Set Start Time") },
+                                title = { Text(stringResource(Res.string.set_start_time)) },
                                 text = {
                                     TimePicker(state = timePickerState)
                                 },
@@ -381,12 +384,12 @@ fun HabitEditScreen(
                                             showTimePicker = false
                                         }
                                     ) {
-                                        Text("Set")
+                                        Text(stringResource(Res.string.set))
                                     }
                                 },
                                 dismissButton = {
                                     TextButton(onClick = { showTimePicker = false }) {
-                                        Text("Cancel")
+                                        Text(stringResource(Res.string.cancel))
                                     }
                                 }
                             )
@@ -404,7 +407,7 @@ fun HabitEditScreen(
                                 OutlinedButton(
                                     onClick = { showEndTimePicker = true }
                                 ) {
-                                    Text(if (uiState.endTime != null) "Change End Time" else "Set End Time")
+                                    Text(if (uiState.endTime != null) stringResource(Res.string.change_end_time) else stringResource(Res.string.set_end_time))
                                 }
                                 
                                 uiState.endTime?.let { endTime ->
@@ -415,7 +418,7 @@ fun HabitEditScreen(
                                     TextButton(
                                         onClick = { viewModel.updateEndTime(null) }
                                     ) {
-                                        Text("Clear")
+                                        Text(stringResource(Res.string.clear))
                                     }
                                 }
                             }
@@ -429,7 +432,7 @@ fun HabitEditScreen(
                                 
                                 AlertDialog(
                                     onDismissRequest = { showEndTimePicker = false },
-                                    title = { Text("Set End Time") },
+                                    title = { Text(stringResource(Res.string.set_end_time)) },
                                     text = {
                                         TimePicker(state = endTimePickerState)
                                     },
@@ -442,12 +445,12 @@ fun HabitEditScreen(
                                                 showEndTimePicker = false
                                             }
                                         ) {
-                                            Text("Set")
+                                            Text(stringResource(Res.string.set))
                                         }
                                     },
                                     dismissButton = {
                                         TextButton(onClick = { showEndTimePicker = false }) {
-                                            Text("Cancel")
+                                            Text(stringResource(Res.string.cancel))
                                         }
                                     }
                                 )
@@ -465,12 +468,12 @@ fun HabitEditScreen(
             ) {
                 Column {
                     Text(
-                        text = "Active",
+                        text = stringResource(Res.string.active),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Enable tracking for this habit",
+                        text = stringResource(Res.string.enable_tracking),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -536,7 +539,7 @@ private fun ColorOption(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(Res.string.selected),
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )

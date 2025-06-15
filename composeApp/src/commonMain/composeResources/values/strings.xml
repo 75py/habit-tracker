@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Habit Tracker</string>
+    
+    <!-- Navigation -->
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="retry">Retry</string>
+    <string name="add">Add</string>
+    <string name="set">Set</string>
+    <string name="remove">Remove</string>
+    <string name="clear">Clear</string>
+    
+    <!-- Today Screen -->
+    <string name="todays_tasks">Today's Tasks</string>
+    <string name="no_tasks_scheduled">No tasks scheduled for today</string>
+    <string name="error_prefix">Error: %s</string>
+    
+    <!-- Habit Edit Screen -->
+    <string name="add_habit">Add Habit</string>
+    <string name="edit_habit">Edit Habit</string>
+    <string name="habit_name_required">Habit Name *</string>
+    <string name="description_optional">Description (Optional)</string>
+    <string name="choose_color">Choose Color</string>
+    <string name="schedule">Schedule</string>
+    <string name="frequency">Frequency</string>
+    <string name="once_daily">Once Daily</string>
+    <string name="hourly">Hourly</string>
+    <string name="custom_interval">Custom Interval</string>
+    <string name="every">Every</string>
+    <string name="interval">Interval:</string>
+    <string name="minutes">minutes</string>
+    <string name="hours">hours</string>
+    <string name="hour">hour</string>
+    <string name="scheduled_times">Scheduled Times</string>
+    <string name="start_time">Start Time</string>
+    <string name="add_time">Add Time</string>
+    <string name="change_start_time">Change Start Time</string>
+    <string name="set_start_time">Set Start Time</string>
+    <string name="change_end_time">Change End Time</string>
+    <string name="set_end_time">Set End Time</string>
+    <string name="active">Active</string>
+    <string name="enable_tracking">Enable tracking for this habit</string>
+    <string name="selected">Selected</string>
+    
+    <!-- Error Messages -->
+    <string name="name_is_required">Name is required</string>
+    <string name="failed_to_load_habit">Failed to load habit</string>
+    <string name="failed_to_save_habit">Failed to save habit</string>
+    <string name="habit_not_found">Habit not found</string>
+    <string name="failed_to_complete_task">Failed to complete task: %s</string>
+    
+    <!-- Habit List Screen -->
+    <string name="my_habits">My Habits</string>
+    <string name="todays_tasks_content_description">Today's Tasks</string>
+    <string name="no_habits_yet">No habits yet</string>
+    <string name="add_first_habit">Tap the + button to add your first habit</string>
+    <string name="inactive">Inactive</string>
+    <string name="edit_habit_content_description">Edit habit</string>
+    <string name="delete_habit_content_description">Delete habit</string>
+    <string name="delete_habit">Delete Habit</string>
+    <string name="delete_habit_confirmation">Are you sure you want to delete "%s"? This action cannot be undone.</string>
+    <string name="delete">Delete</string>
+    
+    <!-- Permission Dialogs -->
+    <string name="notification_permission">Notification Permission</string>
+    <string name="notification_permission_explanation">Permission is required to send push notifications. Please allow push notifications in the next screen.</string>
+    <string name="ok">OK</string>
+    <string name="reminder_permission">Reminder Permission</string>
+    <string name="reminder_permission_explanation">Please allow reminders in the next screen to send reminders at exact times.</string>
+    <string name="skip">Skip</string>
+    <string name="notification_permission_denied">Notification Permission Denied</string>
+    <string name="notification_permission_denied_explanation">Notification permission was not granted. You can continue using the app, but you will not receive reminder notifications.</string>
+    
+    <!-- Misc -->
+    <string name="add_button">+</string>
+</resources>
