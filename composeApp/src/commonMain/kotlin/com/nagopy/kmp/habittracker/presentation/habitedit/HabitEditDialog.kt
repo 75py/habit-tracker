@@ -59,7 +59,7 @@ fun HabitEditDialog(
     val descriptionFocusRequester = remember { FocusRequester() }
     
     // Bottom sheet state
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     
     // Load habit for editing if habitId is provided
     LaunchedEffect(habitId) {
@@ -89,8 +89,9 @@ fun HabitEditDialog(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
                 .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
             // Title
             Text(
@@ -102,36 +103,29 @@ fun HabitEditDialog(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Scrollable content area with weight to take available space
+            // Content area
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .padding(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    HabitEditForm(
-                        uiState = uiState,
-                        viewModel = viewModel,
-                        focusManager = focusManager,
-                        descriptionFocusRequester = descriptionFocusRequester,
-                        colorOptions = colorOptions
-                    )
-                }
+                HabitEditForm(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    focusManager = focusManager,
+                    descriptionFocusRequester = descriptionFocusRequester,
+                    colorOptions = colorOptions
+                )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
-            // Action buttons - fixed at bottom
+            // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -165,7 +159,7 @@ fun HabitEditDialog(
                 }
             }
             
-            // Add some bottom padding for gesture navigation
+            // Bottom padding for gesture navigation
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
