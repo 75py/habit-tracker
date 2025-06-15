@@ -13,6 +13,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -345,5 +346,92 @@ class HabitEditViewModelTest {
         
         // Verify notification scheduling was called for the new habit
         coVerify(exactly = 1) { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(expectedHabitId) }
+    }
+
+    @Test
+    fun `loadHabitForEdit should set intervalUnit to MINUTES for non-60-multiple intervals`() = runTest {
+        // Given - a habit with 5-minute interval
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            description = "Test description",
+            color = "#FF5722",
+            isActive = true,
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 5, // 5 minutes - not a multiple of 60
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = null
+        )
+        
+        coEvery { mockGetHabitUseCase(1L) } returns habit
+
+        // When
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(5, uiState.intervalMinutes)
+        assertEquals(TimeUnit.MINUTES, uiState.intervalUnit) // Should be MINUTES for 5-minute interval
+        assertEquals(5, uiState.intervalValue) // Should display 5, not 0
+    }
+
+    @Test
+    fun `loadHabitForEdit should set intervalUnit to HOURS for 60-multiple intervals`() = runTest {
+        // Given - a habit with 120-minute interval (2 hours)
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            description = "Test description",
+            color = "#FF5722",
+            isActive = true,
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 120, // 120 minutes = 2 hours
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = null
+        )
+        
+        coEvery { mockGetHabitUseCase(1L) } returns habit
+
+        // When
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(120, uiState.intervalMinutes)
+        assertEquals(TimeUnit.HOURS, uiState.intervalUnit) // Should be HOURS for 120-minute interval
+        assertEquals(2, uiState.intervalValue) // Should display 2 hours
+    }
+
+    @Test
+    fun `loadHabitForEdit should set intervalUnit to HOURS for 60-minute interval`() = runTest {
+        // Given - a habit with exactly 60-minute interval
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            description = "Test description",
+            color = "#FF5722",
+            isActive = true,
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 60, // Exactly 1 hour
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = null
+        )
+        
+        coEvery { mockGetHabitUseCase(1L) } returns habit
+
+        // When
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertEquals(60, uiState.intervalMinutes)
+        assertEquals(TimeUnit.HOURS, uiState.intervalUnit) // Should be HOURS for 60-minute interval
+        assertEquals(1, uiState.intervalValue) // Should display 1 hour
     }
 }
