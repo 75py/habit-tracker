@@ -10,8 +10,6 @@ import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
-import habittracker.composeapp.generated.resources.Res
-import habittracker.composeapp.generated.resources.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +19,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import org.jetbrains.compose.resources.getString
 
 /**
  * ViewModel for the Habit Edit screen.
@@ -81,12 +78,10 @@ class HabitEditViewModel(
     }
 
     fun updateName(name: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                name = name,
-                nameError = if (name.isBlank()) getString(Res.string.name_is_required) else null
-            )
-        }
+        _uiState.value = _uiState.value.copy(
+            name = name,
+            nameError = if (name.isBlank()) "Name is required" else null
+        )
     }
 
     fun updateDescription(description: String) {
@@ -140,9 +135,7 @@ class HabitEditViewModel(
         
         // Validate form
         if (currentState.name.isBlank()) {
-            viewModelScope.launch {
-                _uiState.value = currentState.copy(nameError = getString(Res.string.name_is_required))
-            }
+            _uiState.value = currentState.copy(nameError = "Name is required")
             return
         }
 

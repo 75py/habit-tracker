@@ -120,7 +120,7 @@ fun HabitEditScreen(
                     label = { Text(stringResource(Res.string.habit_name_required)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = uiState.nameError != null,
-                    supportingText = uiState.nameError?.let { { Text(it) } }
+                    supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } }
                 )
             }
 
