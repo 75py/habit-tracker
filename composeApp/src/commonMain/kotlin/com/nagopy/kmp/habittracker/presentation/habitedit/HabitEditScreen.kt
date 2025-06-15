@@ -30,12 +30,224 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditUiState
 import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Modal dialog for adding or editing a habit.
+ * Provides form fields for name, description, color selection, and active status.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HabitEditDialog(
+    habitId: Long? = null,
+    onSaveSuccess: () -> Unit,
+    onDismiss: () -> Unit,
+    viewModel: HabitEditViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Focus management
+    val focusManager = LocalFocusManager.current
+    val descriptionFocusRequester = remember { FocusRequester() }
+    
+    // Load habit for editing if habitId is provided
+    LaunchedEffect(habitId) {
+        if (habitId != null) {
+            viewModel.loadHabitForEdit(habitId)
+        }
+    }
+    
+    // Predefined color options
+    val colorOptions = listOf(
+        "#2196F3", // Blue
+        "#4CAF50", // Green
+        "#FF9800", // Orange
+        "#9C27B0", // Purple
+        "#F44336", // Red
+        "#00BCD4", // Cyan
+        "#FFEB3B", // Yellow
+        "#795548", // Brown
+        "#607D8B", // Blue Grey
+        "#E91E63"  // Pink
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit)) 
+        },
+        text = {
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                HabitEditDialogContent(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    focusManager = focusManager,
+                    descriptionFocusRequester = descriptionFocusRequester,
+                    colorOptions = colorOptions
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    viewModel.saveHabit(
+                        onSuccess = { onSaveSuccess() },
+                        onError = { /* Error handled in UI state */ }
+                    )
+                },
+                enabled = !uiState.isSaving
+            ) {
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(Res.string.save))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun HabitEditDialogContent(
+    uiState: HabitEditUiState,
+    viewModel: HabitEditViewModel,
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    descriptionFocusRequester: FocusRequester,
+    colorOptions: List<String>
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                focusManager.clearFocus()
+            },
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Name field
+        OutlinedTextField(
+            value = uiState.name,
+            onValueChange = { viewModel.updateName(it) },
+            label = { Text(stringResource(Res.string.habit_name_required)) },
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.nameError != null,
+            supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(
+                onNext = {
+                    descriptionFocusRequester.requestFocus()
+                }
+            )
+        )
+
+        // Description field
+        OutlinedTextField(
+            value = uiState.description,
+            onValueChange = { viewModel.updateDescription(it) },
+            label = { Text(stringResource(Res.string.description_optional)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(descriptionFocusRequester),
+            minLines = 2,
+            maxLines = 3,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            )
+        )
+
+        // Color selection
+        Column {
+            Text(
+                text = stringResource(Res.string.choose_color),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(colorOptions) { colorHex ->
+                    ColorOption(
+                        color = colorHex,
+                        isSelected = uiState.color == colorHex,
+                        onClick = { viewModel.updateColor(colorHex) }
+                    )
+                }
+            }
+        }
+
+        // Active status
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = stringResource(Res.string.active),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = stringResource(Res.string.enable_tracking),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = uiState.isActive,
+                onCheckedChange = { viewModel.updateIsActive(it) }
+            )
+        }
+
+        // Error message
+        uiState.saveError?.let { error ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = error,
+                    modifier = Modifier.padding(8.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
 
 /**
  * Compose screen for adding or editing a habit.

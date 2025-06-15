@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import com.nagopy.kmp.habittracker.presentation.app.AppViewModel
+import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditDialog
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditScreen
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
 import com.nagopy.kmp.habittracker.presentation.habitlist.HabitListScreen
@@ -72,11 +73,33 @@ fun App() {
                     )
                 }
                 
+                Screen.Today -> {
+                    val viewModel: TodayViewModel = koinInject()
+                    TodayScreen(
+                        viewModel = viewModel,
+                        onNavigateBack = { currentScreen = Screen.HabitList }
+                    )
+                }
+                
+                else -> {
+                    // For non-supported screens, show HabitList as fallback
+                    val viewModel: HabitListViewModel = koinInject()
+                    HabitListScreen(
+                        onAddHabitClick = { currentScreen = Screen.AddHabit },
+                        onTodayClick = { currentScreen = Screen.Today },
+                        onHabitEdit = { habit -> currentScreen = Screen.EditHabit(habit.id) },
+                        viewModel = viewModel
+                    )
+                }
+            }
+
+            // Show modal dialogs for habit add/edit
+            when (currentScreen) {
                 Screen.AddHabit -> {
                     val viewModel: HabitEditViewModel = koinInject()
-                    HabitEditScreen(
+                    HabitEditDialog(
                         onSaveSuccess = { currentScreen = Screen.HabitList },
-                        onNavigateBack = { currentScreen = Screen.HabitList },
+                        onDismiss = { currentScreen = Screen.HabitList },
                         viewModel = viewModel
                     )
                 }
@@ -84,20 +107,16 @@ fun App() {
                 is Screen.EditHabit -> {
                     val viewModel: HabitEditViewModel = koinInject()
                     val editScreen = currentScreen as Screen.EditHabit
-                    HabitEditScreen(
+                    HabitEditDialog(
                         habitId = editScreen.habitId,
                         onSaveSuccess = { currentScreen = Screen.HabitList },
-                        onNavigateBack = { currentScreen = Screen.HabitList },
+                        onDismiss = { currentScreen = Screen.HabitList },
                         viewModel = viewModel
                     )
                 }
                 
-                Screen.Today -> {
-                    val viewModel: TodayViewModel = koinInject()
-                    TodayScreen(
-                        viewModel = viewModel,
-                        onNavigateBack = { currentScreen = Screen.HabitList }
-                    )
+                else -> {
+                    // No modal for other screens
                 }
             }
         }
