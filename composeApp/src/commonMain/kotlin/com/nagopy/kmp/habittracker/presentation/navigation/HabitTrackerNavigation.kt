@@ -9,6 +9,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -81,6 +83,27 @@ private val slideOutToLeft = slideOutHorizontally(
 fun HabitTrackerNavigation(
     navController: NavHostController = rememberNavController()
 ) {
+    // State to prevent multiple rapid navigation actions
+    val isNavigating = remember { mutableStateOf(false) }
+    
+    // Safe navigation function that prevents multiple rapid calls
+    val safeNavigateBack: () -> Unit = {
+        if (!isNavigating.value && navController.previousBackStackEntry != null) {
+            isNavigating.value = true
+            Logger.d("Safe navigation: popping back stack", tag = "Navigation")
+            try {
+                navController.popBackStack()
+            } catch (e: Exception) {
+                Logger.e(e, "Failed to pop back stack", tag = "Navigation")
+            } finally {
+                // Reset flag after a short delay to allow navigation to complete
+                isNavigating.value = false
+            }
+        } else {
+            Logger.d("Navigation blocked: isNavigating=${isNavigating.value}, hasBackStack=${navController.previousBackStackEntry != null}", tag = "Navigation")
+        }
+    }
+    
     NavHost(
         navController = navController,
         startDestination = HabitTrackerRoutes.HABIT_LIST
@@ -119,10 +142,10 @@ fun HabitTrackerNavigation(
             val viewModel: HabitEditViewModel = koinInject()
             HabitEditScreen(
                 onSaveSuccess = { 
-                    navController.popBackStack()
+                    safeNavigateBack()
                 },
                 onNavigateBack = { 
-                    navController.popBackStack()
+                    safeNavigateBack()
                 },
                 viewModel = viewModel
             )
@@ -141,10 +164,10 @@ fun HabitTrackerNavigation(
             HabitEditScreen(
                 habitId = habitId,
                 onSaveSuccess = { 
-                    navController.popBackStack()
+                    safeNavigateBack()
                 },
                 onNavigateBack = { 
-                    navController.popBackStack()
+                    safeNavigateBack()
                 },
                 viewModel = viewModel
             )
@@ -162,7 +185,7 @@ fun HabitTrackerNavigation(
             TodayScreen(
                 viewModel = viewModel,
                 onNavigateBack = { 
-                    navController.popBackStack()
+                    safeNavigateBack()
                 }
             )
         }
