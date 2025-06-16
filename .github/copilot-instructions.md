@@ -83,6 +83,18 @@ This is a cross-platform habit tracking application built with Kotlin Multiplatf
 
 All project-specific information including detailed technical specifications is maintained in the `/docs` directory to ensure accuracy and consistency.
 
+## 🔨 最重要ルール - ルールの継続的改善
+
+常に対応が必要と思われる指示を受けたり、そう考えられる差分を追加した場合は、copilot-instructions.mdにルールを追加すること。
+
+プロジェクトのルールを継続的に改善し、開発ガイドラインを持続的に向上させるため：
+
+1. 一度限りではなく継続的に適用すべき指示や要件を特定
+2. copilot-instructions.mdの適切なセクションに追加ルールとして記載
+3. 以降は標準ルールとして常に適用
+
+このプロセスにより、プロジェクトの品質と一貫性を継続的に向上させていきます。
+
 ## Critical Coding Standards
 
 ### Logging Requirements
