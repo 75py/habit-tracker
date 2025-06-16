@@ -81,11 +81,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.nagopy.kmp.habittracker"
+    namespace = "com.nagopy.android.habittracker"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.nagopy.kmp.habittracker"
+        applicationId = "com.nagopy.android.habittracker"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
