@@ -83,17 +83,17 @@ This is a cross-platform habit tracking application built with Kotlin Multiplatf
 
 All project-specific information including detailed technical specifications is maintained in the `/docs` directory to ensure accuracy and consistency.
 
-## 🔨 最重要ルール - ルールの継続的改善
+## 🔨 Critical Rule - Continuous Rule Improvement
 
-常に対応が必要と思われる指示を受けたり、そう考えられる差分を追加した場合は、copilot-instructions.mdにルールを追加すること。
+Always add rules to copilot-instructions.md when receiving instructions that appear to require continuous application or when adding diffs that are deemed necessary for ongoing implementation.
 
-プロジェクトのルールを継続的に改善し、開発ガイドラインを持続的に向上させるため：
+To continuously improve project rules and sustainably enhance development guidelines:
 
-1. 一度限りではなく継続的に適用すべき指示や要件を特定
-2. copilot-instructions.mdの適切なセクションに追加ルールとして記載
-3. 以降は標準ルールとして常に適用
+1. Identify instructions or requirements that should be applied continuously rather than just once
+2. Add them as additional rules in the appropriate section of copilot-instructions.md
+3. Apply them as standard rules thereafter
 
-このプロセスにより、プロジェクトの品質と一貫性を継続的に向上させていきます。
+This process enables continuous improvement of project quality and consistency.
 
 ## Critical Coding Standards
 
