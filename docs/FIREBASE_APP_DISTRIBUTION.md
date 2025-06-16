@@ -2,12 +2,18 @@
 
 このガイドでは、Firebase App Distributionを使用してHabitTrackerアプリ（Android/iOS）のテストビルドを配信するためのセットアップ手順を説明します。
 
+## 配信方法の違い
+
+- **Android**: GitHub Actionsとローカルのどちらでも配信可能
+- **iOS**: ローカル実行のみ（GitHub ActionsはLinuxのためiOSビルド不可）
+
 ## 前提条件
 
 1. Firebaseプロジェクトの作成が必要
 2. Firebase App Distributionの有効化が必要
 3. Android/iOSアプリの登録が必要
 4. fastlaneのインストールが必要
+5. **iOS配信用**: macOS環境とXcode設定が必要
 
 ## 手動セットアップ手順
 
@@ -94,7 +100,9 @@ cd /path/to/habit-tracker
 fastlane install_plugins
 ```
 
-## GitHub Actions の設定
+## GitHub Actions の設定（Android のみ）
+
+**注意**: GitHub ActionsはLinux環境で実行されるため、Androidアプリのみ配信可能です。iOSアプリはローカル環境での配信をご利用ください。
 
 ### 1. GitHub Secrets の追加
 
@@ -104,10 +112,6 @@ fastlane install_plugins
 - `FIREBASE_APP_ID`: Firebase Console のAndroidアプリのアプリID
 - `GOOGLE_SERVICES_JSON`: ダウンロードした `google-services.json` ファイルの内容
 
-**iOS用:**
-- `FIREBASE_APP_ID_IOS`: Firebase Console のiOSアプリのアプリID  
-- `GOOGLE_SERVICE_INFO_PLIST`: ダウンロードした `GoogleService-Info.plist` ファイルの内容
-
 **共通:**
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: ダウンロードしたサービスアカウントキーJSONファイルの内容
 
@@ -116,9 +120,8 @@ fastlane install_plugins
 1. GitHub リポジトリの「Actions」タブを開く
 2. 「Firebase App Distribution」ワークフローを選択
 3. 「Run workflow」をクリック
-4. プラットフォーム（android/ios/both）を選択
-5. 必要に応じてリリースノートやテスターグループを指定
-6. 「Run workflow」を実行
+4. 必要に応じてリリースノートやテスターグループを指定
+5. 「Run workflow」を実行
 
 ## ローカル実行
 
@@ -133,7 +136,20 @@ fastlane install_plugins
 **共通:**
 - `firebase-service-account.json`: サービスアカウントキー（プロジェクトルートに配置）
 
-### 2. 環境変数の設定
+### 2. iOS用の追加要件
+
+**重要**: iOS配信にはmacOS環境とXcode設定が必要です：
+
+1. **Xcode設定**:
+   - 適切なProvisioning Profileの設定
+   - AdHoc配信用のCertificateの設定
+   - App Storeに登録されたApple IDでの署名
+
+2. **AdHoc配信設定**:
+   - iOS配信はAdHoc形式で行われます
+   - テスト端末のUDIDを事前にApple Developer Consoleに登録する必要があります
+
+### 3. 環境変数の設定
 
 ```bash
 # Android用
@@ -146,7 +162,7 @@ export FIREBASE_APP_ID_IOS=your-ios-firebase-app-id
 export TESTER_GROUPS=internal-testers
 ```
 
-### 3. スクリプトの実行
+### 4. スクリプトの実行
 
 ```bash
 # Android のみ配信
@@ -197,6 +213,16 @@ export TESTER_GROUPS=internal-testers
 4. **fastlane が見つからない**
    - `gem install fastlane` でfastlaneをインストール
    - `fastlane install_plugins` でプラグインをインストール
+
+5. **iOS AdHoc ビルドの問題**
+   - Provisioning Profileが正しく設定されているか確認
+   - Certificate（証明書）が有効か確認
+   - テスト端末のUDIDがApple Developer Consoleに登録されているか確認
+   - AdHoc配信用のProvisioning ProfileがFirebase App Distributionと互換性があるか確認
+
+6. **iOS配信がGitHub Actionsで失敗する**
+   - GitHub ActionsはLinux環境のため、iOS配信はサポートされていません
+   - iOS配信はmacOS環境でのローカル実行をご利用ください
 
 ### ログの確認
 

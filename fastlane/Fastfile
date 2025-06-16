@@ -70,8 +70,8 @@ platform :ios do
     build_app(
       scheme: "iosApp",
       project: "iosApp/iosApp.xcodeproj",
-      configuration: "Debug",
-      export_method: "development",
+      configuration: "Release",
+      export_method: "ad-hoc",
       output_directory: "build/ios",
       output_name: "HabitTracker.ipa"
     )
