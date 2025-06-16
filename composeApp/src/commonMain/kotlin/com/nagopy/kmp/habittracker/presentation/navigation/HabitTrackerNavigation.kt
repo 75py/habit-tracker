@@ -1,5 +1,11 @@
 package com.nagopy.kmp.habittracker.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +35,46 @@ object HabitTrackerRoutes {
 }
 
 /**
+ * Animation constants for navigation transitions
+ */
+private object NavigationAnimations {
+    const val ANIMATION_DURATION = 300
+    const val FADE_DURATION = 200
+}
+
+/**
+ * Standard slide-in animation from right to left
+ */
+private val slideInFromRight = slideInHorizontally(
+    initialOffsetX = { it },
+    animationSpec = tween(NavigationAnimations.ANIMATION_DURATION)
+) + fadeIn(animationSpec = tween(NavigationAnimations.FADE_DURATION))
+
+/**
+ * Standard slide-out animation from left to right
+ */
+private val slideOutToRight = slideOutHorizontally(
+    targetOffsetX = { it },
+    animationSpec = tween(NavigationAnimations.ANIMATION_DURATION)
+) + fadeOut(animationSpec = tween(NavigationAnimations.FADE_DURATION))
+
+/**
+ * Standard slide-in animation from left to right (for back navigation)
+ */
+private val slideInFromLeft = slideInHorizontally(
+    initialOffsetX = { -it },
+    animationSpec = tween(NavigationAnimations.ANIMATION_DURATION)
+) + fadeIn(animationSpec = tween(NavigationAnimations.FADE_DURATION))
+
+/**
+ * Standard slide-out animation from right to left (for back navigation)
+ */
+private val slideOutToLeft = slideOutHorizontally(
+    targetOffsetX = { -it },
+    animationSpec = tween(NavigationAnimations.ANIMATION_DURATION)
+) + fadeOut(animationSpec = tween(NavigationAnimations.FADE_DURATION))
+
+/**
  * Main navigation host for the habit tracker app
  */
 @Composable
@@ -39,7 +85,13 @@ fun HabitTrackerNavigation(
         navController = navController,
         startDestination = HabitTrackerRoutes.HABIT_LIST
     ) {
-        composable(HabitTrackerRoutes.HABIT_LIST) {
+        composable(
+            route = HabitTrackerRoutes.HABIT_LIST,
+            enterTransition = { slideInFromLeft },
+            exitTransition = { slideOutToLeft },
+            popEnterTransition = { slideInFromLeft },
+            popExitTransition = { slideOutToRight }
+        ) {
             Logger.d("Navigating to screen: HabitList", tag = "Navigation")
             val viewModel: HabitListViewModel = koinInject()
             HabitListScreen(
@@ -56,7 +108,13 @@ fun HabitTrackerNavigation(
             )
         }
         
-        composable(HabitTrackerRoutes.ADD_HABIT) {
+        composable(
+            route = HabitTrackerRoutes.ADD_HABIT,
+            enterTransition = { slideInFromRight },
+            exitTransition = { slideOutToRight },
+            popEnterTransition = { slideInFromLeft },
+            popExitTransition = { slideOutToRight }
+        ) {
             Logger.d("Navigating to screen: AddHabit", tag = "Navigation")
             val viewModel: HabitEditViewModel = koinInject()
             HabitEditScreen(
@@ -70,7 +128,13 @@ fun HabitTrackerNavigation(
             )
         }
         
-        composable(HabitTrackerRoutes.EDIT_HABIT) { backStackEntry ->
+        composable(
+            route = HabitTrackerRoutes.EDIT_HABIT,
+            enterTransition = { slideInFromRight },
+            exitTransition = { slideOutToRight },
+            popEnterTransition = { slideInFromLeft },
+            popExitTransition = { slideOutToRight }
+        ) { backStackEntry ->
             val habitId = backStackEntry.arguments?.getString("habitId")?.toLongOrNull()
             Logger.d("Navigating to screen: EditHabit with habitId: $habitId", tag = "Navigation")
             val viewModel: HabitEditViewModel = koinInject()
@@ -86,7 +150,13 @@ fun HabitTrackerNavigation(
             )
         }
         
-        composable(HabitTrackerRoutes.TODAY) {
+        composable(
+            route = HabitTrackerRoutes.TODAY,
+            enterTransition = { slideInFromRight },
+            exitTransition = { slideOutToRight },
+            popEnterTransition = { slideInFromLeft },
+            popExitTransition = { slideOutToRight }
+        ) {
             Logger.d("Navigating to screen: Today", tag = "Navigation")
             val viewModel: TodayViewModel = koinInject()
             TodayScreen(
