@@ -10,6 +10,12 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Firebase plugins are applied conditionally to avoid issues when Google Services JSON is not available
+if (project.file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.appdistribution")
+}
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -107,6 +113,21 @@ android {
     }
     lint {
         disable += "NullSafeMutableLiveData"
+    }
+}
+
+// Firebase App Distribution configuration - only applied when google-services.json exists
+if (project.file("google-services.json").exists()) {
+    configure<com.google.firebase.appdistribution.gradle.AppDistributionExtension> {
+        // アプリID - 実際のFirebaseプロジェクトで設定が必要
+        appId = project.findProperty("FIREBASE_APP_ID") as String? ?: ""
+        
+        // サービスアカウントの鍵ファイル - 実際のサービスアカウントファイルのパスを設定
+        serviceCredentialsFile = project.findProperty("FIREBASE_SERVICE_ACCOUNT_FILE") as String? ?: ""
+        
+        // 配信設定
+        groups = project.findProperty("TESTER_GROUPS") as String? ?: "internal-testers"
+        releaseNotes = project.findProperty("RELEASE_NOTES") as String? ?: "最新のテストビルドです。新機能や修正内容をテストしてください。"
     }
 }
 

@@ -72,6 +72,14 @@ The application follows a layered architecture pattern with clear separation of 
 - **Common Tests**: `./gradlew cleanTest test`
 - **Database Tests**: Tests are automatically run with the above commands
 
+### Firebase App Distribution
+
+Firebase App Distributionを使用してテストアプリを配信できます。
+
+- **セットアップ**: [Firebase App Distribution セットアップガイド](docs/FIREBASE_APP_DISTRIBUTION.md)
+- **GitHub Actions**: 手動ワークフローでテストアプリを配信
+- **ローカル実行**: `./scripts/firebase-distribute.sh` スクリプトで開発者PCから配信
+
 ### Screenshots
 
 ![App Screenshots](docs/images/screenshots-placeholder.png)

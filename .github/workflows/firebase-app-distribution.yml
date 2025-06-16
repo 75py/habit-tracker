@@ -1,0 +1,59 @@
+name: Firebase App Distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'リリースノート'
+        required: false
+        default: '最新のテストビルドです'
+        type: string
+      groups:
+        description: 'テスターグループ (カンマ区切り)'
+        required: false
+        default: 'internal-testers'
+        type: string
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: wrapper
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x ./gradlew
+      
+    - name: Create google-services.json
+      run: |
+        echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > composeApp/google-services.json
+        
+    - name: Create Firebase service account file
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > firebase-service-account.json
+      
+    - name: Build and distribute debug APK
+      run: |
+        ./gradlew assembleDebug appDistributionUploadDebug \
+          -PFIREBASE_APP_ID="${{ secrets.FIREBASE_APP_ID }}" \
+          -PFIREBASE_SERVICE_ACCOUNT_FILE="firebase-service-account.json" \
+          -PRELEASE_NOTES="${{ github.event.inputs.release_notes }}" \
+          -PTESTER_GROUPS="${{ github.event.inputs.groups }}"
+      
+    - name: Clean up sensitive files
+      if: always()
+      run: |
+        rm -f composeApp/google-services.json
+        rm -f firebase-service-account.json

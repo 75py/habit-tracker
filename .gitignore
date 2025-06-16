@@ -16,3 +16,9 @@ captures
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# Firebase configuration files
+google-services.json
+GoogleService-Info.plist
+firebase-service-account.json
+**/firebase-service-account*.json
