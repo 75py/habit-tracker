@@ -72,7 +72,7 @@ jobs:
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > firebase-service-account.json
       
     - name: Distribute Android
-      if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
+      if: github.event.inputs.platform == 'android'
       env:
         FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
         FIREBASE_SERVICE_ACCOUNT_FILE: "firebase-service-account.json"
@@ -82,7 +82,7 @@ jobs:
         fastlane android firebase_distribute release_notes:"$RELEASE_NOTES" groups:"$TESTER_GROUPS"
         
     - name: Distribute iOS
-      if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+      if: github.event.inputs.platform == 'ios'
       env:
         FIREBASE_APP_ID_IOS: ${{ secrets.FIREBASE_APP_ID_IOS }}
         FIREBASE_SERVICE_ACCOUNT_FILE: "firebase-service-account.json"

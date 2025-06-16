@@ -10,8 +10,6 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-
-
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -111,8 +109,6 @@ android {
         disable += "NullSafeMutableLiveData"
     }
 }
-
-
 
 dependencies {
     debugImplementation(compose.uiTooling)
