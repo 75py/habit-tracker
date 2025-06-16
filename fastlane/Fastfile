@@ -63,7 +63,7 @@ platform :ios do
     # Build iOS app
     build_app(
       scheme: "iosApp",
-      workspace: "iosApp/iosApp.xcodeproj/project.xcworkspace",
+      project: "iosApp/iosApp.xcodeproj",
       configuration: "Debug",
       export_method: "development",
       output_directory: "build/ios",

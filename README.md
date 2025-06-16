@@ -74,11 +74,12 @@ The application follows a layered architecture pattern with clear separation of 
 
 ### Firebase App Distribution
 
-Firebase App Distributionを使用してテストアプリを配信できます。
+Firebase App Distributionを使用してテストアプリ（Android/iOS）を配信できます。
 
 - **セットアップ**: [Firebase App Distribution セットアップガイド](docs/FIREBASE_APP_DISTRIBUTION.md)
-- **GitHub Actions**: 手動ワークフローでテストアプリを配信
-- **ローカル実行**: `./scripts/firebase-distribute.sh` スクリプトで開発者PCから配信
+- **GitHub Actions**: 手動ワークフローでテストアプリを配信（プラットフォーム選択可能）
+- **ローカル実行**: `./scripts/firebase-distribute.sh [platform]` スクリプトで開発者PCから配信
+- **fastlaneベース**: アプリ本体のGradle設定に影響しない外部実装
 
 ### Screenshots
 
