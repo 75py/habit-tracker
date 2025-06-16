@@ -83,6 +83,18 @@ This is a cross-platform habit tracking application built with Kotlin Multiplatf
 
 All project-specific information including detailed technical specifications is maintained in the `/docs` directory to ensure accuracy and consistency.
 
+## 🔨 Critical Rule - Continuous Rule Improvement
+
+Always add rules to copilot-instructions.md when receiving instructions that appear to require continuous application or when adding diffs that are deemed necessary for ongoing implementation.
+
+To continuously improve project rules and sustainably enhance development guidelines:
+
+1. Identify instructions or requirements that should be applied continuously rather than just once
+2. Add them as additional rules in the appropriate section of copilot-instructions.md
+3. Apply them as standard rules thereafter
+
+This process enables continuous improvement of project quality and consistency.
+
 ## Critical Coding Standards
 
 ### Logging Requirements

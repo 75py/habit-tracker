@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🔨 Critical Rule - New Rule Addition Process
+
+When receiving instructions from users that appear to require continuous application rather than one-time handling:
+
+1. Ask "Should this be made a standard rule?"
+2. If YES is received, add it as an additional rule to CLAUDE.md
+3. Apply it as a standard rule thereafter
+
+This process enables continuous improvement of project rules.
+
 ## Essential Development Commands
 
 ### Build and Run
