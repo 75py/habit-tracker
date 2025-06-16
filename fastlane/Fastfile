@@ -13,7 +13,10 @@ platform :android do
     
     # Validate required parameters
     UI.user_error!("FIREBASE_APP_ID environment variable is required") if firebase_app_id.nil? || firebase_app_id.empty?
-    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_file)
+    
+    # Check service account file path (adjust for fastlane directory context)
+    service_account_check_path = service_account_file.start_with?("/") ? service_account_file : "../#{service_account_file}"
+    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_check_path)
     UI.user_error!("google-services.json not found in composeApp/") unless File.exist?("../composeApp/google-services.json")
     
     UI.message("🚀 Building and distributing Android APK...")
@@ -52,7 +55,10 @@ platform :ios do
     
     # Validate required parameters
     UI.user_error!("FIREBASE_APP_ID_IOS or FIREBASE_APP_ID environment variable is required") if firebase_app_id.nil? || firebase_app_id.empty?
-    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_file)
+    
+    # Check service account file path (adjust for fastlane directory context)
+    service_account_check_path = service_account_file.start_with?("/") ? service_account_file : "../#{service_account_file}"
+    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_check_path)
     UI.user_error!("GoogleService-Info.plist not found in iosApp/iosApp/") unless File.exist?("../iosApp/iosApp/GoogleService-Info.plist")
     
     UI.message("🚀 Building and distributing iOS app...")
