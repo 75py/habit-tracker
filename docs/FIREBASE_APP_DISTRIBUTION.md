@@ -104,9 +104,16 @@ fastlane install_plugins
 
 **注意**: GitHub ActionsはLinux環境で実行されるため、Androidアプリのみ配信可能です。iOSアプリはローカル環境での配信をご利用ください。
 
-### 1. GitHub Secrets の追加
+### 1. GitHub Environment の作成
 
-リポジトリの Settings → Secrets and variables → Actions から以下のシークレットを追加：
+1. リポジトリの Settings → Environments を開く
+2. 「New environment」をクリック
+3. 環境名に `firebase-distribution` を入力
+4. 「Configure environment」をクリック
+
+### 2. Environment Secrets の追加
+
+作成した `firebase-distribution` 環境で以下のシークレットを追加：
 
 **Android用:**
 - `FIREBASE_APP_ID`: Firebase Console のAndroidアプリのアプリID
@@ -115,7 +122,12 @@ fastlane install_plugins
 **共通:**
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: ダウンロードしたサービスアカウントキーJSONファイルの内容
 
-### 2. ワークフローの実行
+**Environment Secrets を使用する利点:**
+- より細かいアクセス制御が可能
+- 環境ごとに異なる設定を管理可能
+- プロテクションルールを設定可能
+
+### 3. ワークフローの実行
 
 1. GitHub リポジトリの「Actions」タブを開く
 2. 「Firebase App Distribution」ワークフローを選択
