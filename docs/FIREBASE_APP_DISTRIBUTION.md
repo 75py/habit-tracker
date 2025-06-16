@@ -22,14 +22,14 @@
 
 1. Firebase Console でプロジェクトを開く
 2. 「アプリを追加」→「Android」を選択
-3. パッケージ名に `com.nagopy.kmp.HabitTracker` を入力
+3. パッケージ名に `com.nagopy.android.habittracker` を入力
 4. アプリの登録を完了
 
 ### 3. iOSアプリの登録
 
 1. Firebase Console でプロジェクトを開く
 2. 「アプリを追加」→「iOS」を選択
-3. バンドルIDに `com.nagopy.kmp.HabitTracker` を入力
+3. バンドルIDに `com.nagopy.ios.habittracker` を入力
 4. アプリの登録を完了
 
 ### 4. Firebase App Distributionの有効化
