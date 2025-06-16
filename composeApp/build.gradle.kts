@@ -60,6 +60,9 @@ kotlin {
             
             // Napier
             implementation(libs.napier)
+            
+            // Navigation
+            implementation(libs.androidx.navigation.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
