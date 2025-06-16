@@ -1,0 +1,13 @@
+# Appfile for HabitTracker
+
+# Android configuration
+for_platform :android do
+  package_name("com.nagopy.kmp.habittracker")
+end
+
+# iOS configuration
+for_platform :ios do
+  app_identifier("com.nagopy.kmp.habittracker")
+  apple_id("") # Will be set via environment variable or parameters
+  team_id("") # Will be set via environment variable or parameters
+end

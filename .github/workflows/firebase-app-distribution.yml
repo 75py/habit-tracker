@@ -3,6 +3,15 @@ name: Firebase App Distribution
 on:
   workflow_dispatch:
     inputs:
+      platform:
+        description: 'プラットフォーム'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - 'android'
+          - 'ios'
+          - 'both'
       release_notes:
         description: 'リリースノート'
         required: false
@@ -16,7 +25,7 @@ on:
 
 jobs:
   distribute:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     
     steps:
     - name: Checkout repository
@@ -36,24 +45,66 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x ./gradlew
       
-    - name: Create google-services.json
+    - name: Setup Ruby and Fastlane
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+        bundler-cache: true
+        working-directory: fastlane
+        
+    - name: Install fastlane
+      run: |
+        gem install fastlane
+        fastlane install_plugins
+      
+    - name: Setup Android configuration
+      if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
       run: |
         echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > composeApp/google-services.json
+        
+    - name: Setup iOS configuration
+      if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+      run: |
+        echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > iosApp/iosApp/GoogleService-Info.plist
         
     - name: Create Firebase service account file
       run: |
         echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' > firebase-service-account.json
       
-    - name: Build and distribute debug APK
+    - name: Distribute Android
+      if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
+      env:
+        FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        FIREBASE_SERVICE_ACCOUNT_FILE: "firebase-service-account.json"
+        RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+        TESTER_GROUPS: ${{ github.event.inputs.groups }}
       run: |
-        ./gradlew assembleDebug appDistributionUploadDebug \
-          -PFIREBASE_APP_ID="${{ secrets.FIREBASE_APP_ID }}" \
-          -PFIREBASE_SERVICE_ACCOUNT_FILE="firebase-service-account.json" \
-          -PRELEASE_NOTES="${{ github.event.inputs.release_notes }}" \
-          -PTESTER_GROUPS="${{ github.event.inputs.groups }}"
+        fastlane android firebase_distribute release_notes:"$RELEASE_NOTES" groups:"$TESTER_GROUPS"
+        
+    - name: Distribute iOS
+      if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+      env:
+        FIREBASE_APP_ID_IOS: ${{ secrets.FIREBASE_APP_ID_IOS }}
+        FIREBASE_SERVICE_ACCOUNT_FILE: "firebase-service-account.json"
+        RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+        TESTER_GROUPS: ${{ github.event.inputs.groups }}
+      run: |
+        fastlane ios firebase_distribute release_notes:"$RELEASE_NOTES" groups:"$TESTER_GROUPS"
+        
+    - name: Distribute both platforms
+      if: github.event.inputs.platform == 'both'
+      env:
+        FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        FIREBASE_APP_ID_IOS: ${{ secrets.FIREBASE_APP_ID_IOS }}
+        FIREBASE_SERVICE_ACCOUNT_FILE: "firebase-service-account.json"
+        RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+        TESTER_GROUPS: ${{ github.event.inputs.groups }}
+      run: |
+        fastlane firebase_distribute_all release_notes:"$RELEASE_NOTES" groups:"$TESTER_GROUPS"
       
     - name: Clean up sensitive files
       if: always()
       run: |
         rm -f composeApp/google-services.json
+        rm -f iosApp/iosApp/GoogleService-Info.plist
         rm -f firebase-service-account.json

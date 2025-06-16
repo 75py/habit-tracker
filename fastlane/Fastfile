@@ -1,0 +1,101 @@
+# Fastfile for Firebase App Distribution
+
+default_platform(:android)
+
+platform :android do
+  desc "Build and distribute Android debug APK to Firebase App Distribution"
+  lane :firebase_distribute do |options|
+    # Environment variables check
+    firebase_app_id = ENV["FIREBASE_APP_ID"]
+    service_account_file = ENV["FIREBASE_SERVICE_ACCOUNT_FILE"] || "firebase-service-account.json"
+    release_notes = options[:release_notes] || ENV["RELEASE_NOTES"] || "最新のテストビルドです"
+    groups = options[:groups] || ENV["TESTER_GROUPS"] || "internal-testers"
+    
+    # Validate required parameters
+    UI.user_error!("FIREBASE_APP_ID environment variable is required") if firebase_app_id.nil? || firebase_app_id.empty?
+    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_file)
+    UI.user_error!("google-services.json not found in composeApp/") unless File.exist?("composeApp/google-services.json")
+    
+    UI.message("🚀 Building and distributing Android APK...")
+    UI.message("📱 App ID: #{firebase_app_id}")
+    UI.message("📝 Release notes: #{release_notes}")
+    UI.message("👥 Tester groups: #{groups}")
+    
+    # Build APK using Gradle
+    gradle(
+      task: "assembleDebug",
+      project_dir: "."
+    )
+    
+    # Distribute to Firebase App Distribution
+    firebase_app_distribution(
+      app: firebase_app_id,
+      groups: groups,
+      release_notes: release_notes,
+      android_artifact_type: "APK",
+      android_artifact_path: "composeApp/build/outputs/apk/debug/composeApp-debug.apk",
+      service_credentials_file: service_account_file
+    )
+    
+    UI.success("✅ Android APK distributed successfully!")
+  end
+end
+
+platform :ios do
+  desc "Build and distribute iOS app to Firebase App Distribution"
+  lane :firebase_distribute do |options|
+    # Environment variables check
+    firebase_app_id = ENV["FIREBASE_APP_ID_IOS"] || ENV["FIREBASE_APP_ID"]
+    service_account_file = ENV["FIREBASE_SERVICE_ACCOUNT_FILE"] || "firebase-service-account.json"
+    release_notes = options[:release_notes] || ENV["RELEASE_NOTES"] || "最新のテストビルドです"
+    groups = options[:groups] || ENV["TESTER_GROUPS"] || "internal-testers"
+    
+    # Validate required parameters
+    UI.user_error!("FIREBASE_APP_ID_IOS or FIREBASE_APP_ID environment variable is required") if firebase_app_id.nil? || firebase_app_id.empty?
+    UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_file)
+    UI.user_error!("GoogleService-Info.plist not found in iosApp/iosApp/") unless File.exist?("iosApp/iosApp/GoogleService-Info.plist")
+    
+    UI.message("🚀 Building and distributing iOS app...")
+    UI.message("📱 App ID: #{firebase_app_id}")
+    UI.message("📝 Release notes: #{release_notes}")
+    UI.message("👥 Tester groups: #{groups}")
+    
+    # Build iOS app
+    build_app(
+      scheme: "iosApp",
+      workspace: "iosApp/iosApp.xcodeproj/project.xcworkspace",
+      configuration: "Debug",
+      export_method: "development",
+      output_directory: "build/ios",
+      output_name: "HabitTracker.ipa"
+    )
+    
+    # Distribute to Firebase App Distribution
+    firebase_app_distribution(
+      app: firebase_app_id,
+      groups: groups,
+      release_notes: release_notes,
+      ipa_path: "build/ios/HabitTracker.ipa",
+      service_credentials_file: service_account_file
+    )
+    
+    UI.success("✅ iOS app distributed successfully!")
+  end
+end
+
+desc "Build and distribute both Android and iOS apps to Firebase App Distribution"
+lane :firebase_distribute_all do |options|
+  UI.message("🚀 Distributing both Android and iOS apps...")
+  
+  # Distribute Android
+  android do
+    firebase_distribute(options)
+  end
+  
+  # Distribute iOS
+  ios do
+    firebase_distribute(options)
+  end
+  
+  UI.success("✅ Both Android and iOS apps distributed successfully!")
+end
