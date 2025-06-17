@@ -29,7 +29,7 @@
 
         <!-- Receiver for alarm broadcasts to display notifications -->
         <receiver
-            android:name=".notification.AlarmReceiver"
+            android:name="com.nagopy.kmp.habittracker.notification.AlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.nagopy.kmp.habittracker.SHOW_NOTIFICATION" />
@@ -38,7 +38,7 @@
 
         <!-- Receiver for notification actions -->
         <receiver
-            android:name=".notification.NotificationActionReceiver"
+            android:name="com.nagopy.kmp.habittracker.notification.NotificationActionReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.nagopy.kmp.habittracker.COMPLETE_TASK" />
@@ -47,7 +47,7 @@
 
         <!-- Receiver for device boot completion to reschedule notifications -->
         <receiver
-            android:name=".notification.BootCompletedReceiver"
+            android:name="com.nagopy.kmp.habittracker.notification.BootCompletedReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
