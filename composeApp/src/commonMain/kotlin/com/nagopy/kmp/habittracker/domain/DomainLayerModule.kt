@@ -34,6 +34,6 @@ val domainModule = module {
     single { CompleteTaskUseCase(get()) }
     single { ManageNotificationsUseCase(get(), get()) }
     single { ScheduleNextNotificationUseCase(get(), get(), get()) }
-    single { CompleteTaskFromNotificationUseCase(get(), get(), get()) }
+    single { CompleteTaskFromNotificationUseCase(get(), get()) }
     single { RequestNotificationPermissionOnStartupUseCase(get(), get()) }
 }

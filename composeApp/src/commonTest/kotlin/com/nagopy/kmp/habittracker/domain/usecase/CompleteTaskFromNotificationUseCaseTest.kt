@@ -1,6 +1,5 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
-import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -13,17 +12,15 @@ import kotlin.test.assertEquals
 class CompleteTaskFromNotificationUseCaseTest {
 
     private val mockCompleteTaskUseCase = mockk<CompleteTaskUseCase>()
-    private val mockNotificationScheduler = mockk<NotificationScheduler>(relaxed = true)
     private val mockScheduleNextNotificationUseCase = mockk<ScheduleNextNotificationUseCase>(relaxed = true)
     
     private val completeTaskFromNotificationUseCase = CompleteTaskFromNotificationUseCase(
         completeTaskUseCase = mockCompleteTaskUseCase,
-        notificationScheduler = mockNotificationScheduler,
         scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
     )
 
     @Test
-    fun `invoke should complete task cancel notification and schedule next notification`() = runTest {
+    fun `invoke should complete task and schedule next notification`() = runTest {
         // Given
         val habitId = 1L
         val date = LocalDate(2024, 1, 20)
@@ -39,16 +36,6 @@ class CompleteTaskFromNotificationUseCaseTest {
         // Then
         assertEquals(expectedLogId, result)
         coVerify { mockCompleteTaskUseCase(habitId, date, scheduledTime) }
-        coVerify { 
-            mockNotificationScheduler.cancelTaskNotification(
-                match { task ->
-                    task.habitId == habitId &&
-                    task.date == date &&
-                    task.scheduledTime == scheduledTime &&
-                    task.isCompleted == true
-                }
-            )
-        }
         coVerify { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId) }
     }
 
@@ -69,16 +56,6 @@ class CompleteTaskFromNotificationUseCaseTest {
         // Then - should still complete successfully despite scheduling failure
         assertEquals(expectedLogId, result)
         coVerify { mockCompleteTaskUseCase(habitId, date, scheduledTime) }
-        coVerify { 
-            mockNotificationScheduler.cancelTaskNotification(
-                match { task ->
-                    task.habitId == habitId &&
-                    task.date == date &&
-                    task.scheduledTime == scheduledTime &&
-                    task.isCompleted == true
-                }
-            )
-        }
         coVerify { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId) }
     }
 }
