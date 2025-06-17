@@ -1,6 +1,7 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -10,12 +11,13 @@ import kotlinx.datetime.LocalTime
  */
 class CompleteTaskFromNotificationUseCase(
     private val completeTaskUseCase: CompleteTaskUseCase,
-    private val notificationScheduler: NotificationScheduler
+    private val notificationScheduler: NotificationScheduler,
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
 ) {
     
     /**
      * Completes a task from a notification action.
-     * This cancels the notification and marks the task as completed.
+     * This cancels the notification, marks the task as completed, and schedules the next notification.
      * 
      * @param habitId The ID of the habit to mark as completed
      * @param date The date for which to mark the habit as completed
@@ -38,6 +40,20 @@ class CompleteTaskFromNotificationUseCase(
             isCompleted = true
         )
         notificationScheduler.cancelTaskNotification(task)
+        
+        // Schedule the next notification for this habit
+        // This is critical for maintaining the notification chain, but should not fail the current completion
+        try {
+            val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+            if (wasScheduled) {
+                Logger.i("Successfully scheduled next notification for habitId: $habitId", "CompleteTaskFromNotificationUseCase")
+            } else {
+                Logger.d("No next notification to schedule for habitId: $habitId", "CompleteTaskFromNotificationUseCase")
+            }
+        } catch (e: Exception) {
+            // Log and continue - failing to schedule next notification shouldn't affect current completion
+            Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "CompleteTaskFromNotificationUseCase")
+        }
         
         return logId
     }
