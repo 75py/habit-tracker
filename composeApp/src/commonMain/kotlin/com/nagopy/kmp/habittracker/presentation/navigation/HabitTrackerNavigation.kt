@@ -140,15 +140,20 @@ fun HabitTrackerNavigation(
         ) {
             Logger.d("Navigating to screen: AddHabit", tag = "Navigation")
             val viewModel: HabitEditViewModel = koinInject()
-            HabitEditScreen(
-                onSaveSuccess = { 
-                    safeNavigateBack()
-                },
-                onNavigateBack = { 
-                    safeNavigateBack()
-                },
-                viewModel = viewModel
-            )
+            SwipeBackHandler(
+                enabled = true,
+                onSwipeBack = { safeNavigateBack() }
+            ) {
+                HabitEditScreen(
+                    onSaveSuccess = { 
+                        safeNavigateBack()
+                    },
+                    onNavigateBack = { 
+                        safeNavigateBack()
+                    },
+                    viewModel = viewModel
+                )
+            }
         }
         
         composable(
@@ -161,16 +166,21 @@ fun HabitTrackerNavigation(
             val habitId = backStackEntry.arguments?.getString("habitId")?.toLongOrNull()
             Logger.d("Navigating to screen: EditHabit with habitId: $habitId", tag = "Navigation")
             val viewModel: HabitEditViewModel = koinInject()
-            HabitEditScreen(
-                habitId = habitId,
-                onSaveSuccess = { 
-                    safeNavigateBack()
-                },
-                onNavigateBack = { 
-                    safeNavigateBack()
-                },
-                viewModel = viewModel
-            )
+            SwipeBackHandler(
+                enabled = true,
+                onSwipeBack = { safeNavigateBack() }
+            ) {
+                HabitEditScreen(
+                    habitId = habitId,
+                    onSaveSuccess = { 
+                        safeNavigateBack()
+                    },
+                    onNavigateBack = { 
+                        safeNavigateBack()
+                    },
+                    viewModel = viewModel
+                )
+            }
         }
         
         composable(
@@ -182,12 +192,17 @@ fun HabitTrackerNavigation(
         ) {
             Logger.d("Navigating to screen: Today", tag = "Navigation")
             val viewModel: TodayViewModel = koinInject()
-            TodayScreen(
-                viewModel = viewModel,
-                onNavigateBack = { 
-                    safeNavigateBack()
-                }
-            )
+            SwipeBackHandler(
+                enabled = true,
+                onSwipeBack = { safeNavigateBack() }
+            ) {
+                TodayScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { 
+                        safeNavigateBack()
+                    }
+                )
+            }
         }
     }
 }
