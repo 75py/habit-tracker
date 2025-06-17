@@ -57,8 +57,15 @@ The presentation layer is responsible for handling user interface and user inter
 
 - **UI Components**: Compose UI components and screens
 - **ViewModels**: Hold UI state and handle user actions
-- **Navigation**: Routing between different screens
+- **Navigation**: Routing between different screens with platform-specific gesture support
 - **State Management**: Managing UI state using Compose state APIs
+
+**Navigation Features:**
+- **Cross-Platform Routing**: Screen-to-screen navigation through `HabitTrackerNavigation`
+- **Smooth Animations**: Slide transitions between screens
+- **iOS Swipe Back**: Native-style edge swipe gesture for iOS users using `SwipeBackHandler`
+- **Safe Navigation**: Debounced navigation to prevent rapid state changes
+- **Platform Consistency**: Unified navigation experience across Android and iOS
 
 **Key Principles:**
 - ViewModels communicate with the domain layer through use cases
@@ -440,6 +447,37 @@ actual val notificationModule: Module = iosNotificationModule
 ```
 
 This pattern ensures platform-specific implementations while maintaining a unified interface for the common application module.
+
+### Platform-Specific UI Components
+
+The application extends the `expect/actual` pattern to UI components for platform-specific behavior:
+
+**SwipeBackHandler Implementation:**
+```kotlin
+// Common interface (commonMain)
+@Composable
+expect fun SwipeBackHandler(
+    enabled: Boolean = true,
+    onSwipeBack: () -> Unit,
+    content: @Composable () -> Unit
+)
+
+// iOS implementation (iosMain)
+actual fun SwipeBackHandler(...) {
+    // iOS-specific gesture detection with edge swipe
+}
+
+// Android implementation (androidMain)  
+actual fun SwipeBackHandler(...) {
+    // Defers to system gesture navigation
+}
+```
+
+**Benefits of UI Component expect/actual Pattern:**
+- **Platform Optimization**: Each platform gets the most appropriate implementation
+- **Unified Interface**: Common code can use the same API across platforms
+- **Maintainability**: Platform-specific behavior is encapsulated in respective modules
+- **Native Experience**: Users get platform-appropriate interactions (iOS edge swipe, Android system gestures)
 
 ## Benefits of This Architecture
 
