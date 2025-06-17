@@ -172,10 +172,9 @@ class IOSNotificationScheduler(
     }
 
     private fun generateNotificationId(task: Task): String {
-        // Generate an ID based on habit ID and date only
-        // This ensures all tasks for the same habit on the same day share the same notification ID,
-        // causing new notifications to replace existing ones instead of creating multiple notifications
-        return "${task.habitId}_${task.date}"
+        // Generate an ID based on habit ID, date, and time
+        // This ensures each specific task has a unique notification ID for sequential scheduling
+        return "${task.habitId}_${task.date}_${task.scheduledTime}"
     }
 
     fun setupNotificationCategories() {
@@ -205,14 +204,13 @@ class IOSNotificationScheduler(
             val identifier = response.notification.request.identifier
             val parts = identifier.split("_")
             
-            if (parts.size >= 2) {
+            if (parts.size >= 3) {
                 try {
                     val habitId = parts[0].toLong()
                     val date = kotlinx.datetime.LocalDate.parse(parts[1])
-                    // Use default time since we're now using habit-level notifications
-                    val time = kotlinx.datetime.LocalTime(9, 0)
+                    val time = kotlinx.datetime.LocalTime.parse(parts[2])
                     
-                    Logger.d("Processing notification response for habitId: $habitId, date: $date", "IOSNotificationScheduler")
+                    Logger.d("Processing notification response for habitId: $habitId, date: $date, time: $time", "IOSNotificationScheduler")
                     
                     // Handle completion in background
                     CoroutineScope(Dispatchers.Default).launch {
@@ -246,7 +244,7 @@ class IOSNotificationScheduler(
                     Logger.e(e, "Unexpected error parsing notification identifier: $identifier", "IOSNotificationScheduler")
                 }
             } else {
-                Logger.w("Invalid notification identifier format (expected at least 2 parts): $identifier", "IOSNotificationScheduler")
+                Logger.w("Invalid notification identifier format (expected at least 3 parts): $identifier", "IOSNotificationScheduler")
             }
         }
     }
