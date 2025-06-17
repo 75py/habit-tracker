@@ -13,7 +13,7 @@
 
 ## キャッシュされる内容
 
-gradle-build-action@v3により以下が自動的にキャッシュされます：
+gradle-build-action@v4により以下が自動的にキャッシュされます：
 
 1. **Gradle Wrapper**
    - Gradle配布ファイル
