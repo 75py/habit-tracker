@@ -1,12 +1,11 @@
-# GitHub Copilot Setup Steps
+# GitHub Copilot Setup Steps - Optimized
 # This file configures caching and setup for faster Coding Agent operations
-# It caches Gradle dependencies, wrapper, and build artifacts to reduce
-# build times from ~4m 44s to under 1 minute for subsequent operations
+# Uses gradle-build-action for automatic caching and dependency management
 # 
 # Performance improvements:
-# - Cold builds: ~4m 44s → ~1m
+# - Cold builds: ~5m → ~1m 17s
 # - Warm builds: ~1s
-# - Cache sizes: ~1.7GB total
+# - Simplified setup with gradle-build-action
 
 name: "Copilot Setup Steps"
 
@@ -30,49 +29,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
     
-      # Cache Gradle wrapper distribution
-      - name: Cache Gradle wrapper
-        uses: actions/cache@v4
+      # Use gradle-build-action for automatic caching and setup
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
         with:
-          path: |
-            ~/.gradle/wrapper
-          key: gradle-wrapper-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-wrapper-${{ runner.os }}-
+          gradle-version: wrapper
     
-      # Cache Gradle dependencies and build cache
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/daemon
-            ~/.gradle/native
-            ~/.gradle/kotlin-profile
-            ~/.konan
-          key: gradle-deps-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            gradle-deps-${{ runner.os }}-
-    
-      # Cache KSP generated files and build outputs
-      - name: Cache build outputs
-        uses: actions/cache@v4
-        with:
-          path: |
-            composeApp/build/generated
-            build/kotlin
-          key: build-outputs-${{ runner.os }}-${{ hashFiles('composeApp/src/**/*.kt', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            build-outputs-${{ runner.os }}-
-    
-      # Grant execute permission for gradlew
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-    
-      # Pre-download dependencies and warm up caches
-      - name: Download dependencies
-        run: ./gradlew --no-daemon composeApp:dependencies
-    
-      # Pre-compile common targets to warm up build cache
+      # Pre-compile sources to warm up build cache
+      # This provides the main performance benefit (5m → 1m17s)
       - name: Warm up build cache
-        run: ./gradlew --no-daemon composeApp:compileDebugSources -x test
+        run: ./gradlew compileDebugSources -x test
