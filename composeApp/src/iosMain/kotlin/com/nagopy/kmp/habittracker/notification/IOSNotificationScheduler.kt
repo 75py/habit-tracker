@@ -12,8 +12,10 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toNSDate
@@ -48,15 +50,46 @@ class IOSNotificationScheduler(
             return
         }
 
-        val identifier = generateNotificationId(task)
-        Logger.d("Generated notification ID: $identifier", "IOSNotificationScheduler")
-        
         // Fetch the actual habit to get current name and description
         val habit = habitRepository.getHabit(task.habitId)
         if (habit == null) {
             Logger.w("Habit not found for task: ${task.habitName} (ID: ${task.habitId}), skipping notification", "IOSNotificationScheduler")
             return
         }
+        
+        // For interval habits that divide evenly into an hour, use interval-based scheduling
+        // This ensures proper coverage of all notification times (e.g., 0, 15, 30, 45 for 15-min intervals)
+        if (habit.frequencyType == FrequencyType.INTERVAL && 
+            habit.intervalMinutes <= 60 && 
+            60 % habit.intervalMinutes == 0) {
+            
+            // Check if interval notifications are already scheduled for this habit
+            val existingIdentifier = "${habit.id}_interval_0"
+            
+            center.getPendingNotificationRequestsWithCompletionHandler { requests ->
+                @Suppress("UNCHECKED_CAST")
+                val typedRequests = requests as? List<UNNotificationRequest>
+                val hasExistingIntervalNotifications = typedRequests?.any { request ->
+                    request.identifier == existingIdentifier
+                } == true
+                
+                if (hasExistingIntervalNotifications) {
+                    Logger.d("Interval notifications already scheduled for habit: ${habit.name}, skipping task-specific notification", "IOSNotificationScheduler")
+                } else {
+                    // Schedule all interval notifications for this habit
+                    scheduleIntervalNotifications(habit)
+                }
+            }
+        } else {
+            // For other frequency types, schedule individual task notifications
+            scheduleIndividualTaskNotification(task, habit)
+        }
+    }
+    
+    private suspend fun scheduleIndividualTaskNotification(task: Task, habit: Habit) {
+        val identifier = generateNotificationId(task)
+        Logger.d("Generated notification ID: $identifier", "IOSNotificationScheduler")
+        
         val habitName = habit.name
         val habitDescription = habit.description
         
@@ -91,6 +124,56 @@ class IOSNotificationScheduler(
                 Logger.i("Successfully scheduled notification for task: ${task.habitName} at ${task.scheduledTime}", "IOSNotificationScheduler")
             }
         }
+    }
+    
+    private fun scheduleIntervalNotifications(habit: Habit) {
+        val intervalMinutes = habit.intervalMinutes
+        val slotsPerHour = 60 / intervalMinutes
+        
+        Logger.d("Scheduling $slotsPerHour interval notifications for ${intervalMinutes}-minute interval habit: ${habit.name}", "IOSNotificationScheduler")
+        
+        // Create notification content
+        val content = UNMutableNotificationContent().apply {
+            setTitle(habit.name)
+            setBody(habit.description.ifEmpty { "Time to complete your habit!" })
+            setSound(UNNotificationSound.defaultSound())
+            setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
+        }
+        
+        // Schedule notifications for each interval slot within the hour
+        for (slot in 0 until slotsPerHour) {
+            val minuteInHour = slot * intervalMinutes
+            
+            // Create unique identifier for this interval slot
+            val identifier = "${habit.id}_interval_${minuteInHour}"
+            
+            // Create trigger for this specific minute of every hour
+            val components = NSDateComponents().apply {
+                minute = minuteInHour.toLong()
+            }
+            
+            val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                components,
+                repeats = true
+            )
+            
+            val request = UNNotificationRequest.requestWithIdentifier(
+                identifier = identifier,
+                content = content,
+                trigger = trigger
+            )
+            
+            // Schedule this interval notification
+            center.addNotificationRequest(request) { error ->
+                if (error != null) {
+                    Logger.e(Exception("Interval notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule interval notification for habit: ${habit.name} at minute $minuteInHour", "IOSNotificationScheduler")
+                } else {
+                    Logger.d("Successfully scheduled interval notification for habit: ${habit.name} at minute $minuteInHour", "IOSNotificationScheduler")
+                }
+            }
+        }
+        
+        Logger.i("Successfully scheduled all $slotsPerHour interval notifications for habit: ${habit.name}", "IOSNotificationScheduler")
     }
 
     override suspend fun scheduleTaskNotifications(tasks: List<Task>) {
@@ -202,37 +285,61 @@ class IOSNotificationScheduler(
             val identifier = response.notification.request.identifier
             val parts = identifier.split("_")
             
+            Logger.d("Processing notification response for identifier: $identifier", "IOSNotificationScheduler")
+            
             if (parts.size >= 2) {
                 try {
                     val habitId = parts[0].toLong()
-                    val date = kotlinx.datetime.LocalDate.parse(parts[1])
-                    // Use default time since we're now using habit-level notifications
-                    val time = kotlinx.datetime.LocalTime(9, 0)
                     
-                    Logger.d("Processing notification response for habitId: $habitId, date: $date", "IOSNotificationScheduler")
-                    
-                    // Handle completion in background
-                    CoroutineScope(Dispatchers.Default).launch {
-                        try {
-                            completeTaskFromNotificationUseCase(habitId, date, time)
-                            Logger.i("Successfully completed task for habitId: $habitId", "IOSNotificationScheduler")
-                            
-                            // Schedule the next notification for this habit
-                            // This is critical for maintaining the notification chain, but should not fail the current completion
+                    // Check if this is an interval notification (format: habitId_interval_minute)
+                    if (parts.size >= 3 && parts[1] == "interval") {
+                        // For interval notifications, we complete the task for the current time
+                        val currentDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                        val date = currentDateTime.date
+                        val time = currentDateTime.time
+                        
+                        Logger.d("Processing interval notification response for habitId: $habitId at current time: $time", "IOSNotificationScheduler")
+                        
+                        // Handle completion in background
+                        CoroutineScope(Dispatchers.Default).launch {
                             try {
-                                val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
-                                if (wasScheduled) {
-                                    Logger.i("Successfully scheduled next notification for habitId: $habitId", "IOSNotificationScheduler")
-                                } else {
-                                    Logger.d("No next notification to schedule for habitId: $habitId", "IOSNotificationScheduler")
+                                completeTaskFromNotificationUseCase(habitId, date, time)
+                                Logger.i("Successfully completed interval task for habitId: $habitId", "IOSNotificationScheduler")
+                            } catch (e: Exception) {
+                                Logger.e(e, "Failed to complete interval task for habitId: $habitId", "IOSNotificationScheduler")
+                            }
+                        }
+                    } else {
+                        // Original format: habitId_date or habitId_date_time
+                        val date = kotlinx.datetime.LocalDate.parse(parts[1])
+                        // Use default time since we're now using habit-level notifications
+                        val time = kotlinx.datetime.LocalTime(9, 0)
+                        
+                        Logger.d("Processing standard notification response for habitId: $habitId, date: $date", "IOSNotificationScheduler")
+                        
+                        // Handle completion in background
+                        CoroutineScope(Dispatchers.Default).launch {
+                            try {
+                                completeTaskFromNotificationUseCase(habitId, date, time)
+                                Logger.i("Successfully completed task for habitId: $habitId", "IOSNotificationScheduler")
+                                
+                                // Schedule the next notification for this habit
+                                // This is critical for maintaining the notification chain, but should not fail the current completion
+                                try {
+                                    val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                                    if (wasScheduled) {
+                                        Logger.i("Successfully scheduled next notification for habitId: $habitId", "IOSNotificationScheduler")
+                                    } else {
+                                        Logger.d("No next notification to schedule for habitId: $habitId", "IOSNotificationScheduler")
+                                    }
+                                } catch (e: Exception) {
+                                    // Log and continue - failing to schedule next notification shouldn't affect current completion
+                                    Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "IOSNotificationScheduler")
                                 }
                             } catch (e: Exception) {
-                                // Log and continue - failing to schedule next notification shouldn't affect current completion
-                                Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "IOSNotificationScheduler")
+                                // This catches database exceptions and other unexpected errors during task completion
+                                Logger.e(e, "Failed to complete task for habitId: $habitId", "IOSNotificationScheduler")
                             }
-                        } catch (e: Exception) {
-                            // This catches database exceptions and other unexpected errors during task completion
-                            Logger.e(e, "Failed to complete task for habitId: $habitId", "IOSNotificationScheduler")
                         }
                     }
                 } catch (e: NumberFormatException) {
@@ -272,45 +379,13 @@ class IOSNotificationScheduler(
                 )
             }
             FrequencyType.INTERVAL -> {
-                // For interval habits, we need to handle different interval types
-                createIntervalTrigger(habit, triggerDate, calendar)
-            }
-        }
-    }
-
-    private fun createIntervalTrigger(habit: Habit, triggerDate: NSDate, calendar: NSCalendar): UNCalendarNotificationTrigger {
-        val intervalMinutes = habit.intervalMinutes
-        
-        Logger.d("Creating interval trigger for habit: ${habit.name} with interval ${intervalMinutes} minutes", "IOSNotificationScheduler")
-        
-        when {
-            // For intervals that divide evenly into an hour, use minute-based repetition
-            intervalMinutes <= 60 && 60 % intervalMinutes == 0 -> {
-                val components = calendar.components(NSCalendarUnitMinute, triggerDate)
-                Logger.d("Using minute-based repetition for ${intervalMinutes}min interval at minute ${components.minute}", "IOSNotificationScheduler")
-                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-                    components,
-                    repeats = true
-                )
-            }
-            // For intervals that divide evenly into a day, use hour/minute repetition
-            intervalMinutes < 1440 && 1440 % intervalMinutes == 0 -> {
+                // For interval habits, create a fallback trigger (though this should not be reached with new logic)
+                Logger.w("createTriggerForTask called for interval habit ${habit.name} - this should be handled by scheduleIntervalNotifications", "IOSNotificationScheduler")
                 val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, triggerDate)
-                Logger.d("Using hour/minute-based repetition for ${intervalMinutes}min interval at ${components.hour}:${components.minute}", "IOSNotificationScheduler")
-                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-                    components,
-                    repeats = true
-                )
-            }
-            // For other intervals, fall back to daily repetition (not ideal, but better than no repetition)
-            else -> {
-                Logger.w("Interval ${intervalMinutes} minutes doesn't divide evenly into hour/day, using daily repetition", "IOSNotificationScheduler")
-                val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, triggerDate)
-                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
                     components,
                     repeats = true
                 )
             }
         }
-    }
 }
