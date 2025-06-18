@@ -1,6 +1,8 @@
 package com.nagopy.kmp.habittracker.notification
 
 import com.nagopy.kmp.habittracker.domain.model.Task
+import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
@@ -66,18 +68,9 @@ class IOSNotificationScheduler(
         val localDateTime = LocalDateTime(task.date, task.scheduledTime)
         val triggerDate = localDateTime.toInstant(TimeZone.currentSystemDefault()).toNSDate()
         
-        // Create calendar trigger
+        // Create calendar trigger based on habit frequency type
         val calendar = NSCalendar.currentCalendar()
-        val components = calendar.components(
-            NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or 
-            NSCalendarUnitHour or NSCalendarUnitMinute,
-            triggerDate
-        )
-        
-        val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-            components,
-            repeats = false
-        )
+        val trigger = createTriggerForTask(habit, triggerDate, calendar)
 
         // Create request
         val request = UNNotificationRequest.requestWithIdentifier(
@@ -172,9 +165,10 @@ class IOSNotificationScheduler(
     }
 
     private fun generateNotificationId(task: Task): String {
-        // Generate an ID based on habit ID, date, and time
-        // This ensures each specific task has a unique notification ID for sequential scheduling
-        return "${task.habitId}_${task.date}_${task.scheduledTime}"
+        // Generate an ID based on habit ID and date only
+        // This ensures all tasks for the same habit on the same day share the same notification ID,
+        // causing new notifications to replace existing ones instead of creating multiple notifications
+        return "${task.habitId}_${task.date}"
     }
 
     fun setupNotificationCategories() {
@@ -204,13 +198,14 @@ class IOSNotificationScheduler(
             val identifier = response.notification.request.identifier
             val parts = identifier.split("_")
             
-            if (parts.size >= 3) {
+            if (parts.size >= 2) {
                 try {
                     val habitId = parts[0].toLong()
                     val date = kotlinx.datetime.LocalDate.parse(parts[1])
-                    val time = kotlinx.datetime.LocalTime.parse(parts[2])
+                    // Use default time since we're now using habit-level notifications
+                    val time = kotlinx.datetime.LocalTime(9, 0)
                     
-                    Logger.d("Processing notification response for habitId: $habitId, date: $date, time: $time", "IOSNotificationScheduler")
+                    Logger.d("Processing notification response for habitId: $habitId, date: $date", "IOSNotificationScheduler")
                     
                     // Handle completion in background
                     CoroutineScope(Dispatchers.Default).launch {
@@ -244,7 +239,86 @@ class IOSNotificationScheduler(
                     Logger.e(e, "Unexpected error parsing notification identifier: $identifier", "IOSNotificationScheduler")
                 }
             } else {
-                Logger.w("Invalid notification identifier format (expected at least 3 parts): $identifier", "IOSNotificationScheduler")
+                Logger.w("Invalid notification identifier format (expected at least 2 parts): $identifier", "IOSNotificationScheduler")
+            }
+        }
+    }
+
+    private fun createTriggerForTask(habit: Habit?, triggerDate: NSDate, calendar: NSCalendar): UNCalendarNotificationTrigger {
+        if (habit == null) {
+            // Fallback to non-repeating if habit is not found
+            val components = calendar.components(
+                NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or
+                NSCalendarUnitHour or NSCalendarUnitMinute,
+                triggerDate
+            )
+            return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                components,
+                repeats = false
+            )
+        }
+
+        return when (habit.frequencyType) {
+            FrequencyType.ONCE_DAILY -> {
+                // For daily habits, repeat daily at the same time
+                val components = calendar.components(
+                    NSCalendarUnitHour or NSCalendarUnitMinute,
+                    triggerDate
+                )
+                Logger.d("Creating daily repeating trigger for habit: ${habit.name} at ${components.hour}:${components.minute}", "IOSNotificationScheduler")
+                UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+            }
+            FrequencyType.HOURLY -> {
+                // For hourly habits, repeat every hour at the same minute
+                val components = calendar.components(NSCalendarUnitMinute, triggerDate)
+                Logger.d("Creating hourly repeating trigger for habit: ${habit.name} at minute ${components.minute}", "IOSNotificationScheduler")
+                UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+            }
+            FrequencyType.INTERVAL -> {
+                // For interval habits, we need to handle different interval types
+                createIntervalTrigger(habit, triggerDate, calendar)
+            }
+        }
+    }
+
+    private fun createIntervalTrigger(habit: Habit, triggerDate: NSDate, calendar: NSCalendar): UNCalendarNotificationTrigger {
+        val intervalMinutes = habit.intervalMinutes
+        
+        Logger.d("Creating interval trigger for habit: ${habit.name} with interval ${intervalMinutes} minutes", "IOSNotificationScheduler")
+        
+        when {
+            // For intervals that divide evenly into an hour, use minute-based repetition
+            intervalMinutes <= 60 && 60 % intervalMinutes == 0 -> {
+                val components = calendar.components(NSCalendarUnitMinute, triggerDate)
+                Logger.d("Using minute-based repetition for ${intervalMinutes}min interval at minute ${components.minute}", "IOSNotificationScheduler")
+                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+            }
+            // For intervals that divide evenly into a day, use hour/minute repetition
+            intervalMinutes < 1440 && 1440 % intervalMinutes == 0 -> {
+                val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, triggerDate)
+                Logger.d("Using hour/minute-based repetition for ${intervalMinutes}min interval at ${components.hour}:${components.minute}", "IOSNotificationScheduler")
+                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+            }
+            // For other intervals, fall back to daily repetition (not ideal, but better than no repetition)
+            else -> {
+                Logger.w("Interval ${intervalMinutes} minutes doesn't divide evenly into hour/day, using daily repetition", "IOSNotificationScheduler")
+                val components = calendar.components(NSCalendarUnitHour or NSCalendarUnitMinute, triggerDate)
+                return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
             }
         }
     }
