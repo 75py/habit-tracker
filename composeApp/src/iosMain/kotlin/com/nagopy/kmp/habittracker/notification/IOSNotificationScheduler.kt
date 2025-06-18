@@ -53,8 +53,12 @@ class IOSNotificationScheduler(
         
         // Fetch the actual habit to get current name and description
         val habit = habitRepository.getHabit(task.habitId)
-        val habitName = habit?.name ?: task.habitName
-        val habitDescription = habit?.description ?: task.habitDescription
+        if (habit == null) {
+            Logger.w("Habit not found for task: ${task.habitName} (ID: ${task.habitId}), skipping notification", "IOSNotificationScheduler")
+            return
+        }
+        val habitName = habit.name
+        val habitDescription = habit.description
         
         // Create notification content
         val content = UNMutableNotificationContent().apply {
@@ -244,20 +248,7 @@ class IOSNotificationScheduler(
         }
     }
 
-    private fun createTriggerForTask(habit: Habit?, triggerDate: NSDate, calendar: NSCalendar): UNCalendarNotificationTrigger {
-        if (habit == null) {
-            // Fallback to non-repeating if habit is not found
-            val components = calendar.components(
-                NSCalendarUnitYear or NSCalendarUnitMonth or NSCalendarUnitDay or
-                NSCalendarUnitHour or NSCalendarUnitMinute,
-                triggerDate
-            )
-            return UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-                components,
-                repeats = false
-            )
-        }
-
+    private fun createTriggerForTask(habit: Habit, triggerDate: NSDate, calendar: NSCalendar): UNCalendarNotificationTrigger {
         return when (habit.frequencyType) {
             FrequencyType.ONCE_DAILY -> {
                 // For daily habits, repeat daily at the same time
