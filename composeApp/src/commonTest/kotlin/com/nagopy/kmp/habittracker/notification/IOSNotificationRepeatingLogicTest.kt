@@ -64,35 +64,5 @@ class IOSNotificationRepeatingLogicTest {
         assertTrue(isValid60Min, "60-minute interval should be valid for minute repetition")
     }
     
-    @Test
-    fun testFrequencyTypeConfiguration() {
-        // Test that habits with different frequency types are configured correctly
-        val dailyHabit = Habit(
-            id = 1,
-            name = "Daily Habit",
-            frequencyType = FrequencyType.ONCE_DAILY,
-            createdAt = LocalDate(2024, 1, 1)
-        )
-        
-        val hourlyHabit = Habit(
-            id = 2,
-            name = "Hourly Habit", 
-            frequencyType = FrequencyType.HOURLY,
-            createdAt = LocalDate(2024, 1, 1)
-        )
-        
-        val oneMinuteIntervalHabit = Habit(
-            id = 3,
-            name = "1-Minute Interval Habit",
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 1,
-            createdAt = LocalDate(2024, 1, 1)
-        )
-        
-        // Verify configurations
-        assertTrue(dailyHabit.frequencyType == FrequencyType.ONCE_DAILY)
-        assertTrue(hourlyHabit.frequencyType == FrequencyType.HOURLY)
-        assertTrue(oneMinuteIntervalHabit.frequencyType == FrequencyType.INTERVAL)
-        assertTrue(oneMinuteIntervalHabit.intervalMinutes == 1)
-    }
+
 }

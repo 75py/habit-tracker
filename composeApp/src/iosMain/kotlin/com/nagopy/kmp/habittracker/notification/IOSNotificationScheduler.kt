@@ -128,52 +128,106 @@ class IOSNotificationScheduler(
     
     private fun scheduleIntervalNotifications(habit: Habit) {
         val intervalMinutes = habit.intervalMinutes
-        val slotsPerHour = 60 / intervalMinutes
         
-        Logger.d("Scheduling $slotsPerHour interval notifications for ${intervalMinutes}-minute interval habit: ${habit.name}", "IOSNotificationScheduler")
-        
-        // Create notification content
-        val content = UNMutableNotificationContent().apply {
-            setTitle(habit.name)
-            setBody(habit.description.ifEmpty { "Time to complete your habit!" })
-            setSound(UNNotificationSound.defaultSound())
-            setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
+        // Only support intervals that divide evenly into 60 minutes for now
+        if (60 % intervalMinutes != 0) {
+            Logger.w("Interval ${intervalMinutes} minutes does not divide evenly into 60 minutes. Using fallback single notification.", "IOSNotificationScheduler")
+            // For non-divisible intervals, create a single repeating notification at the first scheduled time
+            if (habit.scheduledTimes.isNotEmpty()) {
+                val scheduledTime = habit.scheduledTimes.first()
+                
+                // Create notification content
+                val content = UNMutableNotificationContent().apply {
+                    setTitle(habit.name)
+                    setBody(habit.description.ifEmpty { "Time to complete your habit!" })
+                    setSound(UNNotificationSound.defaultSound())
+                    setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
+                }
+                
+                // Create trigger that repeats based on the scheduled time
+                val components = NSDateComponents().apply {
+                    hour = scheduledTime.hour.toLong()
+                    minute = scheduledTime.minute.toLong()
+                }
+                
+                val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+                
+                val request = UNNotificationRequest.requestWithIdentifier(
+                    identifier = "${habit.id}_interval_fallback",
+                    content = content,
+                    trigger = trigger
+                )
+                
+                center.addNotificationRequest(request) { error ->
+                    if (error != null) {
+                        Logger.e(Exception("Fallback interval notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule fallback notification for habit: ${habit.name}", "IOSNotificationScheduler")
+                    } else {
+                        Logger.d("Successfully scheduled fallback interval notification for habit: ${habit.name} at ${scheduledTime}", "IOSNotificationScheduler")
+                    }
+                }
+            }
+            return
         }
         
-        // Schedule notifications for each interval slot within the hour
-        for (slot in 0 until slotsPerHour) {
-            val minuteInHour = slot * intervalMinutes
+        val slotsPerHour = 60 / intervalMinutes
+        
+        // For each scheduled time, create interval notifications starting from that time
+        habit.scheduledTimes.forEach { scheduledTime ->
+            Logger.d("Scheduling $slotsPerHour interval notifications for ${intervalMinutes}-minute interval habit: ${habit.name} starting at ${scheduledTime}", "IOSNotificationScheduler")
             
-            // Create unique identifier for this interval slot
-            val identifier = "${habit.id}_interval_${minuteInHour}"
-            
-            // Create trigger for this specific minute of every hour
-            val components = NSDateComponents().apply {
-                minute = minuteInHour.toLong()
+            // Create notification content
+            val content = UNMutableNotificationContent().apply {
+                setTitle(habit.name)
+                setBody(habit.description.ifEmpty { "Time to complete your habit!" })
+                setSound(UNNotificationSound.defaultSound())
+                setCategoryIdentifier(HABIT_REMINDER_CATEGORY)
             }
             
-            val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-                components,
-                repeats = true
-            )
+            // Calculate the minutes within each hour where notifications should fire
+            val startMinute = scheduledTime.minute
+            val notificationMinutes = mutableSetOf<Int>()
             
-            val request = UNNotificationRequest.requestWithIdentifier(
-                identifier = identifier,
-                content = content,
-                trigger = trigger
-            )
+            // Add intervals starting from the scheduled minute
+            for (slot in 0 until slotsPerHour) {
+                val minuteInHour = (startMinute + slot * intervalMinutes) % 60
+                notificationMinutes.add(minuteInHour)
+            }
             
-            // Schedule this interval notification
-            center.addNotificationRequest(request) { error ->
-                if (error != null) {
-                    Logger.e(Exception("Interval notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule interval notification for habit: ${habit.name} at minute $minuteInHour", "IOSNotificationScheduler")
-                } else {
-                    Logger.d("Successfully scheduled interval notification for habit: ${habit.name} at minute $minuteInHour", "IOSNotificationScheduler")
+            // Create notifications for each calculated minute
+            notificationMinutes.forEach { minute ->
+                val identifier = "${habit.id}_interval_${minute}"
+                
+                // Create trigger for this specific minute of every hour
+                val components = NSDateComponents().apply {
+                    this.minute = minute.toLong()
+                }
+                
+                val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                    components,
+                    repeats = true
+                )
+                
+                val request = UNNotificationRequest.requestWithIdentifier(
+                    identifier = identifier,
+                    content = content,
+                    trigger = trigger
+                )
+                
+                // Schedule this interval notification
+                center.addNotificationRequest(request) { error ->
+                    if (error != null) {
+                        Logger.e(Exception("Interval notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule interval notification for habit: ${habit.name} at minute $minute", "IOSNotificationScheduler")
+                    } else {
+                        Logger.d("Successfully scheduled interval notification for habit: ${habit.name} at minute $minute", "IOSNotificationScheduler")
+                    }
                 }
             }
         }
         
-        Logger.i("Successfully scheduled all $slotsPerHour interval notifications for habit: ${habit.name}", "IOSNotificationScheduler")
+        Logger.i("Successfully scheduled interval notifications for habit: ${habit.name}", "IOSNotificationScheduler")
     }
 
     override suspend fun scheduleTaskNotifications(tasks: List<Task>) {
