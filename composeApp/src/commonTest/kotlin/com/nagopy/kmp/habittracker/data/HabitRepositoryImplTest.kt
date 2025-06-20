@@ -61,7 +61,6 @@ class HabitRepositoryImplTest {
                 color = "#FF5722",
                 isActive = true,
                 createdAt = "2024-01-01",
-                frequencyType = "ONCE_DAILY",
                 intervalMinutes = 1440,
                 scheduledTimes = "07:00"
             )
@@ -89,7 +88,6 @@ class HabitRepositoryImplTest {
                 color = "#FF5722",
                 isActive = true,
                 createdAt = "2024-01-01",
-                frequencyType = "ONCE_DAILY",
                 intervalMinutes = 1440,
                 scheduledTimes = "09:00"
             )
@@ -117,7 +115,6 @@ class HabitRepositoryImplTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "ONCE_DAILY",
             intervalMinutes = 1440,
             scheduledTimes = "07:00"
         )
