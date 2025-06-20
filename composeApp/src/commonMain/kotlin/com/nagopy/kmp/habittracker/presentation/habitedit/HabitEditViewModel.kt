@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
@@ -120,9 +121,36 @@ class HabitEditViewModel(
             TimeUnit.MINUTES -> value
             TimeUnit.HOURS -> value * 60
         }
-        _uiState.value = _uiState.value.copy(
-            intervalMinutes = intervalMinutes,
-            intervalUnit = unit
+        
+        // If frequency type is INTERVAL, validate that the interval minutes is a valid divisor of 60
+        val currentState = _uiState.value
+        val validatedIntervalMinutes = if (currentState.frequencyType == FrequencyType.INTERVAL) {
+            if (HabitIntervalValidator.isValidIntervalMinutes(intervalMinutes)) {
+                intervalMinutes
+            } else {
+                // Use the closest valid value
+                HabitIntervalValidator.getClosestValidIntervalMinutes(intervalMinutes)
+            }
+        } else {
+            intervalMinutes
+        }
+        
+        // Recalculate unit and value based on validated interval minutes
+        val finalUnit = if (validatedIntervalMinutes != intervalMinutes) {
+            // If we changed the value, determine the best unit to display
+            if (validatedIntervalMinutes % 60 == 0) TimeUnit.HOURS else TimeUnit.MINUTES
+        } else {
+            unit
+        }
+        
+        val finalValue = when (finalUnit) {
+            TimeUnit.MINUTES -> validatedIntervalMinutes
+            TimeUnit.HOURS -> validatedIntervalMinutes / 60
+        }
+        
+        _uiState.value = currentState.copy(
+            intervalMinutes = validatedIntervalMinutes,
+            intervalUnit = finalUnit
         )
     }
     

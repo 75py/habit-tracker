@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
@@ -257,6 +258,7 @@ fun HabitEditScreen(
                             IntervalPickerDialog(
                                 currentValue = uiState.intervalValue,
                                 unit = uiState.intervalUnit,
+                                frequencyType = uiState.frequencyType,
                                 onValueAndUnitChange = { value, unit ->
                                     viewModel.updateIntervalValue(value, unit)
                                 },
@@ -594,16 +596,28 @@ private fun ColorOption(
 private fun IntervalPickerDialog(
     currentValue: Int,
     unit: TimeUnit,
+    frequencyType: FrequencyType,
     onValueAndUnitChange: (Int, TimeUnit) -> Unit,
     onDismiss: () -> Unit
 ) {
     var tempUnit by remember { mutableStateOf(unit) }
     
-    // Calculate reasonable min/max values based on current unit
-    val minValue = 1
-    val maxValue = when (tempUnit) {
-        TimeUnit.MINUTES -> 1440 // 24 hours in minutes
-        TimeUnit.HOURS -> 24 // 24 hours
+    // Calculate reasonable min/max values based on current unit and frequency type
+    val (minValue, maxValue) = when (tempUnit) {
+        TimeUnit.MINUTES -> {
+            if (frequencyType == FrequencyType.INTERVAL) {
+                1 to 60 // For INTERVAL, only allow 1-60 minutes (the valid divisors)
+            } else {
+                1 to 1440 // 24 hours in minutes
+            }
+        }
+        TimeUnit.HOURS -> {
+            if (frequencyType == FrequencyType.INTERVAL) {
+                1 to 1 // For INTERVAL, only allow 1 hour (60 minutes is the only valid hour-divisor)
+            } else {
+                1 to 24 // 24 hours
+            }
+        }
     }
     
     // Convert initial value if needed based on current unit
@@ -672,11 +686,22 @@ private fun IntervalPickerDialog(
                     // Decrease button
                     FilledIconButton(
                         onClick = { 
-                            if (tempValue > minValue) {
+                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                                // For INTERVAL minutes, jump to previous valid divisor
+                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                                if (currentIndex > 0) {
+                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex - 1]
+                                }
+                            } else if (tempValue > minValue) {
                                 tempValue--
                             }
                         },
-                        enabled = tempValue > minValue
+                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                            currentIndex > 0
+                        } else {
+                            tempValue > minValue
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Remove,
@@ -695,17 +720,21 @@ private fun IntervalPickerDialog(
                     // Increase button
                     FilledIconButton(
                         onClick = { 
-                            val currentMaxValue = when (tempUnit) {
-                                TimeUnit.MINUTES -> 1440
-                                TimeUnit.HOURS -> 24
-                            }
-                            if (tempValue < currentMaxValue) {
+                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                                // For INTERVAL minutes, jump to next valid divisor
+                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                                if (currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1) {
+                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex + 1]
+                                }
+                            } else if (tempValue < maxValue) {
                                 tempValue++
                             }
                         },
-                        enabled = tempValue < when (tempUnit) {
-                            TimeUnit.MINUTES -> 1440
-                            TimeUnit.HOURS -> 24
+                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                            currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1
+                        } else {
+                            tempValue < maxValue
                         }
                     ) {
                         Icon(
@@ -720,14 +749,30 @@ private fun IntervalPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val quickValues = when (tempUnit) {
-                        TimeUnit.MINUTES -> listOf(1, 5, 10, 15, 30, 60)
-                        TimeUnit.HOURS -> listOf(1, 2, 3, 4, 6, 8, 12, 24)
+                        TimeUnit.MINUTES -> {
+                            if (frequencyType == FrequencyType.INTERVAL) {
+                                // For INTERVAL type, only show valid divisors of 60 in minutes
+                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
+                            } else {
+                                listOf(1, 5, 10, 15, 30, 60)
+                            }
+                        }
+                        TimeUnit.HOURS -> {
+                            if (frequencyType == FrequencyType.INTERVAL) {
+                                // For INTERVAL type, only show valid divisors of 60 that are >= 60 (i.e., only 60 minutes = 1 hour)
+                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
+                                    .filter { it >= 60 && it % 60 == 0 }
+                                    .map { it / 60 }
+                            } else {
+                                listOf(1, 2, 3, 4, 6, 8, 12, 24)
+                            }
+                        }
                     }
                     
                     items(quickValues) { value ->
                         val currentMaxValue = when (tempUnit) {
-                            TimeUnit.MINUTES -> 1440
-                            TimeUnit.HOURS -> 24
+                            TimeUnit.MINUTES -> if (frequencyType == FrequencyType.INTERVAL) 60 else 1440
+                            TimeUnit.HOURS -> if (frequencyType == FrequencyType.INTERVAL) 1 else 24
                         }
                         if (value <= currentMaxValue) {
                             FilterChip(
