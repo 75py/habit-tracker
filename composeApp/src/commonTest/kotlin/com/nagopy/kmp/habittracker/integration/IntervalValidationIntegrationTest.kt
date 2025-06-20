@@ -55,7 +55,7 @@ class IntervalValidationIntegrationTest {
     }
 
     @Test
-    fun `ViewModel should auto-correct invalid INTERVAL values`() {
+    fun `ViewModel should auto-correct invalid values for all frequency types`() {
         val mockAddHabitUseCase = mockk<AddHabitUseCase>(relaxed = true)
         val mockUpdateHabitUseCase = mockk<UpdateHabitUseCase>(relaxed = true)
         val mockGetHabitUseCase = mockk<GetHabitUseCase>(relaxed = true)
@@ -70,54 +70,103 @@ class IntervalValidationIntegrationTest {
             scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
         )
         
-        // Set frequency type to INTERVAL first
+        // Test INTERVAL frequency auto-correction
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
-        
-        // Test that invalid values get auto-corrected to closest valid values
         viewModel.updateIntervalValue(7, TimeUnit.MINUTES)
-        val state1 = viewModel.uiState.value
+        val intervalState = viewModel.uiState.value
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(state1.intervalMinutes),
-            "Expected ${state1.intervalMinutes} to be a valid divisor of 60"
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalState.intervalMinutes),
+            "Expected ${intervalState.intervalMinutes} to be a valid divisor of 60"
         )
         
-        viewModel.updateIntervalValue(25, TimeUnit.MINUTES)
-        val state2 = viewModel.uiState.value
+        // Test HOURLY frequency auto-correction
+        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+        viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
+        val hourlyState = viewModel.uiState.value
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(state2.intervalMinutes),
-            "Expected ${state2.intervalMinutes} to be a valid divisor of 60"
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, hourlyState.intervalMinutes),
+            "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
         )
+        assertEquals(60, hourlyState.intervalMinutes)
         
-        viewModel.updateIntervalValue(90, TimeUnit.MINUTES)
-        val state3 = viewModel.uiState.value
+        // Test ONCE_DAILY frequency auto-correction
+        viewModel.updateFrequencyType(FrequencyType.ONCE_DAILY)
+        viewModel.updateIntervalValue(12, TimeUnit.HOURS) // Should be corrected to 1440
+        val dailyState = viewModel.uiState.value
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(state3.intervalMinutes),
-            "Expected ${state3.intervalMinutes} to be a valid divisor of 60"
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.ONCE_DAILY, dailyState.intervalMinutes),
+            "Expected ${dailyState.intervalMinutes} to be exactly 1440"
         )
-        assertEquals(60, state3.intervalMinutes) // 90 should be corrected to 60
+        assertEquals(1440, dailyState.intervalMinutes)
     }
 
     @Test
-    fun `non-INTERVAL frequency types should not be restricted`() {
-        // ONCE_DAILY and HOURLY should allow any reasonable values
+    fun `frequency type validation should work correctly for all types`() {
+        // Test ONCE_DAILY - only 1440 is valid
         val habit1 = Habit(
             id = 1L,
             name = "Test Daily",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 90 // This would be invalid for INTERVAL, but OK for ONCE_DAILY
+            intervalMinutes = 1440 // Valid for ONCE_DAILY
         )
-        assertEquals(90, habit1.intervalMinutes)
+        assertEquals(1440, habit1.intervalMinutes)
 
+        // Test HOURLY - multiples of 60 are valid
         val habit2 = Habit(
             id = 2L,
             name = "Test Hourly",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.HOURLY,
-            intervalMinutes = 180 // This would be invalid for INTERVAL, but OK for HOURLY
+            intervalMinutes = 120 // Valid for HOURLY (2 hours)
         )
-        assertEquals(180, habit2.intervalMinutes)
+        assertEquals(120, habit2.intervalMinutes)
+        
+        // Test INTERVAL - divisors of 60 are valid
+        val habit3 = Habit(
+            id = 3L,
+            name = "Test Interval",
+            description = "Test",
+            createdAt = LocalDate.parse("2024-01-01"),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 30 // Valid for INTERVAL
+        )
+        assertEquals(30, habit3.intervalMinutes)
+        
+        // Test invalid values
+        assertFailsWith<IllegalArgumentException> {
+            Habit(
+                id = 4L,
+                name = "Invalid Daily",
+                description = "Test",
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalMinutes = 720 // Invalid for ONCE_DAILY
+            )
+        }
+        
+        assertFailsWith<IllegalArgumentException> {
+            Habit(
+                id = 5L,
+                name = "Invalid Hourly",
+                description = "Test",
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.HOURLY,
+                intervalMinutes = 90 // Invalid for HOURLY (not multiple of 60)
+            )
+        }
+        
+        assertFailsWith<IllegalArgumentException> {
+            Habit(
+                id = 6L,
+                name = "Invalid Interval",
+                description = "Test",
+                createdAt = LocalDate.parse("2024-01-01"),
+                frequencyType = FrequencyType.INTERVAL,
+                intervalMinutes = 90 // Invalid for INTERVAL (not divisor of 60)
+            )
+        }
     }
 }

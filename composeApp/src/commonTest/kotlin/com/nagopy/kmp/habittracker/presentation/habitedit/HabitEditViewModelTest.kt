@@ -470,19 +470,22 @@ class HabitEditViewModelTest {
 
     @Test
     fun `updateIntervalValue should handle unit changes from IntervalPickerDialog correctly`() {
-        // Given - initial state with hours
-        viewModel.updateIntervalValue(2, TimeUnit.HOURS)
-        assertEquals(120, viewModel.uiState.value.intervalMinutes) // 2 hours = 120 minutes
-        assertEquals(TimeUnit.HOURS, viewModel.uiState.value.intervalUnit)
-        assertEquals(2, viewModel.uiState.value.intervalValue)
-
-        // When - user changes to 30 minutes via dialog (valid divisor of 60)
+        // Set frequency type to INTERVAL to allow divisor-based intervals
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
+        
+        // Given - initial state with valid INTERVAL value (30 minutes)
         viewModel.updateIntervalValue(30, TimeUnit.MINUTES)
+        assertEquals(30, viewModel.uiState.value.intervalMinutes) // 30 minutes is valid for INTERVAL
+        assertEquals(TimeUnit.MINUTES, viewModel.uiState.value.intervalUnit)
+        assertEquals(30, viewModel.uiState.value.intervalValue)
+
+        // When - user changes to 1 hour via dialog (60 minutes is valid divisor of 60)
+        viewModel.updateIntervalValue(1, TimeUnit.HOURS)
 
         // Then - should update both value and unit correctly
         val state = viewModel.uiState.value
-        assertEquals(30, state.intervalMinutes)
-        assertEquals(TimeUnit.MINUTES, state.intervalUnit)
-        assertEquals(30, state.intervalValue)
+        assertEquals(60, state.intervalMinutes)
+        assertEquals(TimeUnit.HOURS, state.intervalUnit)
+        assertEquals(1, state.intervalValue)
     }
 }
