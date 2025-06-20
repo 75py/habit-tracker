@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -18,11 +19,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -57,7 +64,10 @@ fun HabitListScreen(
             FloatingActionButton(
                 onClick = onAddHabitClick
             ) {
-                Text(stringResource(Res.string.add_button))
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(Res.string.add_habit)
+                )
             }
         }
     ) { paddingValues ->
@@ -245,5 +255,299 @@ private fun HabitItem(
                 }
             }
         )
+    }
+}
+
+/**
+ * Preview data class to avoid dependency on ViewModel
+ */
+private data class PreviewHabitListUiState(
+    val habits: List<Habit> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+/**
+ * Stateless content for preview purposes
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitListContentPreview(
+    uiState: PreviewHabitListUiState,
+    onAddHabitClick: () -> Unit = {},
+    onTodayClick: () -> Unit = {},
+    onHabitEdit: (Habit) -> Unit = {},
+    onHabitDelete: (Long) -> Unit = {},
+    onRefresh: () -> Unit = {}
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.my_habits)) },
+                actions = {
+                    IconButton(onClick = onTodayClick) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = stringResource(Res.string.todays_tasks_content_description)
+                        )
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddHabitClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(Res.string.add_habit)
+                )
+            }
+        }
+    ) { paddingValues ->
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            
+            uiState.error != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(Res.string.error_prefix, uiState.error),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onRefresh) {
+                        Text(stringResource(Res.string.retry))
+                    }
+                }
+            }
+            
+            uiState.habits.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.no_habits_yet),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(Res.string.add_first_habit),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(uiState.habits) { habit ->
+                        HabitItem(
+                            habit = habit,
+                            onEdit = { onHabitEdit(habit) },
+                            onDelete = { onHabitDelete(habit.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ========== Screen-Level Previews ==========
+
+@Preview
+@Composable
+private fun HabitListScreenWithHabitsPreview() {
+    val sampleHabits = listOf(
+        Habit(
+            id = 1L,
+            name = "Drink Water",
+            description = "Stay hydrated throughout the day",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            frequencyType = FrequencyType.ONCE_DAILY,
+            scheduledTimes = listOf(LocalTime(9, 0))
+        ),
+        Habit(
+            id = 2L,
+            name = "Exercise",
+            description = "Daily workout routine for health",
+            color = "#4CAF50",
+            isActive = true,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            frequencyType = FrequencyType.ONCE_DAILY,
+            scheduledTimes = listOf(LocalTime(7, 30))
+        ),
+        Habit(
+            id = 3L,
+            name = "Meditation",
+            description = "",
+            color = "#9C27B0",
+            isActive = false,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+            frequencyType = FrequencyType.ONCE_DAILY,
+            scheduledTimes = listOf(LocalTime(18, 0))
+        )
+    )
+    
+    MaterialTheme {
+        HabitListContentPreview(
+            uiState = PreviewHabitListUiState(
+                habits = sampleHabits,
+                isLoading = false,
+                error = null
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitListScreenEmptyStatePreview() {
+    MaterialTheme {
+        HabitListContentPreview(
+            uiState = PreviewHabitListUiState(
+                habits = emptyList(),
+                isLoading = false,
+                error = null
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitListScreenLoadingStatePreview() {
+    MaterialTheme {
+        HabitListContentPreview(
+            uiState = PreviewHabitListUiState(
+                habits = emptyList(),
+                isLoading = true,
+                error = null
+            )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitListScreenErrorStatePreview() {
+    MaterialTheme {
+        HabitListContentPreview(
+            uiState = PreviewHabitListUiState(
+                habits = emptyList(),
+                isLoading = false,
+                error = "Network connection failed"
+            )
+        )
+    }
+}
+
+// ========== Individual Component Previews ==========
+
+@Preview
+@Composable
+private fun HabitItemPreview() {
+    val sampleHabit = Habit(
+        id = 1L,
+        name = "Drink Water",
+        description = "Stay hydrated throughout the day",
+        color = "#2196F3",
+        isActive = true,
+        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+        frequencyType = FrequencyType.ONCE_DAILY,
+        scheduledTimes = listOf(LocalTime(9, 0))
+    )
+    
+    MaterialTheme {
+        Surface {
+            HabitItem(
+                habit = sampleHabit,
+                onEdit = {},
+                onDelete = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HabitItemInactivePreview() {
+    val sampleHabit = Habit(
+        id = 2L,
+        name = "Exercise",
+        description = "Daily workout routine for health",
+        color = "#4CAF50",
+        isActive = false,
+        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+        frequencyType = FrequencyType.ONCE_DAILY,
+        scheduledTimes = listOf(LocalTime(7, 30))
+    )
+    
+    MaterialTheme {
+        Surface {
+            HabitItem(
+                habit = sampleHabit,
+                onEdit = {},
+                onDelete = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HabitItemNoDescriptionPreview() {
+    val sampleHabit = Habit(
+        id = 3L,
+        name = "Meditation",
+        description = "",
+        color = "#9C27B0",
+        isActive = true,
+        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+        frequencyType = FrequencyType.ONCE_DAILY,
+        scheduledTimes = listOf(LocalTime(18, 0))
+    )
+    
+    MaterialTheme {
+        Surface {
+            HabitItem(
+                habit = sampleHabit,
+                onEdit = {},
+                onDelete = {}
+            )
+        }
     }
 }
