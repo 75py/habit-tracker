@@ -45,12 +45,15 @@ class TimeUnitConversionTest {
             scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
         )
         
+        // Set frequency type to INTERVAL to allow 45 minutes (invalid for ONCE_DAILY)
+        viewModel.updateFrequencyType(com.nagopy.kmp.habittracker.domain.model.FrequencyType.INTERVAL)
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES)
         
         val state = viewModel.uiState.value
-        assertEquals(45, state.intervalMinutes)
+        // 45 minutes is invalid for INTERVAL, so it should be corrected to 30 (closest valid)
+        assertEquals(30, state.intervalMinutes)
         assertEquals(TimeUnit.MINUTES, state.intervalUnit)
-        assertEquals(45, state.intervalValue)
+        assertEquals(30, state.intervalValue)
     }
 
     @Test
@@ -69,6 +72,8 @@ class TimeUnitConversionTest {
             scheduleNextNotificationUseCase = mockScheduleNextNotificationUseCase
         )
         
+        // Set frequency type to HOURLY to allow hour-based intervals
+        viewModel.updateFrequencyType(com.nagopy.kmp.habittracker.domain.model.FrequencyType.HOURLY)
         viewModel.updateIntervalValue(3, TimeUnit.HOURS)
         
         val state = viewModel.uiState.value

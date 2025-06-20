@@ -14,6 +14,13 @@ import kotlinx.datetime.LocalTime
 
 // Habit mappers
 fun HabitEntity.toDomainModel(): Habit {
+    // Auto-detect frequency type based on intervalMinutes
+    val detectedFrequencyType = when {
+        intervalMinutes == 1440 -> FrequencyType.ONCE_DAILY // 24 hours = once daily
+        intervalMinutes % 60 == 0 -> FrequencyType.HOURLY // Multiples of 60 minutes = hourly
+        else -> FrequencyType.INTERVAL // Custom intervals
+    }
+    
     return Habit(
         id = id,
         name = name,
@@ -21,11 +28,7 @@ fun HabitEntity.toDomainModel(): Habit {
         color = color,
         isActive = isActive,
         createdAt = LocalDate.parse(createdAt),
-        frequencyType = try {
-            FrequencyType.valueOf(frequencyType)
-        } catch (e: IllegalArgumentException) {
-            FrequencyType.ONCE_DAILY
-        },
+        frequencyType = detectedFrequencyType,
         intervalMinutes = intervalMinutes,
         scheduledTimes = parseScheduledTimes(scheduledTimes),
         endTime = endTime?.let { parseTime(it) }
@@ -40,7 +43,6 @@ fun Habit.toEntity(): HabitEntity {
         color = color,
         isActive = isActive,
         createdAt = createdAt.toString(),
-        frequencyType = frequencyType.name,
         intervalMinutes = intervalMinutes,
         scheduledTimes = formatScheduledTimes(scheduledTimes),
         endTime = endTime?.let { formatTime(it) }

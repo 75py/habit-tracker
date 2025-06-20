@@ -74,7 +74,7 @@ class MinuteBasedIntervalTest {
     }
     
     @Test
-    fun `generateIntervalTasks should create tasks every 90 minutes`() = runTest {
+    fun `generateIntervalTasks should create tasks every 20 minutes`() = runTest {
         // Given
         val testDate = LocalDate.parse("2024-01-20")
         val fixedInstant = testDate.atStartOfDayIn(TimeZone.currentSystemDefault())
@@ -85,12 +85,12 @@ class MinuteBasedIntervalTest {
         val readingHabit = Habit(
             id = 2L,
             name = "Reading",
-            description = "Read every 90 minutes",
+            description = "Read every 20 minutes",
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 90, // Every 90 minutes (1.5 hours)
+            intervalMinutes = 20, // Every 20 minutes (valid divisor of 60)
             scheduledTimes = listOf(LocalTime(8, 15)) // Start at 8:15 AM
         )
         
@@ -106,13 +106,13 @@ class MinuteBasedIntervalTest {
         // Then
         val readingTasks = result.filter { it.habitName == "Reading" }
         
-        // Should have tasks at: 8:15, 9:45, 11:15, 12:45, 14:15, 15:45, 17:15, 18:45, 20:15, 21:45, 23:15
+        // Should have tasks at: 8:15, 8:35, 8:55, 9:15, 9:35, etc.
         assertTrue(readingTasks.size >= 10, "Expected at least 10 reading tasks, got ${readingTasks.size}")
         
         // Check specific timings
         assertEquals(LocalTime(8, 15), readingTasks[0].scheduledTime)
-        assertEquals(LocalTime(9, 45), readingTasks[1].scheduledTime)
-        assertEquals(LocalTime(11, 15), readingTasks[2].scheduledTime)
-        assertEquals(LocalTime(12, 45), readingTasks[3].scheduledTime)
+        assertEquals(LocalTime(8, 35), readingTasks[1].scheduledTime)
+        assertEquals(LocalTime(8, 55), readingTasks[2].scheduledTime)
+        assertEquals(LocalTime(9, 15), readingTasks[3].scheduledTime)
     }
 }
