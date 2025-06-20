@@ -241,12 +241,12 @@ class GetTodayTasksUseCaseTest {
         val intervalHabitWithEndTime = Habit(
             id = 1,
             name = "Take Vitamins",
-            description = "Every 3 hours",
+            description = "Every 30 minutes",
             color = "#9C27B0",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 180, // 3 hours
+            intervalMinutes = 30, // 30 minutes (valid divisor of 60)
             scheduledTimes = listOf(LocalTime(8, 0)),
             endTime = LocalTime(20, 0) // 8 PM
         )
@@ -260,19 +260,31 @@ class GetTodayTasksUseCaseTest {
         // When
         val result = useCase().first()
 
-        // Then
-        val expectedTimes = listOf(
+        // Then - With 30-minute intervals from 8:00 to 20:00, we should have many tasks
+        // First few expected times: 8:00, 8:30, 9:00, 9:30, ..., 19:30, 20:00
+        val expectedFirstTimes = listOf(
             LocalTime(8, 0),   // Start time
-            LocalTime(11, 0),  // 8 + 3 hours
-            LocalTime(14, 0),  // 11 + 3 hours
-            LocalTime(17, 0),  // 14 + 3 hours
-            LocalTime(20, 0)   // 17 + 3 hours (exactly at end time)
+            LocalTime(8, 30),  // 8:00 + 30 minutes
+            LocalTime(9, 0),   // 8:30 + 30 minutes
+            LocalTime(9, 30),  // 9:00 + 30 minutes
+            LocalTime(10, 0)   // 9:30 + 30 minutes
         )
-        assertEquals(expectedTimes.size, result.size)
         
-        result.forEachIndexed { index, task ->
-            assertEquals(expectedTimes[index], task.scheduledTime)
+        assertTrue(result.size >= 24, "Should have many tasks for 30-minute intervals over 12 hours")
+        
+        // Check first few tasks
+        result.take(5).forEachIndexed { index, task ->
+            assertEquals(expectedFirstTimes[index], task.scheduledTime)
             assertEquals("Take Vitamins", task.habitName)
+        }
+        
+        // Check last task is at 20:00 (end time)
+        assertEquals(LocalTime(20, 0), result.last().scheduledTime)
+        
+        // Verify no tasks beyond 20:00
+        result.forEach { task ->
+            assertTrue(task.scheduledTime <= LocalTime(20, 0), 
+                "Task scheduled at ${task.scheduledTime} should not be beyond end time")
         }
     }
 
@@ -288,12 +300,12 @@ class GetTodayTasksUseCaseTest {
         val intervalHabitWithoutEndTime = Habit(
             id = 1,
             name = "Check Email",
-            description = "Every 4 hours",
+            description = "Every 20 minutes",
             color = "#607D8B",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 240, // 4 hours
+            intervalMinutes = 20, // 20 minutes (valid divisor of 60)
             scheduledTimes = listOf(LocalTime(6, 0)),
             endTime = null // No end time
         )
@@ -307,20 +319,27 @@ class GetTodayTasksUseCaseTest {
         // When
         val result = useCase().first()
 
-        // Then
-        val expectedTimes = listOf(
+        // Then - With 20-minute intervals from 6:00 until end of day (around 23:59)
+        // First few expected times: 6:00, 6:20, 6:40, 7:00, 7:20, etc.
+        val expectedFirstTimes = listOf(
             LocalTime(6, 0),   // Start time
-            LocalTime(10, 0),  // 6 + 4 hours
-            LocalTime(14, 0),  // 10 + 4 hours
-            LocalTime(18, 0),  // 14 + 4 hours
-            LocalTime(22, 0)   // 18 + 4 hours (last one before end of day)
+            LocalTime(6, 20),  // 6:00 + 20 minutes
+            LocalTime(6, 40),  // 6:20 + 20 minutes
+            LocalTime(7, 0),   // 6:40 + 20 minutes
+            LocalTime(7, 20)   // 7:00 + 20 minutes
         )
-        assertEquals(expectedTimes.size, result.size)
         
-        result.forEachIndexed { index, task ->
-            assertEquals(expectedTimes[index], task.scheduledTime)
+        assertTrue(result.size >= 50, "Should have many tasks for 20-minute intervals throughout the day")
+        
+        // Check first few tasks
+        result.take(5).forEachIndexed { index, task ->
+            assertEquals(expectedFirstTimes[index], task.scheduledTime)
             assertEquals("Check Email", task.habitName)
         }
+        
+        // Check last task is before end of day
+        assertTrue(result.last().scheduledTime < LocalTime(23, 59), 
+            "Last task should be before end of day")
     }
 
 

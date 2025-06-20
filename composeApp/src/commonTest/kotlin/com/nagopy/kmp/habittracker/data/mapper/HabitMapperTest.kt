@@ -290,16 +290,16 @@ class HabitMapperTest {
     }
 
     @Test
-    fun `HabitEntity toDomainModel should auto-detect INTERVAL for 90 minute intervals`() {
+    fun `HabitEntity toDomainModel should auto-detect INTERVAL for 30 minute intervals`() {
         // Given
         val entity = HabitEntity(
             id = 1,
             name = "Reading",
-            description = "Read every 90 minutes",
+            description = "Read every 30 minutes",
             color = "#9C27B0",
             isActive = true,
             createdAt = "2024-01-01",
-            intervalMinutes = 90, // 90 minutes = 1.5 hours = INTERVAL
+            intervalMinutes = 30, // 30 minutes = valid INTERVAL divisor of 60
             scheduledTimes = "09:00"
         )
 
@@ -308,6 +308,6 @@ class HabitMapperTest {
 
         // Then
         assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as INTERVAL
-        assertEquals(90, domain.intervalMinutes)
+        assertEquals(30, domain.intervalMinutes)
     }
 }
