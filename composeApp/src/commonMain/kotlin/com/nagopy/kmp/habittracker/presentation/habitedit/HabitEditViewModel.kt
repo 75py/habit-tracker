@@ -106,9 +106,16 @@ class HabitEditViewModel(
     }
 
     fun updateFrequencyType(frequencyType: FrequencyType) {
-        _uiState.value = _uiState.value.copy(
+        val currentState = _uiState.value
+        val newIntervalMinutes = when (frequencyType) {
+            FrequencyType.HOURLY -> 60  // Default to 1 hour
+            FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
+            FrequencyType.INTERVAL -> currentState.intervalMinutes
+        }
+        
+        _uiState.value = currentState.copy(
             frequencyType = frequencyType,
-            intervalMinutes = if (frequencyType == FrequencyType.HOURLY) 60 else _uiState.value.intervalMinutes
+            intervalMinutes = newIntervalMinutes
         )
     }
 
@@ -122,17 +129,13 @@ class HabitEditViewModel(
             TimeUnit.HOURS -> value * 60
         }
         
-        // If frequency type is INTERVAL, validate that the interval minutes is a valid divisor of 60
+        // Validate and auto-correct interval minutes based on frequency type
         val currentState = _uiState.value
-        val validatedIntervalMinutes = if (currentState.frequencyType == FrequencyType.INTERVAL) {
-            if (HabitIntervalValidator.isValidIntervalMinutes(intervalMinutes)) {
-                intervalMinutes
-            } else {
-                // Use the closest valid value
-                HabitIntervalValidator.getClosestValidIntervalMinutes(intervalMinutes)
-            }
-        } else {
+        val validatedIntervalMinutes = if (HabitIntervalValidator.isValidIntervalMinutes(currentState.frequencyType, intervalMinutes)) {
             intervalMinutes
+        } else {
+            // Use the closest valid value for the frequency type
+            HabitIntervalValidator.getClosestValidIntervalMinutes(currentState.frequencyType, intervalMinutes)
         }
         
         // Recalculate unit and value based on validated interval minutes
