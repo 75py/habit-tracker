@@ -68,7 +68,7 @@ class MultipleTasksIntegrationTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 240, // Every 4 hours = 240 minutes
+            intervalMinutes = 30, // Every 30 minutes (valid divisor of 60)
             scheduledTimes = listOf(LocalTime(8, 0)) // Start at 8 AM
         )
         
@@ -98,11 +98,14 @@ class MultipleTasksIntegrationTest {
         assertEquals(LocalTime(9, 0), waterTasks[0].scheduledTime)
         assertEquals(LocalTime(10, 0), waterTasks[1].scheduledTime)
         
-        // Reading: Every 4 hours - should have 4 tasks (8 AM, 12 PM, 4 PM, 8 PM)
-        assertTrue(readingTasks.size >= 4, "Expected at least 4 reading tasks, got ${readingTasks.size}")
+        // Reading: Every 30 minutes - should have many tasks (8:00, 8:30, 9:00, 9:30, etc.)
+        assertTrue(readingTasks.size >= 20, "Expected at least 20 reading tasks for 30-minute intervals, got ${readingTasks.size}")
         assertEquals(LocalTime(8, 0), readingTasks[0].scheduledTime)
         if (readingTasks.size > 1) {
-            assertEquals(LocalTime(12, 0), readingTasks[1].scheduledTime)
+            assertEquals(LocalTime(8, 30), readingTasks[1].scheduledTime)
+        }
+        if (readingTasks.size > 2) {
+            assertEquals(LocalTime(9, 0), readingTasks[2].scheduledTime)
         }
         
         // Verify all tasks are for the correct date
