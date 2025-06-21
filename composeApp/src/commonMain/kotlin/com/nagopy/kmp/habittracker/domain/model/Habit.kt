@@ -74,15 +74,6 @@ object HabitIntervalValidator {
     }
     
     /**
-     * Check if the interval minutes is valid for INTERVAL frequency type
-     * @deprecated Use isValidIntervalMinutes(FrequencyType, Int) instead
-     */
-    @Deprecated("Use isValidIntervalMinutes(FrequencyType, Int) instead")
-    fun isValidIntervalMinutes(intervalMinutes: Int): Boolean {
-        return intervalMinutes in VALID_INTERVAL_MINUTES
-    }
-    
-    /**
      * Get the closest valid interval minutes for the given frequency type and value
      */
     fun getClosestValidIntervalMinutes(frequencyType: FrequencyType, intervalMinutes: Int): Int {
@@ -104,17 +95,5 @@ object HabitIntervalValidator {
                     ?: VALID_INTERVAL_MINUTES.first()
             }
         }
-    }
-    
-    /**
-     * Get the closest valid interval minutes for the INTERVAL frequency type
-     * @deprecated Use getClosestValidIntervalMinutes(FrequencyType, Int) instead
-     */
-    @Deprecated("Use getClosestValidIntervalMinutes(FrequencyType, Int) instead")
-    fun getClosestValidIntervalMinutes(intervalMinutes: Int): Int {
-        if (intervalMinutes <= 0) return VALID_INTERVAL_MINUTES.first()
-        
-        return VALID_INTERVAL_MINUTES.minByOrNull { kotlin.math.abs(it - intervalMinutes) }
-            ?: VALID_INTERVAL_MINUTES.first()
     }
 }

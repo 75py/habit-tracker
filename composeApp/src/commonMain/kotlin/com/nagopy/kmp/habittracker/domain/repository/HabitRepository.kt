@@ -21,8 +21,5 @@ interface HabitRepository {
     
     // Habit log operations
     suspend fun addHabitLog(habitLog: HabitLog): Long
-    suspend fun removeHabitLog(habitId: Long, date: LocalDate)
     suspend fun getHabitLog(habitId: Long, date: LocalDate): HabitLog?
-    fun getHabitLogsForHabit(habitId: Long): Flow<List<HabitLog>>
-    fun getHabitLogsInDateRange(habitId: Long, startDate: LocalDate, endDate: LocalDate): Flow<List<HabitLog>>
 }
