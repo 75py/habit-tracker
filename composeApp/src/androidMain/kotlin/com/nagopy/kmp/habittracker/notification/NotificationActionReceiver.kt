@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
+import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ import org.koin.core.component.inject
 class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
 
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
+    private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase by inject()
 
     companion object {
         private const val COMPLETE_ACTION = "com.nagopy.kmp.habittracker.COMPLETE_TASK"
@@ -54,14 +56,27 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             // Use coroutine to handle the async operation
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    // Complete the task
                     completeTaskFromNotificationUseCase(habitId, date, time)
                     Logger.i("Successfully completed task from notification: habitId=$habitId, date=$date, time=$time", "NotificationActionReceiver")
                     
-                    // Cancel the notification
+                    // Cancel the current notification
                     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) 
                         as android.app.NotificationManager
                     notificationManager.cancel(notificationId)
                     Logger.d("Cancelled notification with ID: $notificationId", "NotificationActionReceiver")
+                    
+                    // Schedule the next notification for this habit
+                    try {
+                        val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                        if (wasScheduled) {
+                            Logger.i("Successfully scheduled next notification for habitId: $habitId", "NotificationActionReceiver")
+                        } else {
+                            Logger.d("No next notification to schedule for habitId: $habitId", "NotificationActionReceiver")
+                        }
+                    } catch (e: Exception) {
+                        Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "NotificationActionReceiver")
+                    }
                 } catch (e: Exception) {
                     Logger.e(e, "Failed to complete task from notification: habitId=$habitId", "NotificationActionReceiver")
                 }

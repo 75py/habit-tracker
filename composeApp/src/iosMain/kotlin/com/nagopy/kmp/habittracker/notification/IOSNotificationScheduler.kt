@@ -48,6 +48,7 @@ class IOSNotificationScheduler(
     )
 
     private val completeTaskFromNotificationUseCase: CompleteTaskFromNotificationUseCase by inject()
+    private val scheduleNextNotificationUseCase: com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase by inject()
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
     override suspend fun scheduleTaskNotification(task: Task) {
@@ -388,6 +389,20 @@ class IOSNotificationScheduler(
                         try {
                             completeTaskFromNotificationUseCase(habitId, currentDateTime.date, currentDateTime.time)
                             Logger.i("Successfully completed task for habitId: $habitId", "IOSNotificationScheduler")
+                            
+                            // Schedule the next notification for this habit
+                            try {
+                                val wasScheduled = scheduleNextNotificationUseCase.scheduleNextNotificationForHabit(habitId)
+                                if (wasScheduled) {
+                                    Logger.i("Successfully scheduled next notification for habitId: $habitId", "IOSNotificationScheduler")
+                                } else {
+                                    Logger.d("No next notification to schedule for habitId: $habitId", "IOSNotificationScheduler")
+                                }
+                            } catch (e: Exception) {
+                                Logger.e(e, "Failed to schedule next notification for habitId: $habitId", "IOSNotificationScheduler")
+                            }
+                            Logger.i("Successfully completed task for habitId: $habitId", "IOSNotificationScheduler")
+>>>>>>> origin/main
                         } catch (e: Exception) {
                             Logger.e(e, "Failed to complete task for habitId: $habitId", "IOSNotificationScheduler")
                         }
