@@ -1,104 +1,65 @@
 # GitHub Copilot Instructions
 
-## Essential First Step
-
-Before answering any questions about this project or generating code, **always read the documentation in the `/docs` directory first**. This directory contains comprehensive and up-to-date information about:
-
-- **Project Architecture** (`/docs/ARCHITECTURE.md`): Complete system design, layer responsibilities, dependency injection patterns, and technical implementation details
-- **Coding Standards** (`/docs/CODING_STANDARDS.md`): Logging guidelines, exception handling requirements, and code quality standards
-- **Feature Specifications** (`/docs/SPECIFICATIONS.md`): Detailed screen specifications, UI components, user interactions, and business logic
-
-## Essential Development Commands
-
-### Build and Run
-```bash
-# Clean and build everything
-./gradlew clean build
-
-# Build and install debug APK
-./gradlew assembleDebug
-./gradlew installDebug
-
-# iOS development
-open iosApp/iosApp.xcodeproj
-```
-
-### Testing
-```bash
-# Run unit tests (same as CI)
-./gradlew testDebugUnitTest
-
-# Run all tests with coverage
-./gradlew test
-
-# Run tests for specific platforms
-./gradlew iosSimulatorArm64Test
-./gradlew connectedAndroidTest
-```
-
-### Code Quality
-```bash
-# Run lint analysis
-./gradlew lint
-
-# Fix lint issues automatically
-./gradlew lintFix
-```
-
-## Project Context
-
-This is a cross-platform habit tracking application built with Kotlin Multiplatform and Compose Multiplatform using a **clean architecture** pattern:
-
-### Three-Layer Architecture
-- **Presentation Layer** (`presentation/`): MVVM pattern with Compose UI, ViewModels, and reactive state management
-- **Domain Layer** (`domain/`): Pure business logic with Use Cases, Entities (Habit, Task, HabitLog), and Repository interfaces
-- **Data Layer** (`data/`): Repository implementations, Room database, and data mappers
-
-### Key Architectural Patterns
-
-**Habit vs Task Distinction:**
-- **Habit**: Template/rule defining what should be done (e.g., "Drink water every hour")
-- **Task**: Specific instance scheduled for a particular time (e.g., "Drink water at 10:00 AM on 2024-01-20")
-
-**Dependency Injection (Koin):**
-- Each layer has its own module: `PresentationModule`, `DomainModule`, `DataModule`
-- Platform-specific modules use `expect/actual` pattern for Android/iOS implementations
-
-**Repository Pattern:**
-- `HabitRepository` interface in domain layer
-- `HabitRepositoryImpl` in data layer using Room database
-- Reactive data streams with Kotlin Flow
-
-### Technology Stack
-- **UI**: Compose Multiplatform with Material Design 3
-- **Database**: Room with KSP code generation
-- **DI**: Koin dependency injection
-- **Testing**: JUnit, MockK, kotlin-test, kotlinx-coroutines-test
-- **Logging**: Napier (project Logger wrapper)
-- **Date/Time**: kotlinx.datetime
-
-### Platform Targets
-- **Android**: Min SDK 24, Target SDK 34, JVM 11
-- **iOS**: iosX64, iosArm64, iosSimulatorArm64 with static framework
-
-All project-specific information including detailed technical specifications is maintained in the `/docs` directory to ensure accuracy and consistency.
+This file provides guidance to GitHub Copilot and other coding agents when working with code in this repository.
 
 ## 🔨 Critical Rule - Continuous Rule Improvement
 
-Always add rules to copilot-instructions.md when receiving instructions that appear to require continuous application or when adding diffs that are deemed necessary for ongoing implementation.
+When adding code or making changes that establish patterns requiring continuous application:
+1. Identify patterns that should become standard practice
+2. Add them as rules to this file
+3. Apply them consistently thereafter
 
-To continuously improve project rules and sustainably enhance development guidelines:
+This enables continuous improvement of project quality and consistency.
 
-1. Identify instructions or requirements that should be applied continuously rather than just once
-2. Add them as additional rules in the appropriate section of copilot-instructions.md
-3. Apply them as standard rules thereafter
+## 📖 Essential Documentation
 
-This process enables continuous improvement of project quality and consistency.
+**Always check these documents before generating code:**
 
-## Critical Coding Standards
+- `/docs/README.md` - Documentation index and navigation guide
+- `/docs/ARCHITECTURE.md` - Complete system design, three-layer architecture, and platform specifics
+- `/docs/CODING_STANDARDS.md` - Logging requirements, communication guidelines, and coding conventions
+- `/docs/SPECIFICATIONS.md` - Screen specifications and UI requirements
+- `/docs/DEVELOPMENT_COMMANDS.md` - Build, test, and maintenance commands
+- `/docs/TESTING.md` - Testing strategy, standards, and best practices
+
+## 🚀 Quick Reference
+
+### Build and Test
+```bash
+# Build everything
+./gradlew clean build
+
+# Run unit tests
+./gradlew testDebugUnitTest
+
+# Run lint checks
+./gradlew lint
+```
+
+See `/docs/DEVELOPMENT_COMMANDS.md` for complete command reference.
+
+### Key Project Information
+
+- **Architecture**: Kotlin Multiplatform with Compose Multiplatform
+- **Pattern**: Clean Architecture (Presentation → Domain → Data)
+- **Database**: Room with Kotlin Multiplatform support
+- **DI**: Koin for dependency injection
+- **Logging**: Must use `Logger.e()` in all catch blocks
+
+## 📝 Documentation Update Requirements
+
+When making significant code changes:
+1. Update relevant documentation in `/docs` directory
+2. Add update date (YYYY-MM-DD) to the Update History section
+3. Ensure documentation remains synchronized with code
+4. Document new patterns, APIs, or architectural decisions
+
+Documentation updates should be made proactively without requiring explicit instructions.
+
+## ⚠️ Critical Coding Standards
 
 ### Logging Requirements
-**All catch blocks must include exception logging:**
+All catch blocks MUST include exception logging:
 ```kotlin
 try {
     // operation
@@ -108,30 +69,51 @@ try {
 }
 ```
 
-**Import the project Logger:**
-```kotlin
-import com.nagopy.kmp.habittracker.util.Logger
-```
+Always import: `import com.nagopy.kmp.habittracker.util.Logger`
 
-**Use meaningful tags:**
-```kotlin
-Logger.d("Creating habit: ${habit.name}", tag = "HabitCreation")
-```
+### Communication Guidelines
+- **Japanese** for PR titles, descriptions, and review comments
+- **English** for code, code comments, and technical documentation
 
-## Guidelines
+## 🏗️ Architecture Overview
 
-1. **Always reference `/docs` first** before providing any code suggestions or architectural advice
-2. **Follow the established patterns** documented in the architecture and coding standards
-3. **Maintain consistency** with existing code structure and naming conventions as documented in the coding standards
-4. **Refer to specifications** when implementing UI components or business logic
-5. **Update documentation proactively** when making code changes - always consider and update relevant documentation in `/docs` to keep it synchronized with code modifications, even without explicit instructions
+### Three-Layer Architecture
+- **Presentation Layer** (`presentation/`): MVVM with Compose UI
+- **Domain Layer** (`domain/`): Business logic and use cases
+- **Data Layer** (`data/`): Repository implementations and Room database
 
-## Communication Guidelines
+### Key Concepts
+- **Habit**: Template defining what should be done
+- **Task**: Specific instance at a scheduled time
+- **Repository Pattern**: Interface in domain, implementation in data
+- **Dependency Injection**: Koin modules for each layer
 
-When creating PR titles, descriptions, and comments for reviewers:
+## ✅ Code Generation Guidelines
 
-- **Use Japanese** for all PR-related content (titles, descriptions, review comments) to ensure clear communication with project maintainers
-- **Use English** for code, comments within code, and technical documentation
-- **Follow established terminology** and conventions used in existing Japanese documentation
+1. **Check documentation first** - Always reference `/docs` before generating code
+2. **Follow existing patterns** - Maintain consistency with current architecture
+3. **Update tests** - Add/update tests for new functionality
+4. **Handle exceptions** - Log all exceptions with meaningful context
+5. **Use meaningful names** - Follow project naming conventions
+6. **Document complex logic** - Add comments for non-obvious implementations
 
-The `/docs` directory serves as the single source of truth for all project information.
+## 🔄 When Adding New Features
+
+1. Review relevant documentation in `/docs`
+2. Follow the three-layer architecture pattern
+3. Create appropriate use cases in domain layer
+4. Implement repository methods if needed
+5. Add ViewModels and UI components
+6. Write comprehensive tests
+7. Update documentation with new feature details
+
+## 🚫 Important Constraints
+
+1. Never bypass the clean architecture layers
+2. Always log exceptions in catch blocks
+3. Follow the established coding standards
+4. Maintain platform compatibility (Android/iOS)
+5. Keep documentation synchronized with code
+
+## Update History
+- 2025-06-21: Updated based on CLAUDE.md for non-interactive GitHub Copilot usage
