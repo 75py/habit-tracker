@@ -110,6 +110,73 @@ class IOSNotificationIntervalLogicTest {
         }
     }
 
+    @Test
+    fun testIntervalNotificationTimes_WithEndTime() {
+        // 30-minute intervals starting at 9:00 with end time at 10:30
+        // Should create notifications at: 9:00, 9:30, 10:00, 10:30
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            createdAt = LocalDate(2024, 1, 1),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 30,
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = LocalTime(10, 30)
+        )
+        
+        val expectedTimes = setOf(
+            LocalTime(9, 0),
+            LocalTime(9, 30),
+            LocalTime(10, 0),
+            LocalTime(10, 30)
+        )
+        val actualTimes = calculateIntervalTimes(habit)
+        
+        assertEquals(expectedTimes, actualTimes)
+    }
+
+    @Test
+    fun testIntervalNotificationTimes_WithEndTimeBeforeSecondInterval() {
+        // 30-minute intervals starting at 9:00 with end time at 9:15
+        // Should create only one notification at: 9:00
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            createdAt = LocalDate(2024, 1, 1),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 30,
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = LocalTime(9, 15)
+        )
+        
+        val expectedTimes = setOf(LocalTime(9, 0))
+        val actualTimes = calculateIntervalTimes(habit)
+        
+        assertEquals(expectedTimes, actualTimes)
+    }
+
+    @Test
+    fun testIntervalNotificationTimes_NoEndTime() {
+        // 30-minute intervals starting at 9:00 with no end time
+        // Should create notifications throughout the day
+        val habit = Habit(
+            id = 1L,
+            name = "Test Habit",
+            createdAt = LocalDate(2024, 1, 1),
+            frequencyType = FrequencyType.INTERVAL,
+            intervalMinutes = 30,
+            scheduledTimes = listOf(LocalTime(9, 0)),
+            endTime = null
+        )
+        
+        val actualTimes = calculateIntervalTimes(habit)
+        
+        // Should have many notifications throughout the day
+        assertTrue(actualTimes.size > 10, "Should have many notifications throughout the day")
+        assertTrue(actualTimes.contains(LocalTime(9, 0)), "Should include start time")
+        assertTrue(actualTimes.any { it.hour == 23 }, "Should include notifications in the evening")
+    }
+
     /**
      * Helper function that replicates the logic from IOSNotificationScheduler.createIntervalTriggers
      */
@@ -128,5 +195,34 @@ class IOSNotificationIntervalLogicTest {
         }
         
         return notificationMinutes
+    }
+
+    /**
+     * Helper function that replicates the endTime logic from IOSNotificationScheduler.createIntervalTriggers
+     */
+    private fun calculateIntervalTimes(habit: Habit): Set<LocalTime> {
+        val intervalMinutes = habit.intervalMinutes
+        val endTime = habit.endTime ?: LocalTime(23, 59)
+        
+        val notificationTimes = mutableSetOf<LocalTime>()
+        
+        habit.scheduledTimes.forEach { startTime ->
+            if (startTime <= endTime) {
+                var currentTime = startTime
+                
+                while (currentTime <= endTime) {
+                    notificationTimes.add(currentTime)
+                    
+                    val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+                    val newHour = (totalMinutes / 60) % 24
+                    val newMinute = totalMinutes % 60
+                    currentTime = LocalTime(newHour, newMinute)
+                    
+                    if (totalMinutes >= 24 * 60) break
+                }
+            }
+        }
+        
+        return notificationTimes
     }
 }

@@ -135,54 +135,24 @@ class IOSNotificationScheduler(
     }
     
     private fun createHourlyTriggers(habit: Habit, baseIdentifier: String, content: UNMutableNotificationContent) {
-        val identifier = "${baseIdentifier}_hourly"
-        val minute = habit.scheduledTimes.firstOrNull()?.minute ?: 0
+        val startTime = habit.scheduledTimes.firstOrNull() ?: return
+        val endTime = habit.endTime ?: LocalTime(23, 59)
+        val minute = startTime.minute
         
-        // Every hour at the specific minute - use minute component with repeat=true
-        val components = NSDateComponents().apply {
-            this.minute = minute.toLong()
-        }
+        Logger.d("Creating hourly triggers from ${startTime.hour}:${minute} to ${endTime.hour}:${endTime.minute}", "IOSNotificationScheduler")
         
-        val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
-            components,
-            repeats = true
-        )
+        // Create individual triggers for each hour from start to end time
+        var currentHour = startTime.hour
+        var triggerIndex = 0
         
-        scheduleNotificationRequest(
-            identifier = identifier,
-            content = content,
-            trigger = trigger,
-            habit = habit,
-            description = "hourly notification at minute $minute"
-        )
-    }
-    
-    private fun createIntervalTriggers(habit: Habit, baseIdentifier: String, content: UNMutableNotificationContent) {
-        val intervalMinutes = habit.intervalMinutes
-        Logger.d("Creating interval triggers for ${intervalMinutes}-minute intervals", "IOSNotificationScheduler")
-        
-        // Calculate all minute marks within an hour where notifications should fire
-        val notificationMinutes = mutableSetOf<Int>()
-        
-        // For each scheduled time, add intervals starting from that minute
-        habit.scheduledTimes.forEach { scheduledTime ->
-            val startMinute = scheduledTime.minute
+        while (true) {
+            val currentTime = LocalTime(currentHour, minute)
+            if (currentTime > endTime) break
             
-            // Add all intervals within the hour, wrapping around
-            var currentMinute = startMinute
-            repeat(60 / intervalMinutes) {
-                notificationMinutes.add(currentMinute)
-                currentMinute = (currentMinute + intervalMinutes) % 60
-            }
-        }
-        
-        Logger.d("Scheduling notifications at minutes: ${notificationMinutes.sorted()}", "IOSNotificationScheduler")
-        
-        // Create a notification for each calculated minute
-        notificationMinutes.forEach { minute ->
-            val identifier = "${baseIdentifier}_interval_$minute"
+            val identifier = "${baseIdentifier}_hourly_$triggerIndex"
             
             val components = NSDateComponents().apply {
+                hour = currentHour.toLong()
                 this.minute = minute.toLong()
             }
             
@@ -196,7 +166,69 @@ class IOSNotificationScheduler(
                 content = content,
                 trigger = trigger,
                 habit = habit,
-                description = "interval notification at minute $minute"
+                description = "hourly notification at $currentHour:${minute.toString().padStart(2, '0')}"
+            )
+            
+            currentHour++
+            if (currentHour > 23) currentHour = 0 // Wrap to next day
+            triggerIndex++
+            
+            // Prevent infinite loop - max 24 hours
+            if (triggerIndex >= 24) break
+        }
+    }
+    
+    private fun createIntervalTriggers(habit: Habit, baseIdentifier: String, content: UNMutableNotificationContent) {
+        val intervalMinutes = habit.intervalMinutes
+        val endTime = habit.endTime ?: LocalTime(23, 59)
+        
+        Logger.d("Creating interval triggers for ${intervalMinutes}-minute intervals until ${endTime}", "IOSNotificationScheduler")
+        
+        // Calculate all specific times when notifications should fire
+        val notificationTimes = mutableSetOf<LocalTime>()
+        
+        habit.scheduledTimes.forEach { startTime ->
+            if (startTime <= endTime) {
+                var currentTime = startTime
+                
+                // Add notifications from start time until end time
+                while (currentTime <= endTime) {
+                    notificationTimes.add(currentTime)
+                    
+                    // Calculate next notification time
+                    val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+                    val newHour = (totalMinutes / 60) % 24
+                    val newMinute = totalMinutes % 60
+                    currentTime = LocalTime(newHour, newMinute)
+                    
+                    // If we've wrapped to the next day, stop
+                    if (totalMinutes >= 24 * 60) break
+                }
+            }
+        }
+        
+        Logger.d("Scheduling notifications at times: ${notificationTimes.sortedBy { it.hour * 60 + it.minute }}", "IOSNotificationScheduler")
+        
+        // Create a notification for each calculated time
+        notificationTimes.forEachIndexed { index, time ->
+            val identifier = "${baseIdentifier}_interval_${time.hour}_${time.minute}"
+            
+            val components = NSDateComponents().apply {
+                hour = time.hour.toLong()
+                minute = time.minute.toLong()
+            }
+            
+            val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+                components,
+                repeats = true
+            )
+            
+            scheduleNotificationRequest(
+                identifier = identifier,
+                content = content,
+                trigger = trigger,
+                habit = habit,
+                description = "interval notification at ${time.hour}:${time.minute.toString().padStart(2, '0')}"
             )
         }
     }
