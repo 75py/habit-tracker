@@ -96,40 +96,6 @@ class HabitIntervalValidatorTest {
         assertEquals(1440, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.ONCE_DAILY, 2880))
     }
 
-    @Test
-    fun `deprecated methods should still work for backward compatibility`() {
-        val validValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
-        
-        @Suppress("DEPRECATION")
-        run {
-            validValues.forEach { value ->
-                assertTrue(
-                    HabitIntervalValidator.isValidIntervalMinutes(value),
-                    "Expected $value to be valid divisor of 60"
-                )
-            }
-        }
-        
-        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
-        
-        @Suppress("DEPRECATION")
-        run {
-            invalidValues.forEach { value ->
-                assertFalse(
-                    HabitIntervalValidator.isValidIntervalMinutes(value),
-                    "Expected $value to be invalid divisor of 60"
-                )
-            }
-        }
-        
-        @Suppress("DEPRECATION")
-        run {
-            assertEquals(1, HabitIntervalValidator.getClosestValidIntervalMinutes(0))
-            assertEquals(1, HabitIntervalValidator.getClosestValidIntervalMinutes(-5))
-            assertEquals(6, HabitIntervalValidator.getClosestValidIntervalMinutes(7))
-            assertEquals(60, HabitIntervalValidator.getClosestValidIntervalMinutes(90))
-        }
-    }
 
     @Test
     fun `VALID_INTERVAL_MINUTES should contain all divisors of 60`() {
