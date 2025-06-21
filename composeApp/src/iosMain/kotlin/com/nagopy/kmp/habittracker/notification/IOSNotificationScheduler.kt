@@ -84,7 +84,28 @@ class IOSNotificationScheduler(
             FrequencyType.INTERVAL -> {
                 // Create multiple triggers for interval minutes within each hour
                 createIntervalTriggers(habit, identifier, content)
-                return
+            }
+        }
+    }
+    
+    private fun scheduleNotificationRequest(
+        identifier: String,
+        content: UNMutableNotificationContent,
+        trigger: UNCalendarNotificationTrigger,
+        habit: Habit,
+        description: String
+    ) {
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = identifier,
+            content = content,
+            trigger = trigger
+        )
+        
+        center.addNotificationRequest(request) { error ->
+            if (error != null) {
+                Logger.e(Exception("Notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule $description for habit: ${habit.name}", "IOSNotificationScheduler")
+            } else {
+                Logger.d("Successfully scheduled $description for habit: ${habit.name}", "IOSNotificationScheduler")
             }
         }
     }
@@ -103,28 +124,23 @@ class IOSNotificationScheduler(
                 repeats = true
             )
             
-            val request = UNNotificationRequest.requestWithIdentifier(
+            scheduleNotificationRequest(
                 identifier = identifier,
                 content = content,
-                trigger = trigger
+                trigger = trigger,
+                habit = habit,
+                description = "daily notification at ${scheduledTime}"
             )
-            
-            center.addNotificationRequest(request) { error ->
-                if (error != null) {
-                    Logger.e(Exception("Daily notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule daily notification for habit: ${habit.name} at ${scheduledTime}", "IOSNotificationScheduler")
-                } else {
-                    Logger.d("Successfully scheduled daily notification for habit: ${habit.name} at ${scheduledTime}", "IOSNotificationScheduler")
-                }
-            }
         }
     }
     
     private fun createHourlyTriggers(habit: Habit, baseIdentifier: String, content: UNMutableNotificationContent) {
         val identifier = "${baseIdentifier}_hourly"
+        val minute = habit.scheduledTimes.firstOrNull()?.minute ?: 0
         
         // Every hour at the specific minute - use minute component with repeat=true
         val components = NSDateComponents().apply {
-            minute = habit.scheduledTimes.firstOrNull()?.minute?.toLong() ?: 0L
+            this.minute = minute.toLong()
         }
         
         val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
@@ -132,19 +148,13 @@ class IOSNotificationScheduler(
             repeats = true
         )
         
-        val request = UNNotificationRequest.requestWithIdentifier(
+        scheduleNotificationRequest(
             identifier = identifier,
             content = content,
-            trigger = trigger
+            trigger = trigger,
+            habit = habit,
+            description = "hourly notification at minute $minute"
         )
-        
-        center.addNotificationRequest(request) { error ->
-            if (error != null) {
-                Logger.e(Exception("Hourly notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule hourly notification for habit: ${habit.name}", "IOSNotificationScheduler")
-            } else {
-                Logger.i("Successfully scheduled hourly notification for habit: ${habit.name} at minute ${habit.scheduledTimes.firstOrNull()?.minute ?: 0}", "IOSNotificationScheduler")
-            }
-        }
     }
     
     private fun createIntervalTriggers(habit: Habit, baseIdentifier: String, content: UNMutableNotificationContent) {
@@ -181,19 +191,13 @@ class IOSNotificationScheduler(
                 repeats = true
             )
             
-            val request = UNNotificationRequest.requestWithIdentifier(
+            scheduleNotificationRequest(
                 identifier = identifier,
                 content = content,
-                trigger = trigger
+                trigger = trigger,
+                habit = habit,
+                description = "interval notification at minute $minute"
             )
-            
-            center.addNotificationRequest(request) { error ->
-                if (error != null) {
-                    Logger.e(Exception("Interval notification scheduling failed: ${error.localizedDescription}"), "Failed to schedule interval notification for habit: ${habit.name} at minute $minute", "IOSNotificationScheduler")
-                } else {
-                    Logger.d("Successfully scheduled interval notification for habit: ${habit.name} at minute $minute", "IOSNotificationScheduler")
-                }
-            }
         }
     }
 
