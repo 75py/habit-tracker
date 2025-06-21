@@ -2,39 +2,14 @@ package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.model.Task
-import kotlinx.coroutines.flow.first
 
 /**
  * Use case for managing task notifications.
  * This encapsulates the business logic for scheduling and managing notifications for tasks.
  */
 class ManageNotificationsUseCase(
-    private val notificationScheduler: NotificationScheduler,
-    private val getTodayTasksUseCase: GetTodayTasksUseCase
+    private val notificationScheduler: NotificationScheduler
 ) {
-    
-    /**
-     * Schedules notifications for today's tasks.
-     * This should be called when the app starts or when tasks are updated.
-     */
-    suspend fun scheduleNotificationsForTodayTasks() {
-        // Get today's tasks as a snapshot (not continuous observation) to schedule notifications
-        val tasks = getTodayTasksUseCase().first()
-        // Only schedule notifications for tasks that haven't been completed yet
-        val pendingTasks = tasks.filter { !it.isCompleted }
-        notificationScheduler.scheduleTaskNotifications(pendingTasks)
-    }
-    
-    /**
-     * Schedules notification for a specific task.
-     * 
-     * @param task The task for which to schedule a notification
-     */
-    suspend fun scheduleTaskNotification(task: Task) {
-        if (!task.isCompleted) {
-            notificationScheduler.scheduleTaskNotification(task)
-        }
-    }
     
     /**
      * Cancels notification for a completed task.

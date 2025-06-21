@@ -31,7 +31,7 @@ val domainModule = module {
     single { GetTodayTasksUseCase(get()) }
     single { GetNextTasksUseCase(get()) }
     single { CompleteTaskUseCase(get()) }
-    single { ManageNotificationsUseCase(get(), get()) }
+    single { ManageNotificationsUseCase(get()) }
     single { ScheduleNextNotificationUseCase(get(), get(), get()) }
     single { CompleteTaskFromNotificationUseCase(get(), get()) }
 }
