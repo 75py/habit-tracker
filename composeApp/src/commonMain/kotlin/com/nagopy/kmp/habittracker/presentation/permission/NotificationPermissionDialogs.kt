@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.presentation.permission
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -73,4 +74,38 @@ fun NotificationPermissionDeniedDialog(
             }
         }
     )
+}
+
+// ========== Previews ==========
+
+@Preview
+@Composable
+private fun NotificationPermissionExplanationDialogPreview() {
+    MaterialTheme {
+        NotificationPermissionExplanationDialog(
+            onConfirm = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ExactAlarmPermissionExplanationDialogPreview() {
+    MaterialTheme {
+        ExactAlarmPermissionExplanationDialog(
+            onConfirm = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationPermissionDeniedDialogPreview() {
+    MaterialTheme {
+        NotificationPermissionDeniedDialog(
+            onDismiss = {}
+        )
+    }
 }

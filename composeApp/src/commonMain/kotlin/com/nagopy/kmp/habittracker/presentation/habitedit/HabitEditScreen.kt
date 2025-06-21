@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,17 +25,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
-import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Compose screen for adding or editing a habit.
@@ -802,3 +800,124 @@ private fun IntervalPickerDialog(
         }
     )
 }
+
+// ========== Preview Data Classes ==========
+
+/**
+ * Preview data class to avoid dependency on ViewModel
+ */
+private data class PreviewHabitEditUiState(
+    val editHabitId: Long? = null,
+    val name: String = "",
+    val description: String = "",
+    val color: String = "#2196F3",
+    val isActive: Boolean = true,
+    val createdAt: kotlinx.datetime.LocalDate? = null,
+    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+    val intervalMinutes: Int = 1440,
+    val intervalUnit: TimeUnit = TimeUnit.HOURS,
+    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
+    val endTime: LocalTime? = null,
+    val nameError: String? = null,
+    val saveError: String? = null,
+    val isSaving: Boolean = false,
+    val isLoading: Boolean = false
+) {
+    val intervalValue: Int
+        get() = when (intervalUnit) {
+            TimeUnit.MINUTES -> intervalMinutes
+            TimeUnit.HOURS -> intervalMinutes / 60
+        }
+}
+
+// ========== Individual Component Previews ==========
+
+@Preview
+@Composable
+private fun ColorOptionPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                ColorOption(
+                    color = "#2196F3",
+                    isSelected = false,
+                    onClick = {}
+                )
+                ColorOption(
+                    color = "#4CAF50",
+                    isSelected = true,
+                    onClick = {}
+                )
+                ColorOption(
+                    color = "#FF9800",
+                    isSelected = false,
+                    onClick = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ColorSelectionPreview() {
+    val colors = listOf(
+        "#2196F3", "#4CAF50", "#FF9800", "#9C27B0", "#F44336",
+        "#00BCD4", "#FFEB3B", "#795548", "#607D8B", "#E91E63"
+    )
+    
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            Column {
+                Text(
+                    text = stringResource(Res.string.choose_color),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(colors) { color ->
+                        ColorOption(
+                            color = color,
+                            isSelected = color == "#4CAF50",
+                            onClick = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 2,
+            unit = TimeUnit.HOURS,
+            frequencyType = FrequencyType.HOURLY,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogMinutesPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 30,
+            unit = TimeUnit.MINUTES,
+            frequencyType = FrequencyType.INTERVAL,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+// Note: Full screen previews are omitted due to ViewModel dependencies and complexity.
+// The individual component previews above provide coverage for the main UI elements.

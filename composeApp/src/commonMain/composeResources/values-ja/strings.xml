@@ -16,7 +16,7 @@
     <!-- Today Screen -->
     <string name="todays_tasks">今日のタスク</string>
     <string name="no_tasks_scheduled">今日予定されているタスクはありません</string>
-    <string name="error_prefix">エラー: %s</string>
+    <string name="error_prefix">エラー: %1$s</string>
     
     <!-- Habit Edit Screen -->
     <string name="add_habit">習慣を追加</string>
@@ -50,7 +50,7 @@
     <string name="failed_to_load_habit">習慣の読み込みに失敗しました</string>
     <string name="failed_to_save_habit">習慣の保存に失敗しました</string>
     <string name="habit_not_found">習慣が見つかりません</string>
-    <string name="failed_to_complete_task">タスクの完了に失敗しました: %s</string>
+    <string name="failed_to_complete_task">タスクの完了に失敗しました: %1$s</string>
     
     <!-- Habit List Screen -->
     <string name="my_habits">マイ習慣</string>
@@ -61,7 +61,7 @@
     <string name="edit_habit_content_description">習慣を編集</string>
     <string name="delete_habit_content_description">習慣を削除</string>
     <string name="delete_habit">習慣を削除</string>
-    <string name="delete_habit_confirmation">「%s」を削除してもよろしいですか？この操作は取り消せません。</string>
+    <string name="delete_habit_confirmation">「%1$s」を削除してもよろしいですか？この操作は取り消せません。</string>
     <string name="delete">削除</string>
     
     <!-- Permission Dialogs -->
