@@ -49,31 +49,7 @@ class HabitRepositoryImpl(
         return habitDao.insertHabitLog(habitLog.toEntity())
     }
 
-    override suspend fun removeHabitLog(habitId: Long, date: LocalDate) {
-        habitDao.deleteHabitLog(habitId, date.toString())
-    }
-
     override suspend fun getHabitLog(habitId: Long, date: LocalDate): HabitLog? {
         return habitDao.getHabitLog(habitId, date.toString())?.toDomainModel()
-    }
-
-    override fun getHabitLogsForHabit(habitId: Long): Flow<List<HabitLog>> {
-        return habitDao.getHabitLogsForHabit(habitId).map { entities ->
-            entities.map { it.toDomainModel() }
-        }
-    }
-
-    override fun getHabitLogsInDateRange(
-        habitId: Long,
-        startDate: LocalDate,
-        endDate: LocalDate
-    ): Flow<List<HabitLog>> {
-        return habitDao.getHabitLogsInDateRange(
-            habitId,
-            startDate.toString(),
-            endDate.toString()
-        ).map { entities ->
-            entities.map { it.toDomainModel() }
-        }
     }
 }

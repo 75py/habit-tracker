@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
@@ -105,9 +106,16 @@ class HabitEditViewModel(
     }
 
     fun updateFrequencyType(frequencyType: FrequencyType) {
-        _uiState.value = _uiState.value.copy(
+        val currentState = _uiState.value
+        val newIntervalMinutes = when (frequencyType) {
+            FrequencyType.HOURLY -> 60  // Default to 1 hour
+            FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
+            FrequencyType.INTERVAL -> currentState.intervalMinutes
+        }
+        
+        _uiState.value = currentState.copy(
             frequencyType = frequencyType,
-            intervalMinutes = if (frequencyType == FrequencyType.HOURLY) 60 else _uiState.value.intervalMinutes
+            intervalMinutes = newIntervalMinutes
         )
     }
 
@@ -120,9 +128,32 @@ class HabitEditViewModel(
             TimeUnit.MINUTES -> value
             TimeUnit.HOURS -> value * 60
         }
-        _uiState.value = _uiState.value.copy(
-            intervalMinutes = intervalMinutes,
-            intervalUnit = unit
+        
+        // Validate and auto-correct interval minutes based on frequency type
+        val currentState = _uiState.value
+        val validatedIntervalMinutes = if (HabitIntervalValidator.isValidIntervalMinutes(currentState.frequencyType, intervalMinutes)) {
+            intervalMinutes
+        } else {
+            // Use the closest valid value for the frequency type
+            HabitIntervalValidator.getClosestValidIntervalMinutes(currentState.frequencyType, intervalMinutes)
+        }
+        
+        // Recalculate unit and value based on validated interval minutes
+        val finalUnit = if (validatedIntervalMinutes != intervalMinutes) {
+            // If we changed the value, determine the best unit to display
+            if (validatedIntervalMinutes % 60 == 0) TimeUnit.HOURS else TimeUnit.MINUTES
+        } else {
+            unit
+        }
+        
+        val finalValue = when (finalUnit) {
+            TimeUnit.MINUTES -> validatedIntervalMinutes
+            TimeUnit.HOURS -> validatedIntervalMinutes / 60
+        }
+        
+        _uiState.value = currentState.copy(
+            intervalMinutes = validatedIntervalMinutes,
+            intervalUnit = finalUnit
         )
     }
     

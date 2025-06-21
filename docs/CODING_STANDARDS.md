@@ -1,5 +1,10 @@
 # Coding Standards
 
+## Communication Guidelines
+
+- **Japanese** for PR titles, descriptions, and review comments
+- **English** for code, code comments, and technical documentation
+
 ## Logging Guidelines
 
 All new code in this project must follow these logging standards:
@@ -47,6 +52,106 @@ Use meaningful tags to categorize log messages by feature or component:
 - No sensitive information should be logged
 - Exception messages should be user-friendly when appropriate
 
+## Compose Preview Guidelines
+
+All Composable functions should include appropriate `@Preview` functions to support UI development and design review:
+
+### 1. Preview Requirements
+**All major UI components must include preview functions:**
+- Screen-level Composables should have previews for different states (loading, error, empty, content)
+- Individual components should have previews showcasing different variations
+- Use meaningful sample data that represents real usage
+
+### 2. Preview Structure
+```kotlin
+@Preview
+@Composable
+private fun ComponentNamePreview() {
+    MaterialTheme {
+        Surface {  // Use Surface for individual components
+            ComponentName(
+                // Provide meaningful sample data
+            )
+        }
+    }
+}
+```
+
+### 3. Preview Naming
+- Use descriptive names ending with "Preview"
+- For variations, include the state: `ComponentLoadingPreview`, `ComponentErrorPreview`
+- Keep preview functions private
+
+### 4. Sample Data
+- Create realistic sample data that showcases the component properly
+- Use current date/time for date-dependent components
+- Include edge cases (long text, empty states, etc.)
+
+### 5. Stateless Components for Previews
+- Extract stateless versions of screen components when ViewModels are involved
+- Create preview-specific data classes to avoid ViewModel dependencies
+- Use preview helper functions for complex state setup
+
+### Examples
+
+#### Good Preview Practice
+```kotlin
+@Preview
+@Composable
+private fun HabitItemPreview() {
+    val sampleHabit = Habit(
+        id = 1L,
+        name = "Drink Water",
+        description = "Stay hydrated throughout the day",
+        color = "#2196F3",
+        isActive = true,
+        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    )
+    
+    MaterialTheme {
+        Surface {
+            HabitItem(
+                habit = sampleHabit,
+                onEdit = {},
+                onDelete = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun HabitListEmptyStatePreview() {
+    MaterialTheme {
+        HabitListContentPreview(
+            uiState = PreviewHabitListUiState(
+                habits = emptyList(),
+                isLoading = false,
+                error = null
+            )
+        )
+    }
+}
+```
+
+#### Avoid
+```kotlin
+// Missing preview functions for important components
+@Composable
+fun ImportantComponent() { /* ... */ }
+
+// No sample data or unrealistic data
+@Preview
+@Composable
+private fun ComponentPreview() {
+    MaterialTheme {
+        Component(item = null) // Poor sample data
+    }
+}
+```
+
+## Logging Guidelines (continued)
+
 ### Examples
 
 #### Good Logging Practice
@@ -76,3 +181,10 @@ try {
 Logger.d("Something happened") // No tag
 Logger.d("Debug info", tag = "Debug") // Too generic
 ```
+
+## Documentation First Approach
+
+**Always check `/docs` directory before starting work** - It contains comprehensive documentation about architecture, standards, and specifications. Update these documents when making significant changes.
+
+## Update History
+- 2025-06-21: Added communication guidelines and documentation first approach from CLAUDE.md

@@ -23,7 +23,6 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "ONCE_DAILY",
             intervalMinutes = 1440,
             scheduledTimes = "07:00,19:00"
         )
@@ -38,7 +37,7 @@ class HabitMapperTest {
         assertEquals("#FF5722", domain.color)
         assertEquals(true, domain.isActive)
         assertEquals(LocalDate.parse("2024-01-01"), domain.createdAt)
-        assertEquals(FrequencyType.ONCE_DAILY, domain.frequencyType)
+        assertEquals(FrequencyType.ONCE_DAILY, domain.frequencyType) // 1440 minutes should be ONCE_DAILY
         assertEquals(1440, domain.intervalMinutes) // 24 hours = 1440 minutes
         assertEquals(2, domain.scheduledTimes.size)
         assertEquals(LocalTime(7, 0), domain.scheduledTimes[0])
@@ -46,7 +45,7 @@ class HabitMapperTest {
     }
 
     @Test
-    fun `HabitEntity toDomainModel should handle invalid frequency type`() {
+    fun `HabitEntity toDomainModel should auto-detect ONCE_DAILY for 1440 minutes`() {
         // Given
         val entity = HabitEntity(
             id = 1,
@@ -55,8 +54,7 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "INVALID_FREQUENCY",
-            intervalMinutes = 1440,
+            intervalMinutes = 1440, // 1440 minutes = 24 hours = ONCE_DAILY
             scheduledTimes = "07:00"
         )
 
@@ -64,7 +62,7 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(FrequencyType.ONCE_DAILY, domain.frequencyType) // Should default to ONCE_DAILY
+        assertEquals(FrequencyType.ONCE_DAILY, domain.frequencyType) // Should detect as ONCE_DAILY
     }
 
     @Test
@@ -77,7 +75,6 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "ONCE_DAILY",
             intervalMinutes = 1440,
             scheduledTimes = ""
         )
@@ -100,7 +97,6 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "ONCE_DAILY",
             intervalMinutes = 1440,
             scheduledTimes = "invalid,07:00,another_invalid"
         )
@@ -138,7 +134,6 @@ class HabitMapperTest {
         assertEquals("#FF5722", entity.color)
         assertEquals(true, entity.isActive)
         assertEquals("2024-01-01", entity.createdAt)
-        assertEquals("HOURLY", entity.frequencyType)
         assertEquals(120, entity.intervalMinutes) // 2 hours = 120 minutes
         assertEquals("07:00,19:30", entity.scheduledTimes)
     }
@@ -193,7 +188,6 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = "2024-01-01",
-            frequencyType = "ONCE_DAILY",
             intervalMinutes = 1440,
             scheduledTimes = "7:5,12:30"
         )
@@ -227,5 +221,93 @@ class HabitMapperTest {
 
         // Then
         assertEquals("07:05,12:30", entity.scheduledTimes)
+    }
+
+    @Test
+    fun `HabitEntity toDomainModel should auto-detect HOURLY for 60 minute intervals`() {
+        // Given
+        val entity = HabitEntity(
+            id = 1,
+            name = "Water",
+            description = "Drink water",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 60, // 60 minutes = 1 hour = HOURLY
+            scheduledTimes = "09:00"
+        )
+
+        // When
+        val domain = entity.toDomainModel()
+
+        // Then
+        assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
+        assertEquals(60, domain.intervalMinutes)
+    }
+
+    @Test
+    fun `HabitEntity toDomainModel should auto-detect HOURLY for 120 minute intervals`() {
+        // Given
+        val entity = HabitEntity(
+            id = 1,
+            name = "Stretch",
+            description = "Stretch every 2 hours",
+            color = "#4CAF50",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 120, // 120 minutes = 2 hours = HOURLY
+            scheduledTimes = "09:00"
+        )
+
+        // When
+        val domain = entity.toDomainModel()
+
+        // Then
+        assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
+        assertEquals(120, domain.intervalMinutes)
+    }
+
+    @Test
+    fun `HabitEntity toDomainModel should auto-detect INTERVAL for non-hour intervals`() {
+        // Given
+        val entity = HabitEntity(
+            id = 1,
+            name = "Meditation",
+            description = "Meditate every 30 minutes",
+            color = "#FF9800",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 30, // 30 minutes = custom interval = INTERVAL
+            scheduledTimes = "09:00"
+        )
+
+        // When
+        val domain = entity.toDomainModel()
+
+        // Then
+        assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as INTERVAL
+        assertEquals(30, domain.intervalMinutes)
+    }
+
+    @Test
+    fun `HabitEntity toDomainModel should auto-detect INTERVAL for 30 minute intervals`() {
+        // Given
+        val entity = HabitEntity(
+            id = 1,
+            name = "Reading",
+            description = "Read every 30 minutes",
+            color = "#9C27B0",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 30, // 30 minutes = valid INTERVAL divisor of 60
+            scheduledTimes = "09:00"
+        )
+
+        // When
+        val domain = entity.toDomainModel()
+
+        // Then
+        assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as INTERVAL
+        assertEquals(30, domain.intervalMinutes)
     }
 }

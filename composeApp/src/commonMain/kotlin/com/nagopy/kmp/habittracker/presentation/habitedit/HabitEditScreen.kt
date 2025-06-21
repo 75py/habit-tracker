@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,16 +25,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
-import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Compose screen for adding or editing a habit.
@@ -257,6 +256,7 @@ fun HabitEditScreen(
                             IntervalPickerDialog(
                                 currentValue = uiState.intervalValue,
                                 unit = uiState.intervalUnit,
+                                frequencyType = uiState.frequencyType,
                                 onValueAndUnitChange = { value, unit ->
                                     viewModel.updateIntervalValue(value, unit)
                                 },
@@ -594,16 +594,28 @@ private fun ColorOption(
 private fun IntervalPickerDialog(
     currentValue: Int,
     unit: TimeUnit,
+    frequencyType: FrequencyType,
     onValueAndUnitChange: (Int, TimeUnit) -> Unit,
     onDismiss: () -> Unit
 ) {
     var tempUnit by remember { mutableStateOf(unit) }
     
-    // Calculate reasonable min/max values based on current unit
-    val minValue = 1
-    val maxValue = when (tempUnit) {
-        TimeUnit.MINUTES -> 1440 // 24 hours in minutes
-        TimeUnit.HOURS -> 24 // 24 hours
+    // Calculate reasonable min/max values based on current unit and frequency type
+    val (minValue, maxValue) = when (tempUnit) {
+        TimeUnit.MINUTES -> {
+            if (frequencyType == FrequencyType.INTERVAL) {
+                1 to 60 // For INTERVAL, only allow 1-60 minutes (the valid divisors)
+            } else {
+                1 to 1440 // 24 hours in minutes
+            }
+        }
+        TimeUnit.HOURS -> {
+            if (frequencyType == FrequencyType.INTERVAL) {
+                1 to 1 // For INTERVAL, only allow 1 hour (60 minutes is the only valid hour-divisor)
+            } else {
+                1 to 24 // 24 hours
+            }
+        }
     }
     
     // Convert initial value if needed based on current unit
@@ -672,11 +684,22 @@ private fun IntervalPickerDialog(
                     // Decrease button
                     FilledIconButton(
                         onClick = { 
-                            if (tempValue > minValue) {
+                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                                // For INTERVAL minutes, jump to previous valid divisor
+                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                                if (currentIndex > 0) {
+                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex - 1]
+                                }
+                            } else if (tempValue > minValue) {
                                 tempValue--
                             }
                         },
-                        enabled = tempValue > minValue
+                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                            currentIndex > 0
+                        } else {
+                            tempValue > minValue
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Remove,
@@ -695,17 +718,21 @@ private fun IntervalPickerDialog(
                     // Increase button
                     FilledIconButton(
                         onClick = { 
-                            val currentMaxValue = when (tempUnit) {
-                                TimeUnit.MINUTES -> 1440
-                                TimeUnit.HOURS -> 24
-                            }
-                            if (tempValue < currentMaxValue) {
+                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                                // For INTERVAL minutes, jump to next valid divisor
+                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                                if (currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1) {
+                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex + 1]
+                                }
+                            } else if (tempValue < maxValue) {
                                 tempValue++
                             }
                         },
-                        enabled = tempValue < when (tempUnit) {
-                            TimeUnit.MINUTES -> 1440
-                            TimeUnit.HOURS -> 24
+                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
+                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
+                            currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1
+                        } else {
+                            tempValue < maxValue
                         }
                     ) {
                         Icon(
@@ -720,14 +747,30 @@ private fun IntervalPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val quickValues = when (tempUnit) {
-                        TimeUnit.MINUTES -> listOf(1, 5, 10, 15, 30, 60)
-                        TimeUnit.HOURS -> listOf(1, 2, 3, 4, 6, 8, 12, 24)
+                        TimeUnit.MINUTES -> {
+                            if (frequencyType == FrequencyType.INTERVAL) {
+                                // For INTERVAL type, only show valid divisors of 60 in minutes
+                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
+                            } else {
+                                listOf(1, 5, 10, 15, 30, 60)
+                            }
+                        }
+                        TimeUnit.HOURS -> {
+                            if (frequencyType == FrequencyType.INTERVAL) {
+                                // For INTERVAL type, only show valid divisors of 60 that are >= 60 (i.e., only 60 minutes = 1 hour)
+                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
+                                    .filter { it >= 60 && it % 60 == 0 }
+                                    .map { it / 60 }
+                            } else {
+                                listOf(1, 2, 3, 4, 6, 8, 12, 24)
+                            }
+                        }
                     }
                     
                     items(quickValues) { value ->
                         val currentMaxValue = when (tempUnit) {
-                            TimeUnit.MINUTES -> 1440
-                            TimeUnit.HOURS -> 24
+                            TimeUnit.MINUTES -> if (frequencyType == FrequencyType.INTERVAL) 60 else 1440
+                            TimeUnit.HOURS -> if (frequencyType == FrequencyType.INTERVAL) 1 else 24
                         }
                         if (value <= currentMaxValue) {
                             FilterChip(
@@ -757,3 +800,124 @@ private fun IntervalPickerDialog(
         }
     )
 }
+
+// ========== Preview Data Classes ==========
+
+/**
+ * Preview data class to avoid dependency on ViewModel
+ */
+private data class PreviewHabitEditUiState(
+    val editHabitId: Long? = null,
+    val name: String = "",
+    val description: String = "",
+    val color: String = "#2196F3",
+    val isActive: Boolean = true,
+    val createdAt: kotlinx.datetime.LocalDate? = null,
+    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+    val intervalMinutes: Int = 1440,
+    val intervalUnit: TimeUnit = TimeUnit.HOURS,
+    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
+    val endTime: LocalTime? = null,
+    val nameError: String? = null,
+    val saveError: String? = null,
+    val isSaving: Boolean = false,
+    val isLoading: Boolean = false
+) {
+    val intervalValue: Int
+        get() = when (intervalUnit) {
+            TimeUnit.MINUTES -> intervalMinutes
+            TimeUnit.HOURS -> intervalMinutes / 60
+        }
+}
+
+// ========== Individual Component Previews ==========
+
+@Preview
+@Composable
+private fun ColorOptionPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                ColorOption(
+                    color = "#2196F3",
+                    isSelected = false,
+                    onClick = {}
+                )
+                ColorOption(
+                    color = "#4CAF50",
+                    isSelected = true,
+                    onClick = {}
+                )
+                ColorOption(
+                    color = "#FF9800",
+                    isSelected = false,
+                    onClick = {}
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ColorSelectionPreview() {
+    val colors = listOf(
+        "#2196F3", "#4CAF50", "#FF9800", "#9C27B0", "#F44336",
+        "#00BCD4", "#FFEB3B", "#795548", "#607D8B", "#E91E63"
+    )
+    
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            Column {
+                Text(
+                    text = stringResource(Res.string.choose_color),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(colors) { color ->
+                        ColorOption(
+                            color = color,
+                            isSelected = color == "#4CAF50",
+                            onClick = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 2,
+            unit = TimeUnit.HOURS,
+            frequencyType = FrequencyType.HOURLY,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogMinutesPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 30,
+            unit = TimeUnit.MINUTES,
+            frequencyType = FrequencyType.INTERVAL,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+// Note: Full screen previews are omitted due to ViewModel dependencies and complexity.
+// The individual component previews above provide coverage for the main UI elements.

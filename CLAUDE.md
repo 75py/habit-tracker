@@ -2,127 +2,80 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🔨 Critical Rule - New Rule Addition Process
+## 🔨 Critical Rule - Interactive Rule Addition Process
 
-When receiving instructions from users that appear to require continuous application rather than one-time handling:
+When receiving instructions from users that appear to require continuous application:
 
-1. Ask "Should this be made a standard rule?"
-2. If YES is received, add it as an additional rule to CLAUDE.md
-3. Apply it as a standard rule thereafter
+1. **Always ask**: "Should this be made a standard rule?"
+2. **If YES is received**: Add it as an additional rule to CLAUDE.md
+3. **Apply it as standard rule thereafter**
 
-This process enables continuous improvement of project rules.
+This process enables continuous improvement of project rules through active interaction.
 
-## Essential Development Commands
+## 📚 Interactive Documentation Update System
 
-### Build and Run
+This project uses an interactive system to capture and document development knowledge. See `/docs/DOCUMENTATION_UPDATE_SYSTEM.md` for complete details.
+
+### Quick Reference - When to Propose Updates
+
+Propose documentation updates after:
+- Resolving errors or problems
+- Discovering efficient implementation patterns  
+- Establishing new API/library usage methods
+- Finding outdated/incorrect documentation
+- Discovering frequently referenced information
+
+### Proposal Format
+```
+💡 Documentation update proposal: [situation description]
+【Update Content】 [specific additions/modifications]
+【Update Candidates】
+1. /docs/ARCHITECTURE.md - [reason]
+2. /docs/CODING_STANDARDS.md - [reason]  
+3. Create new file - [reason]
+
+Which should be updated? (select number or "skip")
+```
+
+## 📖 Essential Documentation
+
+Always review these documents before starting work:
+
+- `/docs/ARCHITECTURE.md` - Complete system design, three-layer architecture, and platform specifics
+- `/docs/CODING_STANDARDS.md` - Logging requirements, communication guidelines, and coding conventions
+- `/docs/SPECIFICATIONS.md` - Screen specifications and UI requirements
+- `/docs/DEVELOPMENT_COMMANDS.md` - Build, test, and maintenance commands
+- `/docs/DOCUMENTATION_UPDATE_SYSTEM.md` - Full documentation update process and guidelines
+- `/docs/FIREBASE_APP_DISTRIBUTION.md` - Firebase setup guide (Japanese)
+- `/docs/IOS_SWIPE_BACK.md` - iOS gesture implementation details
+
+## 🚀 Quick Start
+
+### Build and Test
 ```bash
-# Clean and build everything
+# Build everything
 ./gradlew clean build
 
-# Build and install debug APK
-./gradlew assembleDebug
-./gradlew installDebug
-
-# iOS development
-open iosApp/iosApp.xcodeproj
-```
-
-### Testing
-```bash
-# Run unit tests (same as CI)
+# Run unit tests
 ./gradlew testDebugUnitTest
 
-# Run all tests with coverage
-./gradlew test
-
-# Run tests for specific platforms
-./gradlew iosSimulatorArm64Test
-./gradlew connectedAndroidTest
-```
-
-### Code Quality
-```bash
-# Run lint analysis
+# Run lint checks
 ./gradlew lint
-
-# Fix lint issues automatically
-./gradlew lintFix
 ```
 
-## Architecture Overview
+See `/docs/DEVELOPMENT_COMMANDS.md` for complete command reference.
 
-This is a **Kotlin Multiplatform** project using **Compose Multiplatform** with a **clean architecture** pattern:
+### Key Project Information
 
-### Three-Layer Architecture
-- **Presentation Layer** (`presentation/`): MVVM pattern with Compose UI, ViewModels, and reactive state management
-- **Domain Layer** (`domain/`): Pure business logic with Use Cases, Entities (Habit, Task, HabitLog), and Repository interfaces
-- **Data Layer** (`data/`): Repository implementations, Room database, and data mappers
+- **Architecture**: Kotlin Multiplatform with Compose Multiplatform
+- **Pattern**: Clean Architecture (Presentation → Domain → Data)
+- **Database**: Room with Kotlin Multiplatform support
+- **DI**: Koin for dependency injection
+- **Logging**: Must use `Logger.e()` in all catch blocks
 
-### Key Architectural Patterns
+## ⚠️ Important Constraints
 
-**Habit vs Task Distinction:**
-- **Habit**: Template/rule defining what should be done (e.g., "Drink water every hour")
-- **Task**: Specific instance scheduled for a particular time (e.g., "Drink water at 10:00 AM on 2024-01-20")
-
-**Dependency Injection (Koin):**
-- Each layer has its own module: `PresentationModule`, `DomainModule`, `DataModule`
-- Platform-specific modules use `expect/actual` pattern for Android/iOS implementations
-
-**Repository Pattern:**
-- `HabitRepository` interface in domain layer
-- `HabitRepositoryImpl` in data layer using Room database
-- Reactive data streams with Kotlin Flow
-
-### Notification System
-- **Sequential Scheduling**: One notification scheduled per habit, chain-scheduled after each trigger
-- **Platform Implementations**: 
-  - Android: `AlarmManager` + `BroadcastReceiver`
-  - iOS: `UserNotifications` framework
-- **Dynamic Content**: Notifications fetch current habit data at scheduling time
-
-## Critical Coding Standards
-
-### Logging Requirements
-**All catch blocks must include exception logging:**
-```kotlin
-try {
-    // operation
-} catch (e: Exception) {
-    Logger.e(e, "Failed to perform operation", tag = "ComponentName")
-    // handle exception
-}
-```
-
-**Import the project Logger:**
-```kotlin
-import com.nagopy.kmp.habittracker.util.Logger
-```
-
-**Use meaningful tags:**
-```kotlin
-Logger.d("Creating habit: ${habit.name}", tag = "HabitCreation")
-```
-
-### Documentation Requirements
-**Always read `/docs` directory first** - it contains:
-- `ARCHITECTURE.md`: Complete system design and patterns
-- `CODING_STANDARDS.md`: Logging and exception handling requirements  
-- `SPECIFICATIONS.md`: Screen specifications and UI requirements
-
-**Update documentation when making changes** - keep `/docs` synchronized with code modifications.
-
-### Communication Guidelines
-- **Japanese** for PR titles, descriptions, and review comments
-- **English** for code, code comments, and technical documentation
-
-## Key Technology Stack
-- **UI**: Compose Multiplatform with Material Design 3
-- **Database**: Room with KSP code generation
-- **DI**: Koin dependency injection
-- **Testing**: JUnit, MockK, kotlin-test, kotlinx-coroutines-test
-- **Logging**: Napier (project Logger wrapper)
-- **Date/Time**: kotlinx.datetime
-
-## Platform Targets
-- **Android**: Min SDK 24, Target SDK 34, JVM 11
-- **iOS**: iosX64, iosArm64, iosSimulatorArm64 with static framework
+1. **Never update files without user approval**
+2. **Always check `/docs` directory before starting work**
+3. **Follow the interactive documentation update process**
+4. **Use Japanese for PR titles/descriptions, English for code**

@@ -16,7 +16,7 @@
     <!-- Today Screen -->
     <string name="todays_tasks">Today's Tasks</string>
     <string name="no_tasks_scheduled">No tasks scheduled for today</string>
-    <string name="error_prefix">Error: %s</string>
+    <string name="error_prefix">Error: %1$s</string>
     
     <!-- Habit Edit Screen -->
     <string name="add_habit">Add Habit</string>
@@ -50,7 +50,7 @@
     <string name="failed_to_load_habit">Failed to load habit</string>
     <string name="failed_to_save_habit">Failed to save habit</string>
     <string name="habit_not_found">Habit not found</string>
-    <string name="failed_to_complete_task">Failed to complete task: %s</string>
+    <string name="failed_to_complete_task">Failed to complete task: %1$s</string>
     
     <!-- Habit List Screen -->
     <string name="my_habits">My Habits</string>
@@ -61,7 +61,7 @@
     <string name="edit_habit_content_description">Edit habit</string>
     <string name="delete_habit_content_description">Delete habit</string>
     <string name="delete_habit">Delete Habit</string>
-    <string name="delete_habit_confirmation">Are you sure you want to delete "%s"? This action cannot be undone.</string>
+    <string name="delete_habit_confirmation">Are you sure you want to delete "%1$s"? This action cannot be undone.</string>
     <string name="delete">Delete</string>
     
     <!-- Permission Dialogs -->

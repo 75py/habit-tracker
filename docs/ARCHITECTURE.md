@@ -2,6 +2,20 @@
 
 This document describes the layered architecture adopted for the Habit Tracker application.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Logging Strategy](#logging-strategy)
+- [Layer Responsibilities](#layer-responsibilities)
+  - [Presentation Layer](#presentation-layer)
+  - [Domain Layer](#domain-layer)
+  - [Data Layer](#data-layer)
+- [Dependency Flow](#dependency-flow)
+- [Dependency Injection](#dependency-injection)
+- [Benefits of This Architecture](#benefits-of-this-architecture)
+- [Notification Feature](#notification-feature)
+- [Update History](#update-history)
+
 ## Overview
 
 The Habit Tracker follows a **three-layer architecture** pattern that ensures clear separation of concerns, maintainability, and testability. The architecture is designed to support both Android and iOS platforms through Kotlin Multiplatform.
@@ -29,24 +43,7 @@ The Habit Tracker follows a **three-layer architecture** pattern that ensures cl
 
 ## Logging Strategy
 
-The application uses **Napier** for cross-platform logging with the following guidelines:
-
-- **Debug Information**: Use `Logger.d()` for general debug information
-- **Exception Logging**: All caught exceptions must be logged using `Logger.e(exception)` inside catch blocks
-- **Debug Build Only**: Logs are only printed in debug builds using `DebugAntilog`
-- **Consistent Tagging**: Use meaningful tags to categorize log messages by feature or component
-
-**Example Usage:**
-```kotlin
-try {
-    // Some operation
-} catch (e: Exception) {
-    Logger.e(e, "Failed to save habit")
-    // Handle exception
-}
-
-Logger.d("Habit created successfully", tag = "HabitCreation")
-```
+The application uses **Napier** for cross-platform logging. See `/docs/CODING_STANDARDS.md` for detailed logging guidelines and examples.
 
 ## Layer Responsibilities
 
@@ -57,8 +54,15 @@ The presentation layer is responsible for handling user interface and user inter
 
 - **UI Components**: Compose UI components and screens
 - **ViewModels**: Hold UI state and handle user actions
-- **Navigation**: Routing between different screens
+- **Navigation**: Routing between different screens with platform-specific gesture support
 - **State Management**: Managing UI state using Compose state APIs
+
+**Navigation Features:**
+- **Cross-Platform Routing**: Screen-to-screen navigation through `HabitTrackerNavigation`
+- **Smooth Animations**: Slide transitions between screens
+- **iOS Swipe Back**: Native-style edge swipe gesture for iOS users using `SwipeBackHandler`
+- **Safe Navigation**: Debounced navigation to prevent rapid state changes
+- **Platform Consistency**: Unified navigation experience across Android and iOS
 
 **Key Principles:**
 - ViewModels communicate with the domain layer through use cases
@@ -441,6 +445,37 @@ actual val notificationModule: Module = iosNotificationModule
 
 This pattern ensures platform-specific implementations while maintaining a unified interface for the common application module.
 
+### Platform-Specific UI Components
+
+The application extends the `expect/actual` pattern to UI components for platform-specific behavior:
+
+**SwipeBackHandler Implementation:**
+```kotlin
+// Common interface (commonMain)
+@Composable
+expect fun SwipeBackHandler(
+    enabled: Boolean = true,
+    onSwipeBack: () -> Unit,
+    content: @Composable () -> Unit
+)
+
+// iOS implementation (iosMain)
+actual fun SwipeBackHandler(...) {
+    // iOS-specific gesture detection with edge swipe
+}
+
+// Android implementation (androidMain)  
+actual fun SwipeBackHandler(...) {
+    // Defers to system gesture navigation
+}
+```
+
+**Benefits of UI Component expect/actual Pattern:**
+- **Platform Optimization**: Each platform gets the most appropriate implementation
+- **Unified Interface**: Common code can use the same API across platforms
+- **Maintainability**: Platform-specific behavior is encapsulated in respective modules
+- **Native Experience**: Users get platform-appropriate interactions (iOS edge swipe, Android system gestures)
+
 ## Benefits of This Architecture
 
 1. **Separation of Concerns**: Each layer has a single responsibility
@@ -663,3 +698,11 @@ val habitDescription = habit?.description ?: task.habitDescription
 - Comprehensive test suite verifies current data fetching logic
 - Tests ensure fallback behavior works correctly
 - Isolated testing of notification scheduler dependencies
+
+## Platform Targets
+- **Android**: Min SDK 24, Target SDK 34, JVM 11
+- **iOS**: iosX64, iosArm64, iosSimulatorArm64 with static framework
+
+## Update History
+- 2025-06-21: Removed redundant technology stack (see CLAUDE.md for tech stack)
+- 2025-06-21: Simplified logging section to reference CODING_STANDARDS.md
