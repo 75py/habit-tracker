@@ -42,7 +42,6 @@ class BackgroundTaskManager {
     /// Handles the background notification refresh task
     private func handleNotificationRefresh(task: BGAppRefreshTask) {
         print("Starting background notification refresh task: \(task.identifier)")
-        print("Task expiration date: \(task.expirationDate?.description ?? "nil")")
         
         // Schedule the next refresh
         print("Scheduling next background refresh...")
@@ -66,7 +65,7 @@ class BackgroundTaskManager {
     /// Cancels pending background tasks
     func cancelBackgroundTasks() {
         print("Cancelling background tasks for identifier: \(taskIdentifier)")
-        BGTaskScheduler.shared.cancel(taskWithIdentifier: taskIdentifier)
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskIdentifier)
         print("Background tasks cancelled")
     }
 }

@@ -10,18 +10,16 @@ import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toNSDate
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import platform.UserNotifications.*
 import platform.Foundation.*
-import kotlin.math.abs
 
 /**
  * iOS implementation of NotificationScheduler using UserNotifications framework.
@@ -37,7 +35,6 @@ class IOSNotificationScheduler(
         private const val HABIT_REMINDER_CATEGORY = "HABIT_REMINDER"
         private const val COMPLETE_ACTION = "COMPLETE_ACTION"
         private const val MAX_IOS_NOTIFICATIONS = 64
-        private const val BACKGROUND_REFRESH_INTERVAL_HOURS = 1
     }
 
     /**
@@ -90,9 +87,9 @@ class IOSNotificationScheduler(
         
         // Get all active habits
         Logger.d("Fetching all active habits from repository", "IOSNotificationScheduler")
-        val allHabits = habitRepository.getAllHabits().filter { it.isActive }
+        val allHabits = habitRepository.getAllHabits().first().filter { it.isActive }
         Logger.d("Found ${allHabits.size} active habits", "IOSNotificationScheduler")
-        
+
         // Generate all potential notifications
         val allNotifications = mutableListOf<ScheduledNotification>()
         val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
@@ -132,7 +129,7 @@ class IOSNotificationScheduler(
         // Schedule the prioritized notifications
         Logger.d("Scheduling ${prioritizedNotifications.size} prioritized notifications", "IOSNotificationScheduler")
         prioritizedNotifications.forEach { notification ->
-            Logger.d("Scheduling notification for habit ${notification.habitId} at ${notification.time} (${notification.distanceFromNow}min from now)", "IOSNotificationScheduler")
+            Logger.d("Scheduling notification for habit ${notification.habit.id} at ${notification.time} (${notification.distanceFromNow}min from now)", "IOSNotificationScheduler")
             scheduleNotification(notification)
         }
         
