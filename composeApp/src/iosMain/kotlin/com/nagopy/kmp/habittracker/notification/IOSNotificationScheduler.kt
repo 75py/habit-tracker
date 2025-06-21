@@ -85,20 +85,28 @@ class IOSNotificationScheduler(
         Logger.d("Rescheduling all notifications with 64-limit prioritization", "IOSNotificationScheduler")
         
         // Cancel all existing notifications first
+        Logger.d("Cancelling all existing notifications", "IOSNotificationScheduler")
         cancelAllNotifications()
         
         // Get all active habits
+        Logger.d("Fetching all active habits from repository", "IOSNotificationScheduler")
         val allHabits = habitRepository.getAllHabits().filter { it.isActive }
+        Logger.d("Found ${allHabits.size} active habits", "IOSNotificationScheduler")
         
         // Generate all potential notifications
         val allNotifications = mutableListOf<ScheduledNotification>()
         val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
+        Logger.d("Current time: $currentTime", "IOSNotificationScheduler")
         
         allHabits.forEach { habit ->
-            allNotifications.addAll(generateNotificationsForHabit(habit, currentTime))
+            Logger.d("Generating notifications for habit: ${habit.name} (ID: ${habit.id})", "IOSNotificationScheduler")
+            val habitNotifications = generateNotificationsForHabit(habit, currentTime)
+            Logger.d("Generated ${habitNotifications.size} notifications for habit: ${habit.name}", "IOSNotificationScheduler")
+            allNotifications.addAll(habitNotifications)
         }
         
         // Sort by distance from current time and take only 64
+        Logger.d("Sorting ${allNotifications.size} notifications by distance from current time", "IOSNotificationScheduler")
         val prioritizedNotifications = allNotifications
             .sortedBy { it.distanceFromNow }
             .take(MAX_IOS_NOTIFICATIONS)
@@ -122,12 +130,16 @@ class IOSNotificationScheduler(
         }
         
         // Schedule the prioritized notifications
+        Logger.d("Scheduling ${prioritizedNotifications.size} prioritized notifications", "IOSNotificationScheduler")
         prioritizedNotifications.forEach { notification ->
+            Logger.d("Scheduling notification for habit ${notification.habitId} at ${notification.time} (${notification.distanceFromNow}min from now)", "IOSNotificationScheduler")
             scheduleNotification(notification)
         }
         
         // Register background task for next refresh
+        Logger.d("Registering background task for next refresh", "IOSNotificationScheduler")
         registerBackgroundRefresh()
+        Logger.d("Notification rescheduling completed", "IOSNotificationScheduler")
     }
 
     /**
@@ -398,11 +410,15 @@ class IOSNotificationScheduler(
      */
     suspend fun performBackgroundRefresh() {
         Logger.d("Performing background notification refresh", "IOSNotificationScheduler")
+        Logger.d("Current time: ${Clock.System.now()}", "IOSNotificationScheduler")
+        
         try {
+            Logger.d("Calling rescheduleAllNotifications() to refresh all habit notifications", "IOSNotificationScheduler")
             rescheduleAllNotifications()
             Logger.i("Background notification refresh completed successfully", "IOSNotificationScheduler")
         } catch (e: Exception) {
-            Logger.e(e, "Background notification refresh failed", "IOSNotificationScheduler")
+            Logger.e(e, "Background notification refresh failed with error: ${e.message}", "IOSNotificationScheduler")
+            throw e
         }
     }
 }

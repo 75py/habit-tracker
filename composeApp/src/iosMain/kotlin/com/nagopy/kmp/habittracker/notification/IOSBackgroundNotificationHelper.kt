@@ -19,14 +19,18 @@ object IOSBackgroundNotificationHelper : KoinComponent {
      */
     fun performBackgroundRefresh() {
         Logger.d("Background notification refresh requested from Swift", "IOSBackgroundNotificationHelper")
+        Logger.d("Starting coroutine for background refresh on Dispatchers.Default", "IOSBackgroundNotificationHelper")
         
         CoroutineScope(Dispatchers.Default).launch {
             try {
+                Logger.d("Calling notificationScheduler.performBackgroundRefresh()", "IOSBackgroundNotificationHelper")
                 notificationScheduler.performBackgroundRefresh()
-                Logger.i("Background notification refresh completed", "IOSBackgroundNotificationHelper")
+                Logger.i("Background notification refresh completed successfully", "IOSBackgroundNotificationHelper")
             } catch (e: Exception) {
-                Logger.e(e, "Background notification refresh failed", "IOSBackgroundNotificationHelper")
+                Logger.e(e, "Background notification refresh failed with exception: ${e.message}", "IOSBackgroundNotificationHelper")
             }
         }
+        
+        Logger.d("Background refresh coroutine launched, returning from performBackgroundRefresh()", "IOSBackgroundNotificationHelper")
     }
 }
