@@ -105,6 +105,22 @@ class IOSNotificationScheduler(
         
         Logger.d("Generated ${allNotifications.size} total notifications, scheduling ${prioritizedNotifications.size} closest ones", "IOSNotificationScheduler")
         
+        if (allNotifications.size > MAX_IOS_NOTIFICATIONS) {
+            val furthestScheduled = prioritizedNotifications.last()
+            val closestSkipped = allNotifications
+                .sortedBy { it.distanceFromNow }
+                .drop(MAX_IOS_NOTIFICATIONS)
+                .firstOrNull()
+            
+            if (closestSkipped != null) {
+                Logger.i(
+                    "iOS 64-notification limit reached. Furthest scheduled: ${furthestScheduled.time} (${furthestScheduled.distanceFromNow}min), " +
+                    "closest skipped: ${closestSkipped.time} (${closestSkipped.distanceFromNow}min)",
+                    "IOSNotificationScheduler"
+                )
+            }
+        }
+        
         // Schedule the prioritized notifications
         prioritizedNotifications.forEach { notification ->
             scheduleNotification(notification)
