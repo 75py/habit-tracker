@@ -701,3 +701,18 @@ val habitDescription = habit?.description ?: task.habitDescription
 - Comprehensive test suite verifies current data fetching logic
 - Tests ensure fallback behavior works correctly
 - Isolated testing of notification scheduler dependencies
+
+## Key Technology Stack
+- **UI**: Compose Multiplatform with Material Design 3
+- **Database**: Room with KSP code generation
+- **DI**: Koin dependency injection
+- **Testing**: JUnit, MockK, kotlin-test, kotlinx-coroutines-test
+- **Logging**: Napier (project Logger wrapper)
+- **Date/Time**: kotlinx.datetime
+
+## Platform Targets
+- **Android**: Min SDK 24, Target SDK 34, JVM 11
+- **iOS**: iosX64, iosArm64, iosSimulatorArm64 with static framework
+
+## Update History
+- 2025-06-21: Added technology stack and platform targets from CLAUDE.md

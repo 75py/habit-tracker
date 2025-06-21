@@ -1,5 +1,10 @@
 # Coding Standards
 
+## Communication Guidelines
+
+- **Japanese** for PR titles, descriptions, and review comments
+- **English** for code, code comments, and technical documentation
+
 ## Logging Guidelines
 
 All new code in this project must follow these logging standards:
@@ -176,3 +181,10 @@ try {
 Logger.d("Something happened") // No tag
 Logger.d("Debug info", tag = "Debug") // Too generic
 ```
+
+## Documentation First Approach
+
+**Always check `/docs` directory before starting work** - It contains comprehensive documentation about architecture, standards, and specifications. Update these documents when making significant changes.
+
+## Update History
+- 2025-06-21: Added communication guidelines and documentation first approach from CLAUDE.md
