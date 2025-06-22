@@ -92,8 +92,8 @@ private fun HabitEditContent(
     Scaffold(
         topBar = {
             HabitEditTopBar(
-                isEditMode = uiState.editHabitId != null,
-                isSaving = uiState.isSaving,
+                isEditMode = (uiState as? HabitEditUiState.Content)?.editHabitId != null,
+                isSaving = (uiState as? HabitEditUiState.Content)?.isSaving == true,
                 onNavigateBack = onNavigateBack,
                 onSave = onSave
             )
@@ -104,9 +104,13 @@ private fun HabitEditContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> LoadingState()
-                else -> HabitEditForm(
+            when (uiState) {
+                is HabitEditUiState.Loading -> LoadingState()
+                is HabitEditUiState.Error -> ErrorState(
+                    error = uiState.message,
+                    onNavigateBack = onNavigateBack
+                )
+                is HabitEditUiState.Content -> HabitEditForm(
                     uiState = uiState,
                     descriptionFocusRequester = descriptionFocusRequester,
                     onNameChange = onNameChange,
@@ -176,8 +180,34 @@ private fun LoadingState() {
 }
 
 @Composable
+private fun ErrorState(
+    error: String,
+    onNavigateBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.error_prefix, error),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(onClick = onNavigateBack) {
+            Text(stringResource(Res.string.back))
+        }
+    }
+}
+
+@Composable
 private fun HabitEditForm(
-    uiState: HabitEditUiState,
+    uiState: HabitEditUiState.Content,
     descriptionFocusRequester: FocusRequester,
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
@@ -386,7 +416,7 @@ private fun ErrorCard(error: String) {
 private fun HabitEditScreenAddModePreview() {
     MaterialTheme {
         HabitEditContent(
-            uiState = HabitEditUiState(
+            uiState = HabitEditUiState.Content(
                 editHabitId = null,
                 name = "",
                 description = "",
@@ -399,8 +429,7 @@ private fun HabitEditScreenAddModePreview() {
                 endTime = null,
                 nameError = null,
                 saveError = null,
-                isSaving = false,
-                isLoading = false
+                isSaving = false
             ),
             onNameChange = {},
             onDescriptionChange = {},
@@ -422,7 +451,7 @@ private fun HabitEditScreenAddModePreview() {
 private fun HabitEditScreenEditModePreview() {
     MaterialTheme {
         HabitEditContent(
-            uiState = HabitEditUiState(
+            uiState = HabitEditUiState.Content(
                 editHabitId = 1L,
                 name = "Drink Water",
                 description = "Stay hydrated throughout the day",
@@ -435,8 +464,7 @@ private fun HabitEditScreenEditModePreview() {
                 endTime = LocalTime(22, 0),
                 nameError = null,
                 saveError = null,
-                isSaving = false,
-                isLoading = false
+                isSaving = false
             ),
             onNameChange = {},
             onDescriptionChange = {},
@@ -458,7 +486,7 @@ private fun HabitEditScreenEditModePreview() {
 private fun HabitEditScreenErrorStatePreview() {
     MaterialTheme {
         HabitEditContent(
-            uiState = HabitEditUiState(
+            uiState = HabitEditUiState.Content(
                 editHabitId = null,
                 name = "",
                 description = "",
@@ -471,8 +499,7 @@ private fun HabitEditScreenErrorStatePreview() {
                 endTime = null,
                 nameError = "Name is required",
                 saveError = "Failed to save habit",
-                isSaving = false,
-                isLoading = false
+                isSaving = false
             ),
             onNameChange = {},
             onDescriptionChange = {},
@@ -494,21 +521,29 @@ private fun HabitEditScreenErrorStatePreview() {
 private fun HabitEditScreenLoadingStatePreview() {
     MaterialTheme {
         HabitEditContent(
-            uiState = HabitEditUiState(
-                editHabitId = 1L,
-                name = "",
-                description = "",
-                color = "#2196F3",
-                isActive = true,
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 1440,
-                intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = listOf(LocalTime(9, 0)),
-                endTime = null,
-                nameError = null,
-                saveError = null,
-                isSaving = false,
-                isLoading = true
+            uiState = HabitEditUiState.Loading,
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitEditScreenErrorLoadingPreview() {
+    MaterialTheme {
+        HabitEditContent(
+            uiState = HabitEditUiState.Error(
+                message = "Failed to load habit data"
             ),
             onNameChange = {},
             onDescriptionChange = {},

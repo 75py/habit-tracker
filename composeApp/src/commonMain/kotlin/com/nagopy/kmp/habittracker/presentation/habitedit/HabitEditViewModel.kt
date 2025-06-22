@@ -33,17 +33,18 @@ class HabitEditViewModel(
     private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HabitEditUiState())
+    private val _uiState = MutableStateFlow<HabitEditUiState>(HabitEditUiState.Content())
     val uiState: StateFlow<HabitEditUiState> = _uiState.asStateFlow()
 
     fun loadHabitForEdit(habitId: Long) {
-        if (_uiState.value.editHabitId == habitId) {
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content && currentState.editHabitId == habitId) {
             // Already loaded this habit
             return
         }
         
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, editHabitId = habitId)
+            _uiState.value = HabitEditUiState.Loading
             
             try {
                 val habit = getHabitUseCase(habitId)
@@ -55,7 +56,7 @@ class HabitEditViewModel(
                         TimeUnit.MINUTES
                     }
                     
-                    _uiState.value = _uiState.value.copy(
+                    _uiState.value = HabitEditUiState.Content(
                         editHabitId = habitId,
                         name = habit.name,
                         description = habit.description,
@@ -66,111 +67,140 @@ class HabitEditViewModel(
                         intervalMinutes = habit.intervalMinutes,
                         intervalUnit = intervalUnit,
                         scheduledTimes = habit.scheduledTimes,
-                        endTime = habit.endTime,
-                        isLoading = false
+                        endTime = habit.endTime
                     )
                 } else {
                     Logger.d("Habit with ID $habitId not found", tag = "HabitEdit")
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        saveError = "Habit not found"
+                    _uiState.value = HabitEditUiState.Error(
+                        message = "Habit not found"
                     )
                 }
             } catch (exception: Exception) {
                 Logger.e(exception, "Failed to load habit for editing", tag = "HabitEdit")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    saveError = exception.message ?: "Failed to load habit"
+                _uiState.value = HabitEditUiState.Error(
+                    message = exception.message ?: "Failed to load habit"
                 )
             }
         }
     }
 
     fun updateName(name: String) {
-        _uiState.value = _uiState.value.copy(
-            name = name,
-            nameError = if (name.isBlank()) "Name is required" else null
-        )
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(
+                name = name,
+                nameError = if (name.isBlank()) "Name is required" else null
+            )
+        }
     }
 
     fun updateDescription(description: String) {
-        _uiState.value = _uiState.value.copy(description = description)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(description = description)
+        }
     }
 
     fun updateColor(color: String) {
-        _uiState.value = _uiState.value.copy(color = color)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(color = color)
+        }
     }
 
     fun updateIsActive(isActive: Boolean) {
-        _uiState.value = _uiState.value.copy(isActive = isActive)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(isActive = isActive)
+        }
     }
 
     fun updateFrequencyType(frequencyType: FrequencyType) {
         val currentState = _uiState.value
-        val newIntervalMinutes = when (frequencyType) {
-            FrequencyType.HOURLY -> 60  // Default to 1 hour
-            FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
-            FrequencyType.INTERVAL -> currentState.intervalMinutes
+        if (currentState is HabitEditUiState.Content) {
+            val newIntervalMinutes = when (frequencyType) {
+                FrequencyType.HOURLY -> 60  // Default to 1 hour
+                FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
+                FrequencyType.INTERVAL -> currentState.intervalMinutes
+            }
+            
+            _uiState.value = currentState.copy(
+                frequencyType = frequencyType,
+                intervalMinutes = newIntervalMinutes
+            )
         }
-        
-        _uiState.value = currentState.copy(
-            frequencyType = frequencyType,
-            intervalMinutes = newIntervalMinutes
-        )
     }
 
     fun updateIntervalMinutes(intervalMinutes: Int) {
-        _uiState.value = _uiState.value.copy(intervalMinutes = intervalMinutes)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(intervalMinutes = intervalMinutes)
+        }
     }
     
     fun updateIntervalValue(value: Int, unit: TimeUnit) {
-        val intervalMinutes = when (unit) {
-            TimeUnit.MINUTES -> value
-            TimeUnit.HOURS -> value * 60
-        }
-        
-        // Validate and auto-correct interval minutes based on frequency type
         val currentState = _uiState.value
-        val validatedIntervalMinutes = if (HabitIntervalValidator.isValidIntervalMinutes(currentState.frequencyType, intervalMinutes)) {
-            intervalMinutes
-        } else {
-            // Use the closest valid value for the frequency type
-            HabitIntervalValidator.getClosestValidIntervalMinutes(currentState.frequencyType, intervalMinutes)
+        if (currentState is HabitEditUiState.Content) {
+            val intervalMinutes = when (unit) {
+                TimeUnit.MINUTES -> value
+                TimeUnit.HOURS -> value * 60
+            }
+            
+            // Validate and auto-correct interval minutes based on frequency type
+            val validatedIntervalMinutes = if (HabitIntervalValidator.isValidIntervalMinutes(currentState.frequencyType, intervalMinutes)) {
+                intervalMinutes
+            } else {
+                // Use the closest valid value for the frequency type
+                HabitIntervalValidator.getClosestValidIntervalMinutes(currentState.frequencyType, intervalMinutes)
+            }
+            
+            // Recalculate unit and value based on validated interval minutes
+            val finalUnit = if (validatedIntervalMinutes != intervalMinutes) {
+                // If we changed the value, determine the best unit to display
+                if (validatedIntervalMinutes % 60 == 0) TimeUnit.HOURS else TimeUnit.MINUTES
+            } else {
+                unit
+            }
+            
+            val finalValue = when (finalUnit) {
+                TimeUnit.MINUTES -> validatedIntervalMinutes
+                TimeUnit.HOURS -> validatedIntervalMinutes / 60
+            }
+            
+            _uiState.value = currentState.copy(
+                intervalMinutes = validatedIntervalMinutes,
+                intervalUnit = finalUnit
+            )
         }
-        
-        // Recalculate unit and value based on validated interval minutes
-        val finalUnit = if (validatedIntervalMinutes != intervalMinutes) {
-            // If we changed the value, determine the best unit to display
-            if (validatedIntervalMinutes % 60 == 0) TimeUnit.HOURS else TimeUnit.MINUTES
-        } else {
-            unit
-        }
-        
-        val finalValue = when (finalUnit) {
-            TimeUnit.MINUTES -> validatedIntervalMinutes
-            TimeUnit.HOURS -> validatedIntervalMinutes / 60
-        }
-        
-        _uiState.value = currentState.copy(
-            intervalMinutes = validatedIntervalMinutes,
-            intervalUnit = finalUnit
-        )
     }
     
     fun updateIntervalUnit(unit: TimeUnit) {
-        _uiState.value = _uiState.value.copy(intervalUnit = unit)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(intervalUnit = unit)
+        }
     }
 
     fun updateScheduledTimes(scheduledTimes: List<LocalTime>) {
-        _uiState.value = _uiState.value.copy(scheduledTimes = scheduledTimes)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(scheduledTimes = scheduledTimes)
+        }
     }
 
     fun updateEndTime(endTime: LocalTime?) {
-        _uiState.value = _uiState.value.copy(endTime = endTime)
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(endTime = endTime)
+        }
     }
 
     fun saveHabit(onSuccess: (Long) -> Unit, onError: (String) -> Unit) {
         val currentState = _uiState.value
+        if (currentState !is HabitEditUiState.Content) {
+            onError("Invalid state for saving")
+            return
+        }
         
         // Validate form
         if (currentState.name.isBlank()) {
@@ -254,10 +284,13 @@ class HabitEditViewModel(
     }
 
     fun clearErrors() {
-        _uiState.value = _uiState.value.copy(
-            nameError = null,
-            saveError = null
-        )
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(
+                nameError = null,
+                saveError = null
+            )
+        }
     }
 }
 
@@ -269,29 +302,44 @@ enum class TimeUnit {
 }
 
 /**
- * UI state for the Habit Edit screen
+ * UI state for the Habit Edit screen using sealed class pattern
  */
-data class HabitEditUiState(
-    val editHabitId: Long? = null, // null for adding, habitId for editing
-    val name: String = "",
-    val description: String = "",
-    val color: String = "#2196F3", // Default blue color
-    val isActive: Boolean = true,
-    val createdAt: LocalDate? = null, // Original creation date for editing
-    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-    val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
-    val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
-    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
-    val endTime: LocalTime? = null, // End time for interval-based habits
-    val nameError: String? = null,
-    val saveError: String? = null,
-    val isSaving: Boolean = false,
-    val isLoading: Boolean = false
-) {
-    // Helper property to get the interval value in the selected unit
-    val intervalValue: Int
-        get() = when (intervalUnit) {
-            TimeUnit.MINUTES -> intervalMinutes
-            TimeUnit.HOURS -> intervalMinutes / 60
-        }
+sealed interface HabitEditUiState {
+    
+    /**
+     * Loading state when fetching habit for editing
+     */
+    data object Loading : HabitEditUiState
+    
+    /**
+     * Error state when habit loading fails
+     */
+    data class Error(val message: String) : HabitEditUiState
+    
+    /**
+     * Content state when habit data is loaded or being edited
+     */
+    data class Content(
+        val editHabitId: Long? = null, // null for adding, habitId for editing
+        val name: String = "",
+        val description: String = "",
+        val color: String = "#2196F3", // Default blue color
+        val isActive: Boolean = true,
+        val createdAt: LocalDate? = null, // Original creation date for editing
+        val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+        val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
+        val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
+        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
+        val endTime: LocalTime? = null, // End time for interval-based habits
+        val nameError: String? = null,
+        val saveError: String? = null,
+        val isSaving: Boolean = false
+    ) : HabitEditUiState {
+        // Helper property to get the interval value in the selected unit
+        val intervalValue: Int
+            get() = when (intervalUnit) {
+                TimeUnit.MINUTES -> intervalMinutes
+                TimeUnit.HOURS -> intervalMinutes / 60
+            }
+    }
 }
