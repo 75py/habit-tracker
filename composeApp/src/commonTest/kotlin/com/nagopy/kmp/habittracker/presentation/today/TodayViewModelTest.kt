@@ -85,11 +85,10 @@ class TodayViewModelTest {
         
         // Then
         val uiState = viewModel.uiState.first()
+        assertTrue(uiState is TodayUiState.Content)
         assertEquals(2, uiState.tasks.size)
         assertEquals("Exercise", uiState.tasks[0].habitName)
         assertEquals("Meditate", uiState.tasks[1].habitName)
-        assertFalse(uiState.isLoading)
-        assertNull(uiState.error)
     }
 
     @Test
@@ -102,9 +101,7 @@ class TodayViewModelTest {
         
         // Then
         val uiState = viewModel.uiState.first()
-        assertEquals(0, uiState.tasks.size)
-        assertFalse(uiState.isLoading)
-        assertNull(uiState.error)
+        assertTrue(uiState is TodayUiState.Empty)
     }
 
     @Test
@@ -120,9 +117,8 @@ class TodayViewModelTest {
         
         // Then
         val uiState = viewModel.uiState.first()
-        assertEquals(0, uiState.tasks.size)
-        assertFalse(uiState.isLoading)
-        assertEquals("Network error", uiState.error)
+        assertTrue(uiState is TodayUiState.Error)
+        assertEquals("Network error", uiState.message)
     }
 
     @Test
@@ -145,6 +141,7 @@ class TodayViewModelTest {
         
         // Verify initial state - task should not be completed
         val initialState = viewModel.uiState.first()
+        assertTrue(initialState is TodayUiState.Content)
         assertFalse(initialState.tasks.first().isCompleted)
         assertTrue(initialState.completedTaskKeys.isEmpty())
         
@@ -156,6 +153,7 @@ class TodayViewModelTest {
         
         // Verify the UI state is updated immediately - both tasks list and completed keys
         val updatedState = viewModel.uiState.first()
+        assertTrue(updatedState is TodayUiState.Content)
         assertTrue(updatedState.tasks.first().isCompleted, "Task should be marked as completed in tasks list")
         assertTrue(updatedState.completedTaskKeys.contains("1_2024-01-20_07:00"), "Task key should be in completed set")
     }
@@ -183,6 +181,7 @@ class TodayViewModelTest {
         
         // Then
         val uiState = viewModel.uiState.first()
-        assertEquals("Failed to complete task: Failed to complete", uiState.error)
+        assertTrue(uiState is TodayUiState.Error)
+        assertEquals("Failed to complete task: Failed to complete", uiState.message)
     }
 }

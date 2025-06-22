@@ -49,6 +49,7 @@ class HabitEditViewModelTest {
     fun `initial state should have default values`() {
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals("", uiState.name)
         assertEquals("", uiState.description)
         assertEquals("#2196F3", uiState.color)
@@ -68,6 +69,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals("Morning Exercise", uiState.name)
         assertNull(uiState.nameError)
     }
@@ -79,6 +81,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals("", uiState.name)
         assertEquals("Name is required", uiState.nameError)
     }
@@ -90,6 +93,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals("30 minutes of exercise", uiState.description)
     }
 
@@ -100,6 +104,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals("#FF5722", uiState.color)
     }
 
@@ -110,6 +115,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertFalse(uiState.isActive)
     }
 
@@ -120,6 +126,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
     }
 
@@ -127,13 +134,16 @@ class HabitEditViewModelTest {
     fun `updateFrequencyType should set intervalMinutes to 60 when HOURLY is selected`() {
         // Given - start with a different interval
         viewModel.updateIntervalMinutes(240) // 4 hours
-        assertEquals(240, viewModel.uiState.value.intervalMinutes)
+        val initialState = viewModel.uiState.value
+        assertTrue(initialState is HabitEditUiState.Content)
+        assertEquals(240, initialState.intervalMinutes)
 
         // When
         viewModel.updateFrequencyType(FrequencyType.HOURLY)
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
         assertEquals(60, uiState.intervalMinutes) // 1 hour = 60 minutes
     }
@@ -142,13 +152,16 @@ class HabitEditViewModelTest {
     fun `updateFrequencyType should not change intervalMinutes when non-HOURLY is selected`() {
         // Given - start with a custom interval (30 minutes, valid divisor of 60)
         viewModel.updateIntervalMinutes(30) // 30 minutes, valid for INTERVAL
-        assertEquals(30, viewModel.uiState.value.intervalMinutes)
+        val initialState = viewModel.uiState.value
+        assertTrue(initialState is HabitEditUiState.Content)
+        assertEquals(30, initialState.intervalMinutes)
 
         // When
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
         assertEquals(30, uiState.intervalMinutes) // Should preserve the existing value
     }
@@ -160,6 +173,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(120, uiState.intervalMinutes)
     }
 
@@ -173,6 +187,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(newTimes, uiState.scheduledTimes)
     }
 
@@ -191,7 +206,9 @@ class HabitEditViewModelTest {
         // Then
         assertFalse(successCalled)
         assertFalse(errorCalled)
-        assertEquals("Name is required", viewModel.uiState.value.nameError)
+        val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
+        assertEquals("Name is required", uiState.nameError)
     }
 
     @Test
@@ -218,7 +235,9 @@ class HabitEditViewModelTest {
         // Then
         assertEquals(expectedHabitId, successResult)
         assertNull(errorMessage)
-        assertFalse(viewModel.uiState.value.isSaving)
+        val finalState = viewModel.uiState.value
+        assertTrue(finalState is HabitEditUiState.Content)
+        assertFalse(finalState.isSaving)
         
         coVerify(exactly = 1) {
             mockAddHabitUseCase(match { habit ->
@@ -251,8 +270,10 @@ class HabitEditViewModelTest {
         // Then
         assertNull(successResult)
         assertEquals(errorMessage, errorResult)
-        assertEquals(errorMessage, viewModel.uiState.value.saveError)
-        assertFalse(viewModel.uiState.value.isSaving)
+        val finalState = viewModel.uiState.value
+        assertTrue(finalState is HabitEditUiState.Content)
+        assertEquals(errorMessage, finalState.saveError)
+        assertFalse(finalState.isSaving)
     }
 
     @Test
@@ -268,28 +289,56 @@ class HabitEditViewModelTest {
         )
 
         // Then - Initially saving should be true
-        assertTrue(viewModel.uiState.value.isSaving)
+        val savingState = viewModel.uiState.value
+        assertTrue(savingState is HabitEditUiState.Content)
+        assertTrue(savingState.isSaving)
 
         // When saving completes
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then - Saving should be false
-        assertFalse(viewModel.uiState.value.isSaving)
+        val completedState = viewModel.uiState.value
+        assertTrue(completedState is HabitEditUiState.Content)
+        assertFalse(completedState.isSaving)
     }
 
     @Test
     fun `clearErrors should clear all error states`() {
         // Given
         viewModel.updateName("") // This sets nameError
-        val habitWithErrors = viewModel.uiState.value.copy(saveError = "Some save error")
         
         // When
         viewModel.clearErrors()
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertNull(uiState.nameError)
         assertNull(uiState.saveError)
+    }
+
+    @Test
+    fun `saveHabit should not work in Error state`() = runTest {
+        // Given - force the ViewModel into Error state
+        coEvery { mockGetHabitUseCase(1L) } throws Exception("Database error")
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Verify we're in Error state
+        assertTrue(viewModel.uiState.value is HabitEditUiState.Error)
+
+        var successCalled = false
+        var errorMessage: String? = null
+
+        // When - try to save
+        viewModel.saveHabit(
+            onSuccess = { successCalled = true },
+            onError = { errorMessage = it }
+        )
+
+        // Then - should call onError with invalid state message
+        assertFalse(successCalled)
+        assertEquals("Invalid state for saving", errorMessage)
     }
 
     @Test
@@ -342,7 +391,9 @@ class HabitEditViewModelTest {
         // Then - navigation should complete indicating the method didn't hang
         assertEquals(expectedHabitId, successResult)
         assertTrue(navigationCompleted, "Navigation should complete after save operation")
-        assertFalse(viewModel.uiState.value.isSaving, "isSaving should be false after completion")
+        val finalState = viewModel.uiState.value
+        assertTrue(finalState is HabitEditUiState.Content)
+        assertFalse(finalState.isSaving, "isSaving should be false after completion")
         
         // Verify notification scheduling was called for the new habit
         coVerify(exactly = 1) { mockScheduleNextNotificationUseCase.scheduleNextNotificationForHabit(expectedHabitId) }
@@ -372,6 +423,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(6, uiState.intervalMinutes)
         assertEquals(TimeUnit.MINUTES, uiState.intervalUnit) // Should be MINUTES for 6-minute interval
         assertEquals(6, uiState.intervalValue) // Should display 6, not 0
@@ -401,6 +453,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(60, uiState.intervalMinutes)
         assertEquals(TimeUnit.HOURS, uiState.intervalUnit) // Should be HOURS for 60-minute interval
         assertEquals(1, uiState.intervalValue) // Should display 1 hour
@@ -430,6 +483,7 @@ class HabitEditViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(60, uiState.intervalMinutes)
         assertEquals(TimeUnit.HOURS, uiState.intervalUnit) // Should be HOURS for 60-minute interval
         assertEquals(1, uiState.intervalValue) // Should display 1 hour
@@ -460,6 +514,7 @@ class HabitEditViewModelTest {
 
         // Then - Should now show correctly as "10分" instead of "0時間"
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
         assertEquals(10, uiState.intervalMinutes)
         assertEquals(TimeUnit.MINUTES, uiState.intervalUnit) // Should be MINUTES, not HOURS
         assertEquals(10, uiState.intervalValue) // Should display 10, not 0
@@ -469,21 +524,55 @@ class HabitEditViewModelTest {
     }
 
     @Test
+    fun `loadHabitForEdit should handle non-existent habit`() = runTest {
+        // Given
+        coEvery { mockGetHabitUseCase(999L) } returns null
+
+        // When
+        viewModel.loadHabitForEdit(999L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Error)
+        assertEquals("Habit not found", uiState.message)
+    }
+
+    @Test
+    fun `loadHabitForEdit should handle database error`() = runTest {
+        // Given
+        val errorMessage = "Database connection failed"
+        coEvery { mockGetHabitUseCase(1L) } throws Exception(errorMessage)
+
+        // When
+        viewModel.loadHabitForEdit(1L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Error)
+        assertEquals(errorMessage, uiState.message)
+    }
+
+    @Test
     fun `updateIntervalValue should handle unit changes from IntervalPickerDialog correctly`() {
         // Set frequency type to INTERVAL to allow divisor-based intervals
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
         
         // Given - initial state with valid INTERVAL value (30 minutes)
         viewModel.updateIntervalValue(30, TimeUnit.MINUTES)
-        assertEquals(30, viewModel.uiState.value.intervalMinutes) // 30 minutes is valid for INTERVAL
-        assertEquals(TimeUnit.MINUTES, viewModel.uiState.value.intervalUnit)
-        assertEquals(30, viewModel.uiState.value.intervalValue)
+        val initialState = viewModel.uiState.value
+        assertTrue(initialState is HabitEditUiState.Content)
+        assertEquals(30, initialState.intervalMinutes) // 30 minutes is valid for INTERVAL
+        assertEquals(TimeUnit.MINUTES, initialState.intervalUnit)
+        assertEquals(30, initialState.intervalValue)
 
         // When - user changes to 1 hour via dialog (60 minutes is valid divisor of 60)
         viewModel.updateIntervalValue(1, TimeUnit.HOURS)
 
         // Then - should update both value and unit correctly
         val state = viewModel.uiState.value
+        assertTrue(state is HabitEditUiState.Content)
         assertEquals(60, state.intervalMinutes)
         assertEquals(TimeUnit.HOURS, state.intervalUnit)
         assertEquals(1, state.intervalValue)

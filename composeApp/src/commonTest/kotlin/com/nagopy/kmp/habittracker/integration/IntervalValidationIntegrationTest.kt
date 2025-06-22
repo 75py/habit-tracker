@@ -9,6 +9,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
 import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditViewModel
+import com.nagopy.kmp.habittracker.presentation.habitedit.HabitEditUiState
 import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import io.mockk.mockk
 import kotlinx.datetime.LocalDate
@@ -74,6 +75,7 @@ class IntervalValidationIntegrationTest {
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
         viewModel.updateIntervalValue(7, TimeUnit.MINUTES)
         val intervalState = viewModel.uiState.value
+        assertTrue(intervalState is HabitEditUiState.Content)
         assertTrue(
             HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalState.intervalMinutes),
             "Expected ${intervalState.intervalMinutes} to be a valid divisor of 60"
@@ -83,6 +85,7 @@ class IntervalValidationIntegrationTest {
         viewModel.updateFrequencyType(FrequencyType.HOURLY)
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
         val hourlyState = viewModel.uiState.value
+        assertTrue(hourlyState is HabitEditUiState.Content)
         assertTrue(
             HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, hourlyState.intervalMinutes),
             "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
@@ -93,6 +96,7 @@ class IntervalValidationIntegrationTest {
         viewModel.updateFrequencyType(FrequencyType.ONCE_DAILY)
         viewModel.updateIntervalValue(12, TimeUnit.HOURS) // Should be corrected to 1440
         val dailyState = viewModel.uiState.value
+        assertTrue(dailyState is HabitEditUiState.Content)
         assertTrue(
             HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.ONCE_DAILY, dailyState.intervalMinutes),
             "Expected ${dailyState.intervalMinutes} to be exactly 1440"

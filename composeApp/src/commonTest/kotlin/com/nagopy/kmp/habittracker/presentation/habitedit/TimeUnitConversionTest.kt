@@ -8,12 +8,13 @@ import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCas
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TimeUnitConversionTest {
 
     @Test
     fun `intervalValue should return correct value for minutes unit`() {
-        val state = HabitEditUiState(
+        val state = HabitEditUiState.Content(
             intervalMinutes = 30,
             intervalUnit = TimeUnit.MINUTES
         )
@@ -22,7 +23,7 @@ class TimeUnitConversionTest {
 
     @Test
     fun `intervalValue should return correct value for hours unit`() {
-        val state = HabitEditUiState(
+        val state = HabitEditUiState.Content(
             intervalMinutes = 120, // 2 hours
             intervalUnit = TimeUnit.HOURS
         )
@@ -51,6 +52,7 @@ class TimeUnitConversionTest {
         
         val state = viewModel.uiState.value
         // 45 minutes is invalid for INTERVAL, so it should be corrected to 30 (closest valid)
+        assertTrue(state is HabitEditUiState.Content)
         assertEquals(30, state.intervalMinutes)
         assertEquals(TimeUnit.MINUTES, state.intervalUnit)
         assertEquals(30, state.intervalValue)
@@ -77,6 +79,7 @@ class TimeUnitConversionTest {
         viewModel.updateIntervalValue(3, TimeUnit.HOURS)
         
         val state = viewModel.uiState.value
+        assertTrue(state is HabitEditUiState.Content)
         assertEquals(180, state.intervalMinutes) // 3 hours = 180 minutes
         assertEquals(TimeUnit.HOURS, state.intervalUnit)
         assertEquals(3, state.intervalValue)
