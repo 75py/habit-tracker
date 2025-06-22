@@ -25,7 +25,7 @@ class MinuteBasedIntervalTest {
     fun `generateIntervalTasks should create tasks every 30 minutes`() = runTest {
         // Given - A fixed date for deterministic testing
         val testDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = testDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = testDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -77,7 +77,7 @@ class MinuteBasedIntervalTest {
     fun `generateIntervalTasks should create tasks every 20 minutes`() = runTest {
         // Given
         val testDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = testDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = testDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }

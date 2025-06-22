@@ -30,7 +30,7 @@ class CompleteTaskUseCaseTest {
         
         // Use a fixed date to make the test deterministic
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }

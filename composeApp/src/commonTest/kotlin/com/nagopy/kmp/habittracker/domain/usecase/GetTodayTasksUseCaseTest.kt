@@ -27,7 +27,7 @@ class GetTodayTasksUseCaseTest {
     fun `invoke should return task instances for active habits with once daily frequency`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -85,7 +85,7 @@ class GetTodayTasksUseCaseTest {
     fun `invoke should return multiple task instances for hourly habits`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -148,7 +148,7 @@ class GetTodayTasksUseCaseTest {
     fun `invoke should mark hourly and interval tasks as not completed by default`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -186,7 +186,7 @@ class GetTodayTasksUseCaseTest {
     fun `hourly habit with end time should only generate tasks within time window`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -233,7 +233,7 @@ class GetTodayTasksUseCaseTest {
     fun `interval habit with end time should only generate tasks within time window`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
@@ -292,7 +292,7 @@ class GetTodayTasksUseCaseTest {
     fun `habit without end time should work as before (generate tasks until end of day)`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
-        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
+        val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.UTC)
         val fixedClock = object : Clock {
             override fun now(): Instant = fixedInstant
         }
