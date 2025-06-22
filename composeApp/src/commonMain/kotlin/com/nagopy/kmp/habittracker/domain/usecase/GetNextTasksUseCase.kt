@@ -34,7 +34,7 @@ class GetNextTasksUseCase(
         val habit = habitRepository.getHabit(habitId) ?: return null
         if (!habit.isActive) return null
         
-        val currentDateTime = clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val currentDateTime = clock.now().toLocalDateTime(TimeZone.UTC)
         val today = currentDateTime.date
         
         // Look for tasks today and tomorrow to find the next one
@@ -59,7 +59,7 @@ class GetNextTasksUseCase(
      */
     suspend fun getNextUpcomingTask(): Task? {
         val habits = habitRepository.getActiveHabits().first()
-        val currentDateTime = clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val currentDateTime = clock.now().toLocalDateTime(TimeZone.UTC)
         
         var nextTask: Task? = null
         var nextTaskDateTime: LocalDateTime? = null
