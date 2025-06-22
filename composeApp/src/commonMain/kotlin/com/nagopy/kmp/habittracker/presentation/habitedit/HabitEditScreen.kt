@@ -1,35 +1,24 @@
 package com.nagopy.kmp.habittracker.presentation.habitedit
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
-import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
-import com.nagopy.kmp.habittracker.presentation.ui.parseColor
+import com.nagopy.kmp.habittracker.presentation.habitedit.components.*
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
@@ -50,10 +39,6 @@ fun HabitEditScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
-    // Focus management
-    val focusManager = LocalFocusManager.current
-    val descriptionFocusRequester = remember { FocusRequester() }
-    
     // Load habit for editing if habitId is provided
     LaunchedEffect(habitId) {
         if (habitId != null) {
@@ -61,7 +46,289 @@ fun HabitEditScreen(
         }
     }
     
-    // Predefined color options
+    HabitEditContent(
+        uiState = uiState,
+        onNameChange = viewModel::updateName,
+        onDescriptionChange = viewModel::updateDescription,
+        onColorChange = viewModel::updateColor,
+        onFrequencyTypeChange = viewModel::updateFrequencyType,
+        onIntervalValueChange = viewModel::updateIntervalValue,
+        onIntervalUnitChange = viewModel::updateIntervalUnit,
+        onScheduledTimesChange = viewModel::updateScheduledTimes,
+        onEndTimeChange = viewModel::updateEndTime,
+        onActiveChange = viewModel::updateIsActive,
+        onSave = {
+            viewModel.saveHabit(
+                onSuccess = { onSaveSuccess() },
+                onError = { /* Error handled in UI state */ }
+            )
+        },
+        onNavigateBack = onNavigateBack
+    )
+}
+
+/**
+ * Stateless content for HabitEditScreen
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitEditContent(
+    uiState: HabitEditUiState,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onColorChange: (String) -> Unit,
+    onFrequencyTypeChange: (FrequencyType) -> Unit,
+    onIntervalValueChange: (Int, TimeUnit) -> Unit,
+    onIntervalUnitChange: (TimeUnit) -> Unit,
+    onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onEndTimeChange: (LocalTime?) -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+    onSave: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    val descriptionFocusRequester = remember { FocusRequester() }
+    
+    Scaffold(
+        topBar = {
+            HabitEditTopBar(
+                isEditMode = (uiState as? HabitEditUiState.Content)?.editHabitId != null,
+                isSaving = (uiState as? HabitEditUiState.Content)?.isSaving == true,
+                onNavigateBack = onNavigateBack,
+                onSave = onSave
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (uiState) {
+                is HabitEditUiState.Loading -> LoadingState()
+                is HabitEditUiState.Error -> ErrorState(
+                    error = uiState.message,
+                    onNavigateBack = onNavigateBack
+                )
+                is HabitEditUiState.Content -> HabitEditForm(
+                    uiState = uiState,
+                    descriptionFocusRequester = descriptionFocusRequester,
+                    onNameChange = onNameChange,
+                    onDescriptionChange = onDescriptionChange,
+                    onColorChange = onColorChange,
+                    onFrequencyTypeChange = onFrequencyTypeChange,
+                    onIntervalValueChange = onIntervalValueChange,
+                    onIntervalUnitChange = onIntervalUnitChange,
+                    onScheduledTimesChange = onScheduledTimesChange,
+                    onEndTimeChange = onEndTimeChange,
+                    onActiveChange = onActiveChange,
+                    onClearFocus = { focusManager.clearFocus() }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitEditTopBar(
+    isEditMode: Boolean,
+    isSaving: Boolean,
+    onNavigateBack: () -> Unit,
+    onSave: () -> Unit
+) {
+    TopAppBar(
+        title = { 
+            Text(
+                if (isEditMode) 
+                    stringResource(Res.string.edit_habit) 
+                else 
+                    stringResource(Res.string.add_habit)
+            ) 
+        },
+        navigationIcon = {
+            TextButton(onClick = onNavigateBack) {
+                Text(stringResource(Res.string.cancel))
+            }
+        },
+        actions = {
+            TextButton(
+                onClick = onSave,
+                enabled = !isSaving
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(Res.string.save))
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(
+    error: String,
+    onNavigateBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.error_prefix, error),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(onClick = onNavigateBack) {
+            Text(stringResource(Res.string.back))
+        }
+    }
+}
+
+@Composable
+private fun HabitEditForm(
+    uiState: HabitEditUiState.Content,
+    descriptionFocusRequester: FocusRequester,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onColorChange: (String) -> Unit,
+    onFrequencyTypeChange: (FrequencyType) -> Unit,
+    onIntervalValueChange: (Int, TimeUnit) -> Unit,
+    onIntervalUnitChange: (TimeUnit) -> Unit,
+    onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onEndTimeChange: (LocalTime?) -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+    onClearFocus: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onClearFocus()
+            },
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Name field
+        NameField(
+            name = uiState.name,
+            nameError = uiState.nameError,
+            onNameChange = onNameChange,
+            onNext = { descriptionFocusRequester.requestFocus() }
+        )
+
+        // Description field
+        DescriptionField(
+            description = uiState.description,
+            focusRequester = descriptionFocusRequester,
+            onDescriptionChange = onDescriptionChange,
+            onDone = onClearFocus
+        )
+
+        // Color selection
+        ColorSelection(
+            selectedColor = uiState.color,
+            onColorChange = onColorChange
+        )
+
+        // Scheduling configuration
+        SchedulingSection(
+            frequencyType = uiState.frequencyType,
+            intervalValue = uiState.intervalValue,
+            intervalUnit = uiState.intervalUnit,
+            scheduledTimes = uiState.scheduledTimes,
+            endTime = uiState.endTime,
+            onFrequencyTypeChange = onFrequencyTypeChange,
+            onIntervalValueChange = onIntervalValueChange,
+            onIntervalUnitChange = onIntervalUnitChange,
+            onScheduledTimesChange = onScheduledTimesChange,
+            onEndTimeChange = onEndTimeChange
+        )
+
+        // Active status
+        ActiveStatusSwitch(
+            isActive = uiState.isActive,
+            onActiveChange = onActiveChange
+        )
+
+        // Error message
+        uiState.saveError?.let { error ->
+            ErrorCard(error = error)
+        }
+    }
+}
+
+@Composable
+private fun NameField(
+    name: String,
+    nameError: String?,
+    onNameChange: (String) -> Unit,
+    onNext: () -> Unit
+) {
+    Column {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text(stringResource(Res.string.habit_name_required)) },
+            modifier = Modifier.fillMaxWidth(),
+            isError = nameError != null,
+            supportingText = nameError?.let { { Text(stringResource(Res.string.name_is_required)) } },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { onNext() })
+        )
+    }
+}
+
+@Composable
+private fun DescriptionField(
+    description: String,
+    focusRequester: FocusRequester,
+    onDescriptionChange: (String) -> Unit,
+    onDone: () -> Unit
+) {
+    OutlinedTextField(
+        value = description,
+        onValueChange = onDescriptionChange,
+        label = { Text(stringResource(Res.string.description_optional)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+        minLines = 3,
+        maxLines = 5,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onDone() })
+    )
+}
+
+@Composable
+private fun ColorSelection(
+    selectedColor: String,
+    onColorChange: (String) -> Unit
+) {
     val colorOptions = listOf(
         "#2196F3", // Blue
         "#4CAF50", // Green
@@ -74,850 +341,221 @@ fun HabitEditScreen(
         "#607D8B", // Blue Grey
         "#E91E63"  // Pink
     )
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (uiState.editHabitId != null) stringResource(Res.string.edit_habit) else stringResource(Res.string.add_habit)) },
-                navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
-                        Text(stringResource(Res.string.cancel))
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            viewModel.saveHabit(
-                                onSuccess = { onSaveSuccess() },
-                                onError = { /* Error handled in UI state */ }
-                            )
-                        },
-                        enabled = !uiState.isSaving
-                    ) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(stringResource(Res.string.save))
-                        }
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) {
-                        focusManager.clearFocus()
-                    },
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-            // Name field
-            Column {
-                OutlinedTextField(
-                    value = uiState.name,
-                    onValueChange = { viewModel.updateName(it) },
-                    label = { Text(stringResource(Res.string.habit_name_required)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = uiState.nameError != null,
-                    supportingText = uiState.nameError?.let { { Text(stringResource(Res.string.name_is_required)) } },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            descriptionFocusRequester.requestFocus()
-                        }
-                    )
+    
+    Column {
+        Text(
+            text = stringResource(Res.string.choose_color),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(colorOptions) { colorHex ->
+                ColorOption(
+                    color = colorHex,
+                    isSelected = selectedColor == colorHex,
+                    onClick = { onColorChange(colorHex) }
                 )
-            }
-
-            // Description field
-            OutlinedTextField(
-                value = uiState.description,
-                onValueChange = { viewModel.updateDescription(it) },
-                label = { Text(stringResource(Res.string.description_optional)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(descriptionFocusRequester),
-                minLines = 3,
-                maxLines = 5,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                    }
-                )
-            )
-
-            // Color selection
-            Column {
-                Text(
-                    text = stringResource(Res.string.choose_color),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(colorOptions) { colorHex ->
-                        ColorOption(
-                            color = colorHex,
-                            isSelected = uiState.color == colorHex,
-                            onClick = { viewModel.updateColor(colorHex) }
-                        )
-                    }
-                }
-            }
-
-            // Scheduling configuration
-            Column {
-                Text(
-                    text = stringResource(Res.string.schedule),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Frequency Type selection
-                Column {
-                    Text(
-                        text = stringResource(Res.string.frequency),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Frequency type chips
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FrequencyType.entries.forEach { frequency ->
-                            FilterChip(
-                                onClick = { viewModel.updateFrequencyType(frequency) },
-                                label = { 
-                                    Text(when(frequency) {
-                                        FrequencyType.ONCE_DAILY -> stringResource(Res.string.once_daily)
-                                        FrequencyType.HOURLY -> stringResource(Res.string.hourly)
-                                        FrequencyType.INTERVAL -> stringResource(Res.string.custom_interval)
-                                    })
-                                },
-                                selected = uiState.frequencyType == frequency
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Interval Configuration (for HOURLY and INTERVAL types)
-                if (uiState.frequencyType == FrequencyType.HOURLY || uiState.frequencyType == FrequencyType.INTERVAL) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = if (uiState.frequencyType == FrequencyType.HOURLY) stringResource(Res.string.every) else stringResource(Res.string.interval),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        // Interval value selector button
-                        var showIntervalPicker by remember { mutableStateOf(false) }
-                        
-                        OutlinedButton(
-                            onClick = { showIntervalPicker = true },
-                            modifier = Modifier.width(80.dp),
-                            enabled = uiState.frequencyType != FrequencyType.HOURLY
-                        ) {
-                            Text(uiState.intervalValue.toString())
-                        }
-                        
-                        // Interval picker dialog
-                        if (showIntervalPicker) {
-                            IntervalPickerDialog(
-                                currentValue = uiState.intervalValue,
-                                unit = uiState.intervalUnit,
-                                frequencyType = uiState.frequencyType,
-                                onValueAndUnitChange = { value, unit ->
-                                    viewModel.updateIntervalValue(value, unit)
-                                },
-                                onDismiss = { showIntervalPicker = false }
-                            )
-                        }
-                        
-                        // Unit selector dropdown
-                        if (uiState.frequencyType != FrequencyType.HOURLY) {
-                            var expanded by remember { mutableStateOf(false) }
-                            
-                            ExposedDropdownMenuBox(
-                                expanded = expanded,
-                                onExpandedChange = { expanded = !expanded },
-                                modifier = Modifier.width(100.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = when (uiState.intervalUnit) {
-                                        TimeUnit.MINUTES -> stringResource(Res.string.minutes)
-                                        TimeUnit.HOURS -> stringResource(Res.string.hours)
-                                    },
-                                    onValueChange = { },
-                                    readOnly = true,
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                    modifier = Modifier.menuAnchor()
-                                )
-                                
-                                ExposedDropdownMenu(
-                                    expanded = expanded,
-                                    onDismissRequest = { expanded = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(Res.string.minutes)) },
-                                        onClick = {
-                                            viewModel.updateIntervalUnit(TimeUnit.MINUTES)
-                                            expanded = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(Res.string.hours)) },
-                                        onClick = {
-                                            viewModel.updateIntervalUnit(TimeUnit.HOURS)
-                                            expanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = stringResource(Res.string.hour),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-                
-                // Scheduled Times
-                Column {
-                    Text(
-                        text = if (uiState.frequencyType == FrequencyType.ONCE_DAILY) stringResource(Res.string.scheduled_times) else stringResource(Res.string.start_time),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Display current scheduled times
-                    uiState.scheduledTimes.forEach { time ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            
-                            if (uiState.scheduledTimes.size > 1) {
-                                TextButton(
-                                    onClick = {
-                                        viewModel.updateScheduledTimes(
-                                            uiState.scheduledTimes.filter { it != time }
-                                        )
-                                    }
-                                ) {
-                                    Text(stringResource(Res.string.remove))
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Add time button (only for ONCE_DAILY type)
-                    if (uiState.frequencyType == FrequencyType.ONCE_DAILY) {
-                        var showTimePicker by remember { mutableStateOf(false) }
-                        
-                        OutlinedButton(
-                            onClick = { showTimePicker = true }
-                        ) {
-                            Text(stringResource(Res.string.add_time))
-                        }
-                        
-                        if (showTimePicker) {
-                            val timePickerState = rememberTimePickerState(
-                                initialHour = 9,
-                                initialMinute = 0,
-                                is24Hour = true
-                            )
-                            
-                            AlertDialog(
-                                onDismissRequest = { showTimePicker = false },
-                                title = { Text(stringResource(Res.string.add_time)) },
-                                text = {
-                                    TimePicker(state = timePickerState)
-                                },
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            val newTime = LocalTime(timePickerState.hour, timePickerState.minute)
-                                            if (!uiState.scheduledTimes.contains(newTime)) {
-                                                viewModel.updateScheduledTimes(
-                                                    uiState.scheduledTimes + newTime
-                                                )
-                                            }
-                                            showTimePicker = false
-                                        }
-                                    ) {
-                                        Text(stringResource(Res.string.add))
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { showTimePicker = false }) {
-                                        Text(stringResource(Res.string.cancel))
-                                    }
-                                }
-                            )
-                        }
-                    } else {
-                        // For non-daily types, allow editing the single start time
-                        var showTimePicker by remember { mutableStateOf(false) }
-                        
-                        OutlinedButton(
-                            onClick = { showTimePicker = true }
-                        ) {
-                            Text(stringResource(Res.string.change_start_time))
-                        }
-                        
-                        if (showTimePicker) {
-                            val timePickerState = rememberTimePickerState(
-                                initialHour = uiState.scheduledTimes.first().hour,
-                                initialMinute = uiState.scheduledTimes.first().minute,
-                                is24Hour = true
-                            )
-                            
-                            AlertDialog(
-                                onDismissRequest = { showTimePicker = false },
-                                title = { Text(stringResource(Res.string.set_start_time)) },
-                                text = {
-                                    TimePicker(state = timePickerState)
-                                },
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            viewModel.updateScheduledTimes(
-                                                listOf(LocalTime(timePickerState.hour, timePickerState.minute))
-                                            )
-                                            showTimePicker = false
-                                        }
-                                    ) {
-                                        Text(stringResource(Res.string.set))
-                                    }
-                                },
-                                dismissButton = {
-                                    TextButton(onClick = { showTimePicker = false }) {
-                                        Text(stringResource(Res.string.cancel))
-                                    }
-                                }
-                            )
-                        }
-                        
-                        // End time picker for interval-based habits
-                        if (uiState.frequencyType == FrequencyType.HOURLY || uiState.frequencyType == FrequencyType.INTERVAL) {
-                            var showEndTimePicker by remember { mutableStateOf(false) }
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showEndTimePicker = true }
-                                ) {
-                                    Text(if (uiState.endTime != null) stringResource(Res.string.change_end_time) else stringResource(Res.string.set_end_time))
-                                }
-                                
-                                uiState.endTime?.let { endTime ->
-                                    Text(
-                                        text = "${endTime.hour.toString().padStart(2, '0')}:${endTime.minute.toString().padStart(2, '0')}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    TextButton(
-                                        onClick = { viewModel.updateEndTime(null) }
-                                    ) {
-                                        Text(stringResource(Res.string.clear))
-                                    }
-                                }
-                            }
-                            
-                            if (showEndTimePicker) {
-                                val endTimePickerState = rememberTimePickerState(
-                                    initialHour = uiState.endTime?.hour ?: 17,
-                                    initialMinute = uiState.endTime?.minute ?: 0,
-                                    is24Hour = true
-                                )
-                                
-                                AlertDialog(
-                                    onDismissRequest = { showEndTimePicker = false },
-                                    title = { Text(stringResource(Res.string.set_end_time)) },
-                                    text = {
-                                        TimePicker(state = endTimePickerState)
-                                    },
-                                    confirmButton = {
-                                        TextButton(
-                                            onClick = {
-                                                viewModel.updateEndTime(
-                                                    LocalTime(endTimePickerState.hour, endTimePickerState.minute)
-                                                )
-                                                showEndTimePicker = false
-                                            }
-                                        ) {
-                                            Text(stringResource(Res.string.set))
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showEndTimePicker = false }) {
-                                            Text(stringResource(Res.string.cancel))
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Active status
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.active),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = stringResource(Res.string.enable_tracking),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = uiState.isActive,
-                    onCheckedChange = { viewModel.updateIsActive(it) }
-                )
-            }
-
-            // Error message
-            uiState.saveError?.let { error ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Text(
-                        text = error,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
             }
         }
     }
 }
 
 @Composable
-private fun ColorOption(
-    color: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
+private fun ActiveStatusSwitch(
+    isActive: Boolean,
+    onActiveChange: (Boolean) -> Unit
 ) {
-    val parsedColor = parseColor(color)
-    
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(parsedColor)
-            .then(
-                if (isSelected) {
-                    Modifier.border(
-                        width = 3.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape
-                    )
-                } else {
-                    Modifier.border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline,
-                        shape = CircleShape
-                    )
-                }
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        if (isSelected) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = stringResource(Res.string.selected),
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+        Column {
+            Text(
+                text = stringResource(Res.string.active),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = stringResource(Res.string.enable_tracking),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        Switch(
+            checked = isActive,
+            onCheckedChange = onActiveChange
+        )
     }
 }
 
 @Composable
-private fun IntervalPickerDialog(
-    currentValue: Int,
-    unit: TimeUnit,
-    frequencyType: FrequencyType,
-    onValueAndUnitChange: (Int, TimeUnit) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var tempUnit by remember { mutableStateOf(unit) }
-    
-    // Calculate reasonable min/max values based on current unit and frequency type
-    val (minValue, maxValue) = when (tempUnit) {
-        TimeUnit.MINUTES -> {
-            if (frequencyType == FrequencyType.INTERVAL) {
-                1 to 60 // For INTERVAL, only allow 1-60 minutes (the valid divisors)
-            } else {
-                1 to 1440 // 24 hours in minutes
-            }
-        }
-        TimeUnit.HOURS -> {
-            if (frequencyType == FrequencyType.INTERVAL) {
-                1 to 1 // For INTERVAL, only allow 1 hour (60 minutes is the only valid hour-divisor)
-            } else {
-                1 to 24 // 24 hours
-            }
-        }
+private fun ErrorCard(error: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Text(
+            text = error,
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
-    
-    // Convert initial value if needed based on current unit
-    val initialValue = when {
-        unit == tempUnit -> currentValue
-        unit == TimeUnit.MINUTES && tempUnit == TimeUnit.HOURS -> currentValue / 60
-        unit == TimeUnit.HOURS && tempUnit == TimeUnit.MINUTES -> currentValue * 60
-        else -> currentValue
-    }
-    
-    var tempValue by remember { mutableIntStateOf(initialValue.coerceIn(minValue, maxValue)) }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.select_interval)) },
-        text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Unit selector
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        onClick = { 
-                            if (tempUnit != TimeUnit.MINUTES) {
-                                // Convert current value from hours to minutes
-                                val convertedValue = (tempValue * 60).coerceIn(1, 1440)
-                                tempValue = convertedValue
-                                tempUnit = TimeUnit.MINUTES
-                            }
-                        },
-                        label = { Text(stringResource(Res.string.minutes)) },
-                        selected = tempUnit == TimeUnit.MINUTES
-                    )
-                    FilterChip(
-                        onClick = { 
-                            if (tempUnit != TimeUnit.HOURS) {
-                                // Convert current value from minutes to hours
-                                val convertedValue = (tempValue / 60).coerceAtLeast(1).coerceAtMost(24)
-                                tempValue = convertedValue
-                                tempUnit = TimeUnit.HOURS
-                            }
-                        },
-                        label = { Text(stringResource(Res.string.hours)) },
-                        selected = tempUnit == TimeUnit.HOURS
-                    )
-                }
-                
-                // Current value display
-                Text(
-                    text = "$tempValue ${when (tempUnit) {
-                        TimeUnit.MINUTES -> stringResource(Res.string.minutes)
-                        TimeUnit.HOURS -> stringResource(Res.string.hours)
-                    }}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center
-                )
-                
-                // Increment/Decrement controls
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Decrease button
-                    FilledIconButton(
-                        onClick = { 
-                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                                // For INTERVAL minutes, jump to previous valid divisor
-                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
-                                if (currentIndex > 0) {
-                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex - 1]
-                                }
-                            } else if (tempValue > minValue) {
-                                tempValue--
-                            }
-                        },
-                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
-                            currentIndex > 0
-                        } else {
-                            tempValue > minValue
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Remove,
-                            contentDescription = stringResource(Res.string.decrease)
-                        )
-                    }
-                    
-                    // Current value
-                    Text(
-                        text = tempValue.toString(),
-                        style = MaterialTheme.typography.displayMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.width(80.dp)
-                    )
-                    
-                    // Increase button
-                    FilledIconButton(
-                        onClick = { 
-                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                                // For INTERVAL minutes, jump to next valid divisor
-                                val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
-                                if (currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1) {
-                                    tempValue = HabitIntervalValidator.VALID_INTERVAL_MINUTES[currentIndex + 1]
-                                }
-                            } else if (tempValue < maxValue) {
-                                tempValue++
-                            }
-                        },
-                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                            val currentIndex = HabitIntervalValidator.VALID_INTERVAL_MINUTES.indexOf(tempValue)
-                            currentIndex >= 0 && currentIndex < HabitIntervalValidator.VALID_INTERVAL_MINUTES.size - 1
-                        } else {
-                            tempValue < maxValue
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(Res.string.increase)
-                        )
-                    }
-                }
-                
-                // Quick value buttons for common intervals
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val quickValues = when (tempUnit) {
-                        TimeUnit.MINUTES -> {
-                            if (frequencyType == FrequencyType.INTERVAL) {
-                                // For INTERVAL type, only show valid divisors of 60 in minutes
-                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
-                            } else {
-                                listOf(1, 5, 10, 15, 30, 60)
-                            }
-                        }
-                        TimeUnit.HOURS -> {
-                            if (frequencyType == FrequencyType.INTERVAL) {
-                                // For INTERVAL type, only show valid divisors of 60 that are >= 60 (i.e., only 60 minutes = 1 hour)
-                                HabitIntervalValidator.VALID_INTERVAL_MINUTES
-                                    .filter { it >= 60 && it % 60 == 0 }
-                                    .map { it / 60 }
-                            } else {
-                                listOf(1, 2, 3, 4, 6, 8, 12, 24)
-                            }
-                        }
-                    }
-                    
-                    items(quickValues) { value ->
-                        val currentMaxValue = when (tempUnit) {
-                            TimeUnit.MINUTES -> if (frequencyType == FrequencyType.INTERVAL) 60 else 1440
-                            TimeUnit.HOURS -> if (frequencyType == FrequencyType.INTERVAL) 1 else 24
-                        }
-                        if (value <= currentMaxValue) {
-                            FilterChip(
-                                onClick = { tempValue = value },
-                                label = { Text(value.toString()) },
-                                selected = tempValue == value
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onValueAndUnitChange(tempValue, tempUnit)
-                    onDismiss()
-                }
-            ) {
-                Text(stringResource(Res.string.set))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        }
-    )
 }
 
-// ========== Preview Data Classes ==========
-
-/**
- * Preview data class to avoid dependency on ViewModel
- */
-private data class PreviewHabitEditUiState(
-    val editHabitId: Long? = null,
-    val name: String = "",
-    val description: String = "",
-    val color: String = "#2196F3",
-    val isActive: Boolean = true,
-    val createdAt: kotlinx.datetime.LocalDate? = null,
-    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-    val intervalMinutes: Int = 1440,
-    val intervalUnit: TimeUnit = TimeUnit.HOURS,
-    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
-    val endTime: LocalTime? = null,
-    val nameError: String? = null,
-    val saveError: String? = null,
-    val isSaving: Boolean = false,
-    val isLoading: Boolean = false
-) {
-    val intervalValue: Int
-        get() = when (intervalUnit) {
-            TimeUnit.MINUTES -> intervalMinutes
-            TimeUnit.HOURS -> intervalMinutes / 60
-        }
-}
-
-// ========== Individual Component Previews ==========
+// ========== Screen-Level Previews ==========
 
 @Preview
 @Composable
-private fun ColorOptionPreview() {
+private fun HabitEditScreenAddModePreview() {
     MaterialTheme {
-        Surface(modifier = Modifier.padding(16.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ColorOption(
-                    color = "#2196F3",
-                    isSelected = false,
-                    onClick = {}
-                )
-                ColorOption(
-                    color = "#4CAF50",
-                    isSelected = true,
-                    onClick = {}
-                )
-                ColorOption(
-                    color = "#FF9800",
-                    isSelected = false,
-                    onClick = {}
-                )
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun ColorSelectionPreview() {
-    val colors = listOf(
-        "#2196F3", "#4CAF50", "#FF9800", "#9C27B0", "#F44336",
-        "#00BCD4", "#FFEB3B", "#795548", "#607D8B", "#E91E63"
-    )
-    
-    MaterialTheme {
-        Surface(modifier = Modifier.padding(16.dp)) {
-            Column {
-                Text(
-                    text = stringResource(Res.string.choose_color),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(colors) { color ->
-                        ColorOption(
-                            color = color,
-                            isSelected = color == "#4CAF50",
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun IntervalPickerDialogPreview() {
-    MaterialTheme {
-        IntervalPickerDialog(
-            currentValue = 2,
-            unit = TimeUnit.HOURS,
-            frequencyType = FrequencyType.HOURLY,
-            onValueAndUnitChange = { _, _ -> },
-            onDismiss = {}
+        HabitEditContent(
+            uiState = HabitEditUiState.Content(
+                editHabitId = null,
+                name = "",
+                description = "",
+                color = "#2196F3",
+                isActive = true,
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalMinutes = 1440,
+                intervalUnit = TimeUnit.HOURS,
+                scheduledTimes = listOf(LocalTime(9, 0)),
+                endTime = null,
+                nameError = null,
+                saveError = null,
+                isSaving = false
+            ),
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
         )
     }
 }
 
 @Preview
 @Composable
-private fun IntervalPickerDialogMinutesPreview() {
+private fun HabitEditScreenEditModePreview() {
     MaterialTheme {
-        IntervalPickerDialog(
-            currentValue = 30,
-            unit = TimeUnit.MINUTES,
-            frequencyType = FrequencyType.INTERVAL,
-            onValueAndUnitChange = { _, _ -> },
-            onDismiss = {}
+        HabitEditContent(
+            uiState = HabitEditUiState.Content(
+                editHabitId = 1L,
+                name = "Drink Water",
+                description = "Stay hydrated throughout the day",
+                color = "#2196F3",
+                isActive = true,
+                frequencyType = FrequencyType.HOURLY,
+                intervalMinutes = 120,
+                intervalUnit = TimeUnit.HOURS,
+                scheduledTimes = listOf(LocalTime(8, 0)),
+                endTime = LocalTime(22, 0),
+                nameError = null,
+                saveError = null,
+                isSaving = false
+            ),
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
         )
     }
 }
 
-// Note: Full screen previews are omitted due to ViewModel dependencies and complexity.
-// The individual component previews above provide coverage for the main UI elements.
+@Preview
+@Composable
+private fun HabitEditScreenErrorStatePreview() {
+    MaterialTheme {
+        HabitEditContent(
+            uiState = HabitEditUiState.Content(
+                editHabitId = null,
+                name = "",
+                description = "",
+                color = "#2196F3",
+                isActive = true,
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalMinutes = 1440,
+                intervalUnit = TimeUnit.HOURS,
+                scheduledTimes = listOf(LocalTime(9, 0)),
+                endTime = null,
+                nameError = "Name is required",
+                saveError = "Failed to save habit",
+                isSaving = false
+            ),
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitEditScreenLoadingStatePreview() {
+    MaterialTheme {
+        HabitEditContent(
+            uiState = HabitEditUiState.Loading,
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HabitEditScreenErrorLoadingPreview() {
+    MaterialTheme {
+        HabitEditContent(
+            uiState = HabitEditUiState.Error(
+                message = "Failed to load habit data"
+            ),
+            onNameChange = {},
+            onDescriptionChange = {},
+            onColorChange = {},
+            onFrequencyTypeChange = {},
+            onIntervalValueChange = { _, _ -> },
+            onIntervalUnitChange = {},
+            onScheduledTimesChange = {},
+            onEndTimeChange = {},
+            onActiveChange = {},
+            onSave = {},
+            onNavigateBack = {}
+        )
+    }
+}

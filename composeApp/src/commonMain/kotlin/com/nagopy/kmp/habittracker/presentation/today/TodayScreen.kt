@@ -39,6 +39,25 @@ fun TodayScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    TodayScreenContent(
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        onRefresh = viewModel::refresh,
+        onTaskComplete = viewModel::completeTask
+    )
+}
+
+/**
+ * Stateless content for TodayScreen
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TodayScreenContent(
+    uiState: TodayUiState,
+    onNavigateBack: () -> Unit,
+    onRefresh: () -> Unit,
+    onTaskComplete: (Task) -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,72 +73,92 @@ fun TodayScreen(
             )
         }
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (uiState) {
+                is TodayUiState.Loading -> LoadingState()
+                is TodayUiState.Error -> ErrorState(
+                    error = uiState.message,
+                    onRetry = onRefresh
+                )
+                is TodayUiState.Empty -> EmptyState()
+                is TodayUiState.Content -> TasksList(
+                    tasks = uiState.tasks,
+                    onTaskComplete = onTaskComplete
+                )
             }
-            
-            uiState.error != null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error ?: "Unknown error"),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Button(onClick = viewModel::refresh) {
-                        Text(stringResource(Res.string.retry))
-                    }
-                }
-            }
-            
-            uiState.tasks.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.no_tasks_scheduled),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.tasks) { task ->
-                        TaskItem(
-                            task = task,
-                            onTaskComplete = viewModel::completeTask
-                        )
-                    }
-                }
-            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.error_prefix, error),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(onClick = onRetry) {
+            Text(stringResource(Res.string.retry))
+        }
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.no_tasks_scheduled),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun TasksList(
+    tasks: List<Task>,
+    onTaskComplete: (Task) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(tasks) { task ->
+            TaskItem(
+                task = task,
+                onTaskComplete = onTaskComplete
+            )
         }
     }
 }
@@ -141,49 +180,21 @@ private fun TaskItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Time indicator
-            Text(
-                text = formatTime(task.scheduledTime),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.width(80.dp)
-            )
+            TimeIndicator(time = task.scheduledTime)
             
             Spacer(modifier = Modifier.width(16.dp))
             
             // Habit color indicator
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(parseColor(task.habitColor))
-            )
+            HabitColorIndicator(color = task.habitColor)
             
             Spacer(modifier = Modifier.width(16.dp))
             
             // Task details
-            Column(
+            TaskDetails(
+                habitName = task.habitName,
+                habitDescription = task.habitDescription,
                 modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = task.habitName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                if (task.habitDescription.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = task.habitDescription,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
+            )
             
             Spacer(modifier = Modifier.width(16.dp))
             
@@ -197,114 +208,60 @@ private fun TaskItem(
     }
 }
 
+@Composable
+private fun TimeIndicator(time: LocalTime) {
+    Text(
+        text = formatTime(time),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.width(80.dp)
+    )
+}
+
+@Composable
+private fun HabitColorIndicator(color: String) {
+    Box(
+        modifier = Modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .background(parseColor(color))
+    )
+}
+
+@Composable
+private fun TaskDetails(
+    habitName: String,
+    habitDescription: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = habitName,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        
+        if (habitDescription.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = habitDescription,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
 private fun formatTime(time: LocalTime): String {
     return "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
 }
 
-/**
- * Preview data class to avoid dependency on ViewModel
- */
-private data class PreviewTodayUiState(
-    val tasks: List<Task> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val completedTaskKeys: Set<String> = emptySet()
-)
-
-/**
- * Stateless content for preview purposes
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TodayScreenContentPreview(
-    uiState: PreviewTodayUiState,
-    onNavigateBack: () -> Unit = {},
-    onTaskComplete: (Task) -> Unit = {}
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.todays_tasks)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            uiState.error != null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Button(onClick = { /* Handle refresh in real implementation */ }) {
-                        Text(stringResource(Res.string.retry))
-                    }
-                }
-            }
-            
-            uiState.tasks.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.no_tasks_scheduled),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.tasks) { task ->
-                        TaskItem(
-                            task = task,
-                            onTaskComplete = onTaskComplete
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+// ========== Preview Helper Functions ==========
 
 // ========== Screen-Level Previews ==========
 
@@ -352,12 +309,13 @@ private fun TodayScreenWithTasksPreview() {
     )
     
     MaterialTheme {
-        TodayScreenContentPreview(
-            uiState = PreviewTodayUiState(
-                tasks = sampleTasks,
-                isLoading = false,
-                error = null
-            )
+        TodayScreenContent(
+            uiState = TodayUiState.Content(
+                tasks = sampleTasks
+            ),
+            onNavigateBack = {},
+            onRefresh = {},
+            onTaskComplete = {}
         )
     }
 }
@@ -366,12 +324,11 @@ private fun TodayScreenWithTasksPreview() {
 @Composable
 private fun TodayScreenEmptyStatePreview() {
     MaterialTheme {
-        TodayScreenContentPreview(
-            uiState = PreviewTodayUiState(
-                tasks = emptyList(),
-                isLoading = false,
-                error = null
-            )
+        TodayScreenContent(
+            uiState = TodayUiState.Empty,
+            onNavigateBack = {},
+            onRefresh = {},
+            onTaskComplete = {}
         )
     }
 }
@@ -380,12 +337,11 @@ private fun TodayScreenEmptyStatePreview() {
 @Composable
 private fun TodayScreenLoadingStatePreview() {
     MaterialTheme {
-        TodayScreenContentPreview(
-            uiState = PreviewTodayUiState(
-                tasks = emptyList(),
-                isLoading = true,
-                error = null
-            )
+        TodayScreenContent(
+            uiState = TodayUiState.Loading,
+            onNavigateBack = {},
+            onRefresh = {},
+            onTaskComplete = {}
         )
     }
 }
@@ -394,12 +350,13 @@ private fun TodayScreenLoadingStatePreview() {
 @Composable
 private fun TodayScreenErrorStatePreview() {
     MaterialTheme {
-        TodayScreenContentPreview(
-            uiState = PreviewTodayUiState(
-                tasks = emptyList(),
-                isLoading = false,
-                error = "Failed to load today's tasks"
-            )
+        TodayScreenContent(
+            uiState = TodayUiState.Error(
+                message = "Failed to load today's tasks"
+            ),
+            onNavigateBack = {},
+            onRefresh = {},
+            onTaskComplete = {}
         )
     }
 }

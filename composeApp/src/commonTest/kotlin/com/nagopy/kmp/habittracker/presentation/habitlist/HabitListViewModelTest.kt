@@ -74,9 +74,8 @@ class HabitListViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitListUiState.Content)
         assertEquals(mockHabits, uiState.habits)
-        assertFalse(uiState.isLoading)
-        assertNull(uiState.error)
     }
 
     @Test
@@ -94,9 +93,8 @@ class HabitListViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
-        assertTrue(uiState.habits.isEmpty())
-        assertFalse(uiState.isLoading)
-        assertEquals(errorMessage, uiState.error)
+        assertTrue(uiState is HabitListUiState.Error)
+        assertEquals(errorMessage, uiState.message)
     }
 
     @Test
@@ -154,9 +152,22 @@ class HabitListViewModelTest {
 
         // Then
         val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitListUiState.Content)
         assertEquals(refreshedHabits, uiState.habits)
-        assertFalse(uiState.isLoading)
-        assertNull(uiState.error)
+    }
+
+    @Test
+    fun `init should handle empty habits list`() = runTest {
+        // Given
+        every { mockGetAllHabitsUseCase() } returns flowOf(emptyList())
+
+        // When
+        viewModel = HabitListViewModel(mockGetAllHabitsUseCase, mockDeleteHabitUseCase)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitListUiState.Empty)
     }
 
     @Test
@@ -182,7 +193,8 @@ class HabitListViewModelTest {
 
         // Then - After advancing the coroutines, loading should be complete
         testDispatcher.scheduler.advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals(mockHabits, viewModel.uiState.value.habits)
+        val finalState = viewModel.uiState.value
+        assertTrue(finalState is HabitListUiState.Content)
+        assertEquals(mockHabits, finalState.habits)
     }
 }

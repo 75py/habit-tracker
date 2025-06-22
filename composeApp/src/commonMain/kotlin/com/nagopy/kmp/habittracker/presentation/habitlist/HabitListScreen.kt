@@ -45,6 +45,29 @@ fun HabitListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    HabitListContent(
+        uiState = uiState,
+        onAddHabitClick = onAddHabitClick,
+        onTodayClick = onTodayClick,
+        onHabitEdit = onHabitEdit,
+        onHabitDelete = viewModel::deleteHabit,
+        onRefresh = viewModel::refresh
+    )
+}
+
+/**
+ * Stateless content for HabitListScreen
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitListContent(
+    uiState: HabitListUiState,
+    onAddHabitClick: () -> Unit,
+    onTodayClick: () -> Unit,
+    onHabitEdit: (Habit) -> Unit,
+    onHabitDelete: (Long) -> Unit,
+    onRefresh: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,81 +93,103 @@ fun HabitListScreen(
             }
         }
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (uiState) {
+                is HabitListUiState.Loading -> LoadingState()
+                is HabitListUiState.Error -> ErrorState(
+                    error = uiState.message,
+                    onRetry = onRefresh
+                )
+                is HabitListUiState.Empty -> EmptyState()
+                is HabitListUiState.Content -> HabitsList(
+                    habits = uiState.habits,
+                    onHabitEdit = onHabitEdit,
+                    onHabitDelete = onHabitDelete
+                )
             }
-            
-            uiState.error != null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error ?: "Unknown error"),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.refresh() }) {
-                        Text(stringResource(Res.string.retry))
-                    }
-                }
-            }
-            
-            uiState.habits.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.no_habits_yet),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(Res.string.add_first_habit),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.habits) { habit ->
-                        HabitItem(
-                            habit = habit,
-                            onEdit = { onHabitEdit(habit) },
-                            onDelete = { viewModel.deleteHabit(habit.id) }
-                        )
-                    }
-                }
-            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(Res.string.error_prefix, error),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Text(stringResource(Res.string.retry))
+        }
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(Res.string.no_habits_yet),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.add_first_habit),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun HabitsList(
+    habits: List<Habit>,
+    onHabitEdit: (Habit) -> Unit,
+    onHabitDelete: (Long) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(habits) { habit ->
+            HabitItem(
+                habit = habit,
+                onEdit = { onHabitEdit(habit) },
+                onDelete = { onHabitDelete(habit.id) }
+            )
         }
     }
 }
@@ -169,218 +214,144 @@ private fun HabitItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Color indicator
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(parseColor(habit.color))
-            )
+            HabitColorIndicator(color = habit.color)
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            Column(
+            // Habit details
+            HabitDetails(
+                name = habit.name,
+                description = habit.description,
+                isActive = habit.isActive,
                 modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = habit.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                if (habit.description.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = habit.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            
-            if (!habit.isActive) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.inactive),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
+            )
             
             Spacer(modifier = Modifier.width(8.dp))
             
-            // Edit button
-            IconButton(onClick = onEdit) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(Res.string.edit_habit_content_description),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            // Delete button
-            IconButton(onClick = { showDeleteConfirmation = true }) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(Res.string.delete_habit_content_description),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+            // Action buttons
+            HabitActions(
+                onEdit = onEdit,
+                onDelete = { showDeleteConfirmation = true }
+            )
         }
     }
 
     // Delete confirmation dialog
     if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(stringResource(Res.string.delete_habit)) },
-            text = { Text(stringResource(Res.string.delete_habit_confirmation, habit.name)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteConfirmation = false
-                    }
-                ) {
-                    Text(stringResource(Res.string.delete))
-                }
+        DeleteConfirmationDialog(
+            habitName = habit.name,
+            onConfirm = {
+                onDelete()
+                showDeleteConfirmation = false
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
+            onDismiss = { showDeleteConfirmation = false }
         )
     }
 }
 
-/**
- * Preview data class to avoid dependency on ViewModel
- */
-private data class PreviewHabitListUiState(
-    val habits: List<Habit> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-
-/**
- * Stateless content for preview purposes
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HabitListContentPreview(
-    uiState: PreviewHabitListUiState,
-    onAddHabitClick: () -> Unit = {},
-    onTodayClick: () -> Unit = {},
-    onHabitEdit: (Habit) -> Unit = {},
-    onHabitDelete: (Long) -> Unit = {},
-    onRefresh: () -> Unit = {}
+private fun HabitColorIndicator(color: String) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(parseColor(color))
+    )
+}
+
+@Composable
+private fun HabitDetails(
+    name: String,
+    description: String,
+    isActive: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.my_habits)) },
-                actions = {
-                    IconButton(onClick = onTodayClick) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = stringResource(Res.string.todays_tasks_content_description)
-                        )
-                    }
-                }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddHabitClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(Res.string.add_habit)
+            
+            if (description.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
-    ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            uiState.error != null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = stringResource(Res.string.error_prefix, uiState.error),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onRefresh) {
-                        Text(stringResource(Res.string.retry))
-                    }
-                }
-            }
-            
-            uiState.habits.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.no_habits_yet),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(Res.string.add_first_habit),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-            
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.habits) { habit ->
-                        HabitItem(
-                            habit = habit,
-                            onEdit = { onHabitEdit(habit) },
-                            onDelete = { onHabitDelete(habit.id) }
-                        )
-                    }
-                }
-            }
+        
+        if (!isActive) {
+            Spacer(modifier = Modifier.width(8.dp))
+            InactiveLabel()
         }
     }
+}
+
+@Composable
+private fun InactiveLabel() {
+    Text(
+        text = stringResource(Res.string.inactive),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.outline
+    )
+}
+
+@Composable
+private fun HabitActions(
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Row {
+        IconButton(onClick = onEdit) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = stringResource(Res.string.edit_habit_content_description),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(Res.string.delete_habit_content_description),
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    habitName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.delete_habit)) },
+        text = { Text(stringResource(Res.string.delete_habit_confirmation, habitName)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(Res.string.delete))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.cancel))
+            }
+        }
+    )
 }
 
 // ========== Screen-Level Previews ==========
@@ -422,12 +393,15 @@ private fun HabitListScreenWithHabitsPreview() {
     )
     
     MaterialTheme {
-        HabitListContentPreview(
-            uiState = PreviewHabitListUiState(
-                habits = sampleHabits,
-                isLoading = false,
-                error = null
-            )
+        HabitListContent(
+            uiState = HabitListUiState.Content(
+                habits = sampleHabits
+            ),
+            onAddHabitClick = {},
+            onTodayClick = {},
+            onHabitEdit = {},
+            onHabitDelete = {},
+            onRefresh = {}
         )
     }
 }
@@ -436,12 +410,13 @@ private fun HabitListScreenWithHabitsPreview() {
 @Composable
 private fun HabitListScreenEmptyStatePreview() {
     MaterialTheme {
-        HabitListContentPreview(
-            uiState = PreviewHabitListUiState(
-                habits = emptyList(),
-                isLoading = false,
-                error = null
-            )
+        HabitListContent(
+            uiState = HabitListUiState.Empty,
+            onAddHabitClick = {},
+            onTodayClick = {},
+            onHabitEdit = {},
+            onHabitDelete = {},
+            onRefresh = {}
         )
     }
 }
@@ -450,12 +425,13 @@ private fun HabitListScreenEmptyStatePreview() {
 @Composable
 private fun HabitListScreenLoadingStatePreview() {
     MaterialTheme {
-        HabitListContentPreview(
-            uiState = PreviewHabitListUiState(
-                habits = emptyList(),
-                isLoading = true,
-                error = null
-            )
+        HabitListContent(
+            uiState = HabitListUiState.Loading,
+            onAddHabitClick = {},
+            onTodayClick = {},
+            onHabitEdit = {},
+            onHabitDelete = {},
+            onRefresh = {}
         )
     }
 }
@@ -464,12 +440,15 @@ private fun HabitListScreenLoadingStatePreview() {
 @Composable
 private fun HabitListScreenErrorStatePreview() {
     MaterialTheme {
-        HabitListContentPreview(
-            uiState = PreviewHabitListUiState(
-                habits = emptyList(),
-                isLoading = false,
-                error = "Network connection failed"
-            )
+        HabitListContent(
+            uiState = HabitListUiState.Error(
+                message = "Network connection failed"
+            ),
+            onAddHabitClick = {},
+            onTodayClick = {},
+            onHabitEdit = {},
+            onHabitDelete = {},
+            onRefresh = {}
         )
     }
 }
