@@ -46,7 +46,7 @@ fun SchedulingSection(
         Spacer(modifier = Modifier.height(12.dp))
         
         // Interval Configuration
-        if (frequencyType == FrequencyType.HOURLY || frequencyType == FrequencyType.INTERVAL) {
+        if (frequencyType == FrequencyType.INTERVAL) {
             IntervalConfiguration(
                 frequencyType = frequencyType,
                 intervalValue = intervalValue,
@@ -111,15 +111,17 @@ private fun IntervalConfiguration(
     onIntervalValueChange: (Int, TimeUnit) -> Unit,
     onIntervalUnitChange: (TimeUnit) -> Unit
 ) {
+    // For HOURLY, don't show the interval configuration as per requirement
+    if (frequencyType == FrequencyType.HOURLY) {
+        return
+    }
+    
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = if (frequencyType == FrequencyType.HOURLY) 
-                stringResource(Res.string.every) 
-            else 
-                stringResource(Res.string.interval),
+            text = stringResource(Res.string.interval),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -129,8 +131,7 @@ private fun IntervalConfiguration(
         
         OutlinedButton(
             onClick = { showIntervalPicker = true },
-            modifier = Modifier.width(80.dp),
-            enabled = frequencyType != FrequencyType.HOURLY
+            modifier = Modifier.width(80.dp)
         ) {
             Text(intervalValue.toString())
         }
@@ -147,51 +148,43 @@ private fun IntervalConfiguration(
         }
         
         // Unit selector dropdown
-        if (frequencyType != FrequencyType.HOURLY) {
-            var expanded by remember { mutableStateOf(false) }
-            
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier.width(100.dp)
-            ) {
-                OutlinedTextField(
-                    value = when (intervalUnit) {
-                        TimeUnit.MINUTES -> stringResource(Res.string.minutes)
-                        TimeUnit.HOURS -> stringResource(Res.string.hours)
-                    },
-                    onValueChange = { },
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor()
-                )
-                
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.minutes)) },
-                        onClick = {
-                            onIntervalUnitChange(TimeUnit.MINUTES)
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.hours)) },
-                        onClick = {
-                            onIntervalUnitChange(TimeUnit.HOURS)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        } else {
-            Text(
-                text = stringResource(Res.string.hour),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        var expanded by remember { mutableStateOf(false) }
+        
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.width(100.dp)
+        ) {
+            OutlinedTextField(
+                value = when (intervalUnit) {
+                    TimeUnit.MINUTES -> stringResource(Res.string.minutes)
+                    TimeUnit.HOURS -> stringResource(Res.string.hours)
+                },
+                onValueChange = { },
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor()
             )
+            
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.minutes)) },
+                    onClick = {
+                        onIntervalUnitChange(TimeUnit.MINUTES)
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.hours)) },
+                    onClick = {
+                        onIntervalUnitChange(TimeUnit.HOURS)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
@@ -216,42 +209,32 @@ private fun ScheduledTimesConfiguration(
         )
         Spacer(modifier = Modifier.height(4.dp))
         
-        // Display current scheduled times
-        scheduledTimes.forEach { time ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                
-                if (scheduledTimes.size > 1) {
-                    TextButton(
-                        onClick = {
-                            onScheduledTimesChange(scheduledTimes.filter { it != time })
-                        }
-                    ) {
-                        Text(stringResource(Res.string.remove))
-                    }
-                }
-            }
-        }
-        
-        // Time picker buttons
         if (frequencyType == FrequencyType.ONCE_DAILY) {
+            // ONCE_DAILY: Show each time with change and delete buttons
+            scheduledTimes.forEach { time ->
+                ScheduledTimeItem(
+                    time = time,
+                    onTimeChange = { newTime ->
+                        val updatedTimes = scheduledTimes.map { if (it == time) newTime else it }
+                        onScheduledTimesChange(updatedTimes)
+                    },
+                    onTimeDelete = {
+                        onScheduledTimesChange(scheduledTimes.filter { it != time })
+                    }
+                )
+            }
+            
             // Add time button for ONCE_DAILY
             AddTimeButton(
                 scheduledTimes = scheduledTimes,
                 onScheduledTimesChange = onScheduledTimesChange
             )
         } else {
-            // Change start time button for other types
-            ChangeStartTimeButton(
-                currentTime = scheduledTimes.firstOrNull() ?: LocalTime(9, 0),
-                onTimeChange = { newTime ->
-                    onScheduledTimesChange(listOf(newTime))
+            // HOURLY and INTERVAL: Use start time configuration similar to end time
+            StartTimeConfiguration(
+                startTime = scheduledTimes.firstOrNull(),
+                onStartTimeChange = { newTime ->
+                    onScheduledTimesChange(if (newTime != null) listOf(newTime) else emptyList())
                 }
             )
             
@@ -423,6 +406,139 @@ private fun EndTimeConfiguration(
             },
             dismissButton = {
                 TextButton(onClick = { showEndTimePicker = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScheduledTimeItem(
+    time: LocalTime,
+    onTimeChange: (LocalTime) -> Unit,
+    onTimeDelete: () -> Unit
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(
+            onClick = { showTimePicker = true }
+        ) {
+            Text(stringResource(Res.string.change_time))
+        }
+        
+        Text(
+            text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        
+        TextButton(
+            onClick = onTimeDelete
+        ) {
+            Text(stringResource(Res.string.remove))
+        }
+    }
+    
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = time.hour,
+            initialMinute = time.minute,
+            is24Hour = true
+        )
+        
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text(stringResource(Res.string.set_time)) },
+            text = {
+                TimePicker(state = timePickerState)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onTimeChange(LocalTime(timePickerState.hour, timePickerState.minute))
+                        showTimePicker = false
+                    }
+                ) {
+                    Text(stringResource(Res.string.set))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StartTimeConfiguration(
+    startTime: LocalTime?,
+    onStartTimeChange: (LocalTime?) -> Unit
+) {
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(
+            onClick = { showStartTimePicker = true }
+        ) {
+            Text(
+                if (startTime != null) 
+                    stringResource(Res.string.change_start_time) 
+                else 
+                    stringResource(Res.string.set_start_time)
+            )
+        }
+        
+        startTime?.let { time ->
+            Text(
+                text = "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            TextButton(
+                onClick = { onStartTimeChange(null) }
+            ) {
+                Text(stringResource(Res.string.clear))
+            }
+        }
+    }
+    
+    if (showStartTimePicker) {
+        val startTimePickerState = rememberTimePickerState(
+            initialHour = startTime?.hour ?: 9,
+            initialMinute = startTime?.minute ?: 0,
+            is24Hour = true
+        )
+        
+        AlertDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            title = { Text(stringResource(Res.string.set_start_time)) },
+            text = {
+                TimePicker(state = startTimePickerState)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onStartTimeChange(LocalTime(startTimePickerState.hour, startTimePickerState.minute))
+                        showStartTimePicker = false
+                    }
+                ) {
+                    Text(stringResource(Res.string.set))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) {
                     Text(stringResource(Res.string.cancel))
                 }
             }

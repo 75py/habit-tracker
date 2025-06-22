@@ -41,6 +41,9 @@
     <string name="set_start_time">Set Start Time</string>
     <string name="change_end_time">Change End Time</string>
     <string name="set_end_time">Set End Time</string>
+    <string name="change_time">Change Time</string>
+    <string name="set_time">Set Time</string>
+    <string name="scheduled_times_required">At least one scheduled time is required</string>
     <string name="active">Active</string>
     <string name="enable_tracking">Enable tracking for this habit</string>
     <string name="selected">Selected</string>

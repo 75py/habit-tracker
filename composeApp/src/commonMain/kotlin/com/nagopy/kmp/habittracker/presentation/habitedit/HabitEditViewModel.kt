@@ -207,6 +207,12 @@ class HabitEditViewModel(
             _uiState.value = currentState.copy(nameError = "Name is required")
             return
         }
+        
+        // Validate scheduled times - must have at least one scheduled time
+        if (currentState.scheduledTimes.isEmpty()) {
+            _uiState.value = currentState.copy(saveError = "At least one scheduled time is required")
+            return
+        }
 
         _uiState.value = currentState.copy(isSaving = true, saveError = null)
 
