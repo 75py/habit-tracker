@@ -1,6 +1,9 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.DailyHabit
+import com.nagopy.kmp.habittracker.domain.model.HourlyHabit
+import com.nagopy.kmp.habittracker.domain.model.IntervalHabit
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
@@ -37,24 +40,24 @@ class GetTodayTasksUseCase(
      * Generates task instances for a specific habit on a given date.
      */
     private suspend fun generateTasksForHabit(habit: Habit, date: LocalDate): List<Task> {
-        return when (habit.frequencyType) {
-            FrequencyType.ONCE_DAILY -> {
+        return when (habit) {
+            is DailyHabit -> {
                 habit.scheduledTimes.map { time ->
                     createTask(habit, date, time)
                 }
             }
-            FrequencyType.HOURLY -> {
+            is HourlyHabit -> {
                 generateHourlyTasks(habit, date)
             }
-            FrequencyType.INTERVAL -> {
+            is IntervalHabit -> {
                 generateIntervalTasks(habit, date)
             }
         }
     }
     
-    private suspend fun generateHourlyTasks(habit: Habit, date: LocalDate): List<Task> {
+    private suspend fun generateHourlyTasks(habit: HourlyHabit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
-        val startTime = habit.startTime ?: LocalTime(9, 0)
+        val startTime = habit.startTime
         val intervalMinutes = 60 // Hourly = every 60 minutes
         
         var currentTime = startTime
@@ -75,9 +78,9 @@ class GetTodayTasksUseCase(
         return tasks
     }
     
-    private suspend fun generateIntervalTasks(habit: Habit, date: LocalDate): List<Task> {
+    private suspend fun generateIntervalTasks(habit: IntervalHabit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
-        val startTime = habit.startTime ?: LocalTime(9, 0)
+        val startTime = habit.startTime
         val intervalMinutes = habit.intervalMinutes.coerceAtLeast(1)
         
         var currentTime = startTime
@@ -102,11 +105,11 @@ class GetTodayTasksUseCase(
         // For now, we check if the habit has any completion for the day
         // Future enhancement: track completion per time slot
         val existingLog = habitRepository.getHabitLog(habit.id, date)
-        val isCompleted = when (habit.frequencyType) {
-            FrequencyType.ONCE_DAILY -> existingLog?.isCompleted == true
+        val isCompleted = when (habit) {
+            is DailyHabit -> existingLog?.isCompleted == true
             // For hourly/interval habits, we assume individual completion tracking
             // would require enhancement to the data layer
-            FrequencyType.HOURLY, FrequencyType.INTERVAL -> false
+            is HourlyHabit, is IntervalHabit -> false
         }
         
         return Task(

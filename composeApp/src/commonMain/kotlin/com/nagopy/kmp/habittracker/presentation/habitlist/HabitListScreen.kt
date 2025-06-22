@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.HabitBase
+import com.nagopy.kmp.habittracker.domain.model.DailyHabit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
@@ -360,34 +362,37 @@ private fun DeleteConfirmationDialog(
 @Composable
 private fun HabitListScreenWithHabitsPreview() {
     val sampleHabits = listOf(
-        Habit(
-            id = 1L,
-            name = "Drink Water",
-            description = "Stay hydrated throughout the day",
-            color = "#2196F3",
-            isActive = true,
-            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
+        DailyHabit(
+            base = HabitBase(
+                id = 1L,
+                name = "Drink Water",
+                description = "Stay hydrated throughout the day",
+                color = "#2196F3",
+                isActive = true,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            ),
             scheduledTimes = listOf(LocalTime(9, 0))
         ),
-        Habit(
-            id = 2L,
-            name = "Exercise",
-            description = "Daily workout routine for health",
-            color = "#4CAF50",
-            isActive = true,
-            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
+        DailyHabit(
+            base = HabitBase(
+                id = 2L,
+                name = "Exercise",
+                description = "Daily workout routine for health",
+                color = "#4CAF50",
+                isActive = true,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            ),
             scheduledTimes = listOf(LocalTime(7, 30))
         ),
-        Habit(
-            id = 3L,
-            name = "Meditation",
-            description = "",
-            color = "#9C27B0",
-            isActive = false,
-            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
+        DailyHabit(
+            base = HabitBase(
+                id = 3L,
+                name = "Meditation",
+                description = "",
+                color = "#9C27B0",
+                isActive = false,
+                createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            ),
             scheduledTimes = listOf(LocalTime(18, 0))
         )
     )
@@ -458,14 +463,15 @@ private fun HabitListScreenErrorStatePreview() {
 @Preview
 @Composable
 private fun HabitItemPreview() {
-    val sampleHabit = Habit(
-        id = 1L,
-        name = "Drink Water",
-        description = "Stay hydrated throughout the day",
-        color = "#2196F3",
-        isActive = true,
-        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
+    val sampleHabit = DailyHabit(
+        base = HabitBase(
+            id = 1L,
+            name = "Drink Water",
+            description = "Stay hydrated throughout the day",
+            color = "#2196F3",
+            isActive = true,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        ),
         scheduledTimes = listOf(LocalTime(9, 0))
     )
     
@@ -483,14 +489,15 @@ private fun HabitItemPreview() {
 @Preview
 @Composable
 private fun HabitItemInactivePreview() {
-    val sampleHabit = Habit(
-        id = 2L,
-        name = "Exercise",
-        description = "Daily workout routine for health",
-        color = "#4CAF50",
-        isActive = false,
-        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
+    val sampleHabit = DailyHabit(
+        base = HabitBase(
+            id = 2L,
+            name = "Exercise",
+            description = "Daily workout routine for health",
+            color = "#4CAF50",
+            isActive = false,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        ),
         scheduledTimes = listOf(LocalTime(7, 30))
     )
     
@@ -508,14 +515,15 @@ private fun HabitItemInactivePreview() {
 @Preview
 @Composable
 private fun HabitItemNoDescriptionPreview() {
-    val sampleHabit = Habit(
-        id = 3L,
-        name = "Meditation",
-        description = "",
-        color = "#9C27B0",
-        isActive = true,
-        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
+    val sampleHabit = DailyHabit(
+        base = HabitBase(
+            id = 3L,
+            name = "Meditation",
+            description = "",
+            color = "#9C27B0",
+            isActive = true,
+            createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        ),
         scheduledTimes = listOf(LocalTime(18, 0))
     )
     

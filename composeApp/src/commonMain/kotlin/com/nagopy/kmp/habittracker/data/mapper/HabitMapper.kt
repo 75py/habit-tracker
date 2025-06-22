@@ -3,8 +3,13 @@ package com.nagopy.kmp.habittracker.data.mapper
 import com.nagopy.kmp.habittracker.data.local.HabitEntity
 import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.HabitBase
+import com.nagopy.kmp.habittracker.domain.model.DailyHabit
+import com.nagopy.kmp.habittracker.domain.model.HourlyHabit
+import com.nagopy.kmp.habittracker.domain.model.IntervalHabit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -21,31 +26,33 @@ fun HabitEntity.toDomainModel(): Habit {
         else -> FrequencyType.INTERVAL // Custom intervals
     }
     
-    return Habit(
+    val habitBase = HabitBase(
         id = id,
         name = name,
         description = description,
         color = color,
         isActive = isActive,
-        createdAt = LocalDate.parse(createdAt),
-        frequencyType = detectedFrequencyType,
-        intervalMinutes = intervalMinutes,
-        scheduledTimes = if (detectedFrequencyType == FrequencyType.ONCE_DAILY) {
-            parseScheduledTimes(scheduledTimes)
-        } else {
-            emptyList() // For HOURLY/INTERVAL, don't use scheduledTimes
-        },
-        startTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
-            startTime?.let { parseTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't use startTime
-        },
-        endTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
-            endTime?.let { parseTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't use endTime
-        }
+        createdAt = LocalDate.parse(createdAt)
     )
+    
+    return when (detectedFrequencyType) {
+        FrequencyType.ONCE_DAILY -> DailyHabit(
+            base = habitBase,
+            scheduledTimes = parseScheduledTimes(scheduledTimes)
+        )
+        FrequencyType.HOURLY -> HourlyHabit(
+            base = habitBase,
+            intervalMinutes = intervalMinutes,
+            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
+            endTime = endTime?.let { parseTime(it) }
+        )
+        FrequencyType.INTERVAL -> IntervalHabit(
+            base = habitBase,
+            intervalMinutes = intervalMinutes,
+            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
+            endTime = endTime?.let { parseTime(it) }
+        )
+    }
 }
 
 fun Habit.toEntity(): HabitEntity {
@@ -56,21 +63,24 @@ fun Habit.toEntity(): HabitEntity {
         color = color,
         isActive = isActive,
         createdAt = createdAt.toString(),
-        intervalMinutes = intervalMinutes,
-        scheduledTimes = if (frequencyType == FrequencyType.ONCE_DAILY) {
-            formatScheduledTimes(scheduledTimes)
-        } else {
-            "" // For HOURLY/INTERVAL, don't store scheduledTimes
+        intervalMinutes = when (this) {
+            is DailyHabit -> HabitIntervalValidator.VALID_ONCE_DAILY_MINUTES
+            is HourlyHabit -> intervalMinutes
+            is IntervalHabit -> intervalMinutes
         },
-        startTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
-            startTime?.let { formatTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't store startTime
+        scheduledTimes = when (this) {
+            is DailyHabit -> formatScheduledTimes(scheduledTimes)
+            is HourlyHabit, is IntervalHabit -> "" // No scheduled times for interval-based habits
         },
-        endTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
-            endTime?.let { formatTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't store endTime
+        startTime = when (this) {
+            is DailyHabit -> null // No start time for daily habits
+            is HourlyHabit -> formatTime(startTime)
+            is IntervalHabit -> formatTime(startTime)
+        },
+        endTime = when (this) {
+            is DailyHabit -> null // No end time for daily habits
+            is HourlyHabit -> endTime?.let { formatTime(it) }
+            is IntervalHabit -> endTime?.let { formatTime(it) }
         }
     )
 }
