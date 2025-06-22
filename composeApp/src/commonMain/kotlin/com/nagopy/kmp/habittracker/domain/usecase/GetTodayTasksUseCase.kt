@@ -54,7 +54,7 @@ class GetTodayTasksUseCase(
     
     private suspend fun generateHourlyTasks(habit: Habit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
-        val startTime = habit.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
+        val startTime = habit.startTime ?: LocalTime(9, 0)
         val intervalMinutes = 60 // Hourly = every 60 minutes
         
         var currentTime = startTime
@@ -77,7 +77,7 @@ class GetTodayTasksUseCase(
     
     private suspend fun generateIntervalTasks(habit: Habit, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
-        val startTime = habit.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
+        val startTime = habit.startTime ?: LocalTime(9, 0)
         val intervalMinutes = habit.intervalMinutes.coerceAtLeast(1)
         
         var currentTime = startTime

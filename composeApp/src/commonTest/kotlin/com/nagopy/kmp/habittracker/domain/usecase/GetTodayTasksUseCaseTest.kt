@@ -247,7 +247,8 @@ class GetTodayTasksUseCaseTest {
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 30, // 30 minutes (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(8, 0)),
+            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
+            startTime = LocalTime(8, 0), // Start at 8:00 AM
             endTime = LocalTime(20, 0) // 8 PM
         )
         
@@ -306,7 +307,8 @@ class GetTodayTasksUseCaseTest {
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 20, // 20 minutes (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(6, 0)),
+            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
+            startTime = LocalTime(6, 0), // Start at 6:00 AM
             endTime = null // No end time
         )
         

@@ -91,7 +91,8 @@ class MinuteBasedIntervalTest {
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 20, // Every 20 minutes (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(8, 15)) // Start at 8:15 AM
+            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
+            startTime = LocalTime(8, 15) // Start at 8:15 AM
         )
         
         val mockRepository = mockk<HabitRepository>()

@@ -57,7 +57,8 @@ class MultipleTasksIntegrationTest {
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.HOURLY,
             intervalMinutes = 60, // 1 hour = 60 minutes
-            scheduledTimes = listOf(LocalTime(9, 0)) // Start at 9 AM
+            scheduledTimes = emptyList(), // For HOURLY, use startTime instead
+            startTime = LocalTime(9, 0) // Start at 9 AM
         )
         
         val readingInterval = Habit(
@@ -69,7 +70,8 @@ class MultipleTasksIntegrationTest {
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 30, // Every 30 minutes (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(8, 0)) // Start at 8 AM
+            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
+            startTime = LocalTime(8, 0) // Start at 8 AM
         )
         
         val habits = listOf(onceDaily, drinkWaterHourly, readingInterval)
