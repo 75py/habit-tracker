@@ -21,7 +21,7 @@ class HabitListViewModel(
     private val deleteHabitUseCase: DeleteHabitUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HabitListUiState())
+    private val _uiState = MutableStateFlow<HabitListUiState>(HabitListUiState.Loading)
     val uiState: StateFlow<HabitListUiState> = _uiState.asStateFlow()
 
     init {
@@ -30,21 +30,22 @@ class HabitListViewModel(
 
     private fun loadHabits() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = HabitListUiState.Loading
             
             getAllHabitsUseCase()
                 .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Unknown error occurred"
+                    _uiState.value = HabitListUiState.Error(
+                        message = exception.message ?: "Unknown error occurred"
                     )
                 }
                 .collect { habits ->
-                    _uiState.value = _uiState.value.copy(
-                        habits = habits,
-                        isLoading = false,
-                        error = null
-                    )
+                    if (habits.isEmpty()) {
+                        _uiState.value = HabitListUiState.Empty
+                    } else {
+                        _uiState.value = HabitListUiState.Content(
+                            habits = habits
+                        )
+                    }
                 }
         }
     }
@@ -61,8 +62,8 @@ class HabitListViewModel(
                 Logger.d("Successfully deleted habit with ID: $habitId", tag = "HabitList")
             } catch (exception: Exception) {
                 Logger.e(exception, "Failed to delete habit with ID: $habitId", tag = "HabitList")
-                _uiState.value = _uiState.value.copy(
-                    error = exception.message ?: "Failed to delete habit"
+                _uiState.value = HabitListUiState.Error(
+                    message = exception.message ?: "Failed to delete habit"
                 )
             }
         }
@@ -70,10 +71,29 @@ class HabitListViewModel(
 }
 
 /**
- * UI state for the Habit List screen
+ * UI state for the Habit List screen using sealed class pattern
  */
-data class HabitListUiState(
-    val habits: List<Habit> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
+sealed interface HabitListUiState {
+    
+    /**
+     * Loading state when fetching habits
+     */
+    data object Loading : HabitListUiState
+    
+    /**
+     * Error state when habit loading fails
+     */
+    data class Error(val message: String) : HabitListUiState
+    
+    /**
+     * Empty state when no habits exist
+     */
+    data object Empty : HabitListUiState
+    
+    /**
+     * Content state when habits are successfully loaded
+     */
+    data class Content(
+        val habits: List<Habit>
+    ) : HabitListUiState
+}

@@ -98,14 +98,14 @@ private fun HabitListContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> LoadingState()
-                uiState.error != null -> ErrorState(
-                    error = uiState.error,
+            when (uiState) {
+                is HabitListUiState.Loading -> LoadingState()
+                is HabitListUiState.Error -> ErrorState(
+                    error = uiState.message,
                     onRetry = onRefresh
                 )
-                uiState.habits.isEmpty() -> EmptyState()
-                else -> HabitsList(
+                is HabitListUiState.Empty -> EmptyState()
+                is HabitListUiState.Content -> HabitsList(
                     habits = uiState.habits,
                     onHabitEdit = onHabitEdit,
                     onHabitDelete = onHabitDelete
@@ -394,10 +394,8 @@ private fun HabitListScreenWithHabitsPreview() {
     
     MaterialTheme {
         HabitListContent(
-            uiState = HabitListUiState(
-                habits = sampleHabits,
-                isLoading = false,
-                error = null
+            uiState = HabitListUiState.Content(
+                habits = sampleHabits
             ),
             onAddHabitClick = {},
             onTodayClick = {},
@@ -413,11 +411,7 @@ private fun HabitListScreenWithHabitsPreview() {
 private fun HabitListScreenEmptyStatePreview() {
     MaterialTheme {
         HabitListContent(
-            uiState = HabitListUiState(
-                habits = emptyList(),
-                isLoading = false,
-                error = null
-            ),
+            uiState = HabitListUiState.Empty,
             onAddHabitClick = {},
             onTodayClick = {},
             onHabitEdit = {},
@@ -432,11 +426,7 @@ private fun HabitListScreenEmptyStatePreview() {
 private fun HabitListScreenLoadingStatePreview() {
     MaterialTheme {
         HabitListContent(
-            uiState = HabitListUiState(
-                habits = emptyList(),
-                isLoading = true,
-                error = null
-            ),
+            uiState = HabitListUiState.Loading,
             onAddHabitClick = {},
             onTodayClick = {},
             onHabitEdit = {},
@@ -451,10 +441,8 @@ private fun HabitListScreenLoadingStatePreview() {
 private fun HabitListScreenErrorStatePreview() {
     MaterialTheme {
         HabitListContent(
-            uiState = HabitListUiState(
-                habits = emptyList(),
-                isLoading = false,
-                error = "Network connection failed"
+            uiState = HabitListUiState.Error(
+                message = "Network connection failed"
             ),
             onAddHabitClick = {},
             onTodayClick = {},
