@@ -22,11 +22,13 @@ fun SchedulingSection(
     intervalValue: Int,
     intervalUnit: TimeUnit,
     scheduledTimes: List<LocalTime>,
+    startTime: LocalTime?,
     endTime: LocalTime?,
     onFrequencyTypeChange: (FrequencyType) -> Unit,
     onIntervalValueChange: (Int, TimeUnit) -> Unit,
     onIntervalUnitChange: (TimeUnit) -> Unit,
     onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onStartTimeChange: (LocalTime?) -> Unit,
     onEndTimeChange: (LocalTime?) -> Unit
 ) {
     Column {
@@ -62,8 +64,10 @@ fun SchedulingSection(
         ScheduledTimesConfiguration(
             frequencyType = frequencyType,
             scheduledTimes = scheduledTimes,
+            startTime = startTime,
             endTime = endTime,
             onScheduledTimesChange = onScheduledTimesChange,
+            onStartTimeChange = onStartTimeChange,
             onEndTimeChange = onEndTimeChange
         )
     }
@@ -194,8 +198,10 @@ private fun IntervalConfiguration(
 private fun ScheduledTimesConfiguration(
     frequencyType: FrequencyType,
     scheduledTimes: List<LocalTime>,
+    startTime: LocalTime?,
     endTime: LocalTime?,
     onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onStartTimeChange: (LocalTime?) -> Unit,
     onEndTimeChange: (LocalTime?) -> Unit
 ) {
     Column {
@@ -230,12 +236,10 @@ private fun ScheduledTimesConfiguration(
                 onScheduledTimesChange = onScheduledTimesChange
             )
         } else {
-            // HOURLY and INTERVAL: Use start time configuration similar to end time
+            // HOURLY and INTERVAL: Use start time configuration
             StartTimeConfiguration(
-                startTime = scheduledTimes.firstOrNull(),
-                onStartTimeChange = { newTime ->
-                    onScheduledTimesChange(if (newTime != null) listOf(newTime) else emptyList())
-                }
+                startTime = startTime,
+                onStartTimeChange = onStartTimeChange
             )
             
             // End time configuration for interval-based habits
@@ -558,11 +562,13 @@ private fun SchedulingSectionOnceDailyPreview() {
                 intervalValue = 24,
                 intervalUnit = TimeUnit.HOURS,
                 scheduledTimes = listOf(LocalTime(9, 0), LocalTime(18, 0)),
+                startTime = null,
                 endTime = null,
                 onFrequencyTypeChange = {},
                 onIntervalValueChange = { _, _ -> },
                 onIntervalUnitChange = {},
                 onScheduledTimesChange = {},
+                onStartTimeChange = {},
                 onEndTimeChange = {}
             )
         }
@@ -578,12 +584,14 @@ private fun SchedulingSectionHourlyPreview() {
                 frequencyType = FrequencyType.HOURLY,
                 intervalValue = 2,
                 intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = listOf(LocalTime(8, 0)),
+                scheduledTimes = emptyList(),
+                startTime = LocalTime(8, 0),
                 endTime = LocalTime(22, 0),
                 onFrequencyTypeChange = {},
                 onIntervalValueChange = { _, _ -> },
                 onIntervalUnitChange = {},
                 onScheduledTimesChange = {},
+                onStartTimeChange = {},
                 onEndTimeChange = {}
             )
         }
@@ -599,12 +607,14 @@ private fun SchedulingSectionIntervalPreview() {
                 frequencyType = FrequencyType.INTERVAL,
                 intervalValue = 30,
                 intervalUnit = TimeUnit.MINUTES,
-                scheduledTimes = listOf(LocalTime(9, 0)),
+                scheduledTimes = emptyList(),
+                startTime = LocalTime(9, 0),
                 endTime = LocalTime(17, 0),
                 onFrequencyTypeChange = {},
                 onIntervalValueChange = { _, _ -> },
                 onIntervalUnitChange = {},
                 onScheduledTimesChange = {},
+                onStartTimeChange = {},
                 onEndTimeChange = {}
             )
         }
@@ -648,8 +658,10 @@ private fun ScheduledTimesConfigurationOnceDailyPreview() {
             ScheduledTimesConfiguration(
                 frequencyType = FrequencyType.ONCE_DAILY,
                 scheduledTimes = listOf(LocalTime(9, 0), LocalTime(18, 0)),
+                startTime = null,
                 endTime = null,
                 onScheduledTimesChange = {},
+                onStartTimeChange = {},
                 onEndTimeChange = {}
             )
         }
@@ -663,9 +675,11 @@ private fun ScheduledTimesConfigurationHourlyPreview() {
         Surface(modifier = Modifier.padding(16.dp)) {
             ScheduledTimesConfiguration(
                 frequencyType = FrequencyType.HOURLY,
-                scheduledTimes = listOf(LocalTime(8, 0)),
+                scheduledTimes = emptyList(),
+                startTime = LocalTime(8, 0),
                 endTime = LocalTime(22, 0),
                 onScheduledTimesChange = {},
+                onStartTimeChange = {},
                 onEndTimeChange = {}
             )
         }
