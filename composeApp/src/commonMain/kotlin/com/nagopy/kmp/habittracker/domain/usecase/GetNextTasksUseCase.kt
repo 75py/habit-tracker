@@ -21,7 +21,8 @@ import kotlinx.datetime.toLocalDateTime
  */
 class GetNextTasksUseCase(
     private val habitRepository: HabitRepository,
-    private val clock: Clock = Clock.System
+    private val clock: Clock = Clock.System,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault()
 ) {
     
     /**
@@ -34,7 +35,7 @@ class GetNextTasksUseCase(
         val habit = habitRepository.getHabit(habitId) ?: return null
         if (!habit.isActive) return null
         
-        val currentDateTime = clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val currentDateTime = clock.now().toLocalDateTime(timeZone)
         val today = currentDateTime.date
         
         // Look for tasks today and tomorrow to find the next one
@@ -59,7 +60,7 @@ class GetNextTasksUseCase(
      */
     suspend fun getNextUpcomingTask(): Task? {
         val habits = habitRepository.getActiveHabits().first()
-        val currentDateTime = clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val currentDateTime = clock.now().toLocalDateTime(timeZone)
         
         var nextTask: Task? = null
         var nextTaskDateTime: LocalDateTime? = null
