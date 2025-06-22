@@ -4,80 +4,139 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
 /**
- * Common properties shared by all habit types.
+ * Domain entity representing a habit that a user wants to track.
  */
-data class HabitBase(
+data class Habit(
     val id: Long = 0,
     val name: String,
     val description: String = "",
-    val color: String = "#2196F3",
+    val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
-    val createdAt: LocalDate
+    val createdAt: LocalDate,
+    val detail: HabitDetail
 )
 
-/**
- * Sealed interface representing different types of habits based on their frequency.
- * This design ensures type safety and eliminates invalid field combinations.
- */
-sealed interface Habit {
-    val base: HabitBase
-    val frequencyType: FrequencyType
+sealed interface HabitDetail {
+    data class OnceDailyHabitDetail(
+        val scheduledTime: LocalTime = LocalTime(9, 0) // Single time per day
+    ) : HabitDetail
     
-    // Convenience accessors for common properties
-    val id: Long get() = base.id
-    val name: String get() = base.name
-    val description: String get() = base.description
-    val color: String get() = base.color
-    val isActive: Boolean get() = base.isActive
-    val createdAt: LocalDate get() = base.createdAt
-}
-
-/**
- * Habit that occurs once daily at specific scheduled times.
- */
-data class DailyHabit(
-    override val base: HabitBase,
-    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0))
-) : Habit {
-    override val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY
-}
-
-/**
- * Habit that occurs every N hours within a time range.
- */
-data class HourlyHabit(
-    override val base: HabitBase,
-    val intervalMinutes: Int = 60,
-    val startTime: LocalTime = LocalTime(9, 0),
-    val endTime: LocalTime? = null
-) : Habit {
-    override val frequencyType: FrequencyType = FrequencyType.HOURLY
+    data class HourlyHabitDetail(
+        val intervalMinutes: Int = 60, // Default to 1 hour
+        val startTime: LocalTime = LocalTime(9, 0), // Start time for hourly habits
+        val endTime: LocalTime? = null // Optional end time for hourly habits
+    ) : HabitDetail {
+        init {
+            require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, intervalMinutes)) {
+                "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes"
+            }
+        }
+    }
     
-    init {
-        require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, intervalMinutes)) {
-            "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes"
+    data class IntervalHabitDetail(
+        val intervalMinutes: Int = 60, // Custom interval in minutes
+        val startTime: LocalTime = LocalTime(9, 0), // Start time for interval habits
+        val endTime: LocalTime? = null // Optional end time for interval habits
+    ) : HabitDetail {
+        init {
+            require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalMinutes)) {
+                "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. " +
+                "Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes"
+            }
         }
     }
 }
 
 /**
- * Habit that occurs at custom intervals (divisors of 60 minutes).
+ * Convenience extension property to get the frequency type from habit detail
  */
-data class IntervalHabit(
-    override val base: HabitBase,
-    val intervalMinutes: Int = 60,
-    val startTime: LocalTime = LocalTime(9, 0),
-    val endTime: LocalTime? = null
-) : Habit {
-    override val frequencyType: FrequencyType = FrequencyType.INTERVAL
-    
-    init {
-        require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalMinutes)) {
-            "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. " +
-            "Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes"
-        }
+val HabitDetail.frequencyType: FrequencyType
+    get() = when (this) {
+        is HabitDetail.OnceDailyHabitDetail -> FrequencyType.ONCE_DAILY
+        is HabitDetail.HourlyHabitDetail -> FrequencyType.HOURLY
+        is HabitDetail.IntervalHabitDetail -> FrequencyType.INTERVAL
     }
+
+/**
+ * Convenience extension property to get the frequency type from habit
+ */
+val Habit.frequencyType: FrequencyType
+    get() = detail.frequencyType
+
+/**
+ * Convenience extension properties for backwards compatibility with existing code
+ */
+val Habit.scheduledTimes: List<LocalTime>
+    get() = when (val detail = this.detail) {
+        is HabitDetail.OnceDailyHabitDetail -> listOf(detail.scheduledTime)
+        is HabitDetail.HourlyHabitDetail -> listOf(detail.startTime)
+        is HabitDetail.IntervalHabitDetail -> listOf(detail.startTime)
+    }
+
+val Habit.intervalMinutes: Int
+    get() = when (val detail = this.detail) {
+        is HabitDetail.OnceDailyHabitDetail -> 1440 // 24 hours for daily habits
+        is HabitDetail.HourlyHabitDetail -> detail.intervalMinutes
+        is HabitDetail.IntervalHabitDetail -> detail.intervalMinutes
+    }
+
+val Habit.startTime: LocalTime?
+    get() = when (val detail = this.detail) {
+        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTime
+        is HabitDetail.HourlyHabitDetail -> detail.startTime
+        is HabitDetail.IntervalHabitDetail -> detail.startTime
+    }
+
+/**
+ * Factory function for creating Habit instances from the old structure
+ * This helps with migration from the previous API
+ */
+fun Habit(
+    id: Long = 0,
+    name: String,
+    description: String = "",
+    color: String = "#2196F3",
+    isActive: Boolean = true,
+    createdAt: LocalDate,
+    frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
+    intervalMinutes: Int = 1440,
+    scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
+    startTime: LocalTime? = LocalTime(9, 0),
+    endTime: LocalTime? = null
+): Habit {
+    val detail = when (frequencyType) {
+        FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
+            scheduledTime = scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
+        )
+        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
+            intervalMinutes = intervalMinutes,
+            startTime = startTime ?: LocalTime(9, 0),
+            endTime = endTime
+        )
+        FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
+            intervalMinutes = intervalMinutes,
+            startTime = startTime ?: LocalTime(9, 0),
+            endTime = endTime
+        )
+    }
+    
+    return Habit(
+        id = id,
+        name = name,
+        description = description,
+        color = color,
+        isActive = isActive,
+        createdAt = createdAt,
+        detail = detail
+    )
 }
+
+val Habit.endTime: LocalTime?
+    get() = when (val detail = this.detail) {
+        is HabitDetail.OnceDailyHabitDetail -> null
+        is HabitDetail.HourlyHabitDetail -> detail.endTime
+        is HabitDetail.IntervalHabitDetail -> detail.endTime
+    }
 
 /**
  * Enum representing different frequency types for habits.

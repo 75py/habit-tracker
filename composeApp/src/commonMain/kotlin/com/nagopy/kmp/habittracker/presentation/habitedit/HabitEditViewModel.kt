@@ -3,10 +3,7 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nagopy.kmp.habittracker.domain.model.Habit
-import com.nagopy.kmp.habittracker.domain.model.HabitBase
-import com.nagopy.kmp.habittracker.domain.model.DailyHabit
-import com.nagopy.kmp.habittracker.domain.model.HourlyHabit
-import com.nagopy.kmp.habittracker.domain.model.IntervalHabit
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase

@@ -18,8 +18,7 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.INTERVAL,
-                intervalMinutes = intervalMinutes
+                detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
             assertEquals(intervalMinutes, habit.intervalMinutes)
         }
@@ -36,8 +35,7 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.INTERVAL,
-                    intervalMinutes = intervalMinutes
+                    detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
             assertEquals(
@@ -54,31 +52,25 @@ class HabitValidationTest {
             name = "Test Habit",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440 // Only 1440 is valid for ONCE_DAILY
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(9, 0))
         )
-        assertEquals(1440, habit.intervalMinutes)
+        assertEquals(1440, habit.intervalMinutes) // Should return 1440 for compatibility
     }
 
     @Test
-    fun `Habit creation should fail with invalid ONCE_DAILY values`() {
-        val invalidIntervalMinutes = listOf(720, 1200, 1439, 1441, 2880)
+    fun `Habit creation should succeed with different ONCE_DAILY times`() {
+        val times = listOf(LocalTime(6, 0), LocalTime(12, 30), LocalTime(18, 45))
         
-        invalidIntervalMinutes.forEach { intervalMinutes ->
-            val exception = assertFailsWith<IllegalArgumentException> {
-                Habit(
-                    id = 1L,
-                    name = "Test Habit",
-                    description = "Test",
-                    createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.ONCE_DAILY,
-                    intervalMinutes = intervalMinutes
-                )
-            }
-            assertEquals(
-                "ONCE_DAILY frequency type requires intervalMinutes to be exactly 1440 (24 hours). Got: $intervalMinutes",
-                exception.message
+        times.forEach { time ->
+            val habit = Habit(
+                id = 1L,
+                name = "Test Habit",
+                description = "Test",
+                createdAt = LocalDate.parse("2024-01-01"),
+                detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = time)
             )
+            assertEquals(time, habit.startTime)
+            assertEquals(FrequencyType.ONCE_DAILY, habit.frequencyType)
         }
     }
 
@@ -92,8 +84,7 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.HOURLY,
-                intervalMinutes = intervalMinutes
+                detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
             )
             assertEquals(intervalMinutes, habit.intervalMinutes)
         }
@@ -110,8 +101,7 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.HOURLY,
-                    intervalMinutes = intervalMinutes
+                    detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
             assertEquals(
