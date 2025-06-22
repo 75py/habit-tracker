@@ -10,8 +10,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -24,14 +26,18 @@ class GetNextTasksUseCaseTest {
     
     private val getNextTasksUseCase = GetNextTasksUseCase(
         habitRepository = mockHabitRepository,
-        clock = mockClock
+        clock = mockClock,
+        timeZone = TimeZone.UTC
     )
 
     @Test
     fun `getNextTaskForHabit should return next upcoming task`() = runTest {
         // Given
         val habitId = 1L
-        val currentTime = Instant.parse("2024-01-20T10:30:00Z")
+        // Create a specific LocalDateTime that represents 10:30 AM on 2024-01-20
+        // Convert to Instant using UTC to avoid timezone issues in test
+        val currentLocalDateTime = LocalDateTime(2024, 1, 20, 10, 30)
+        val currentTime = currentLocalDateTime.toInstant(TimeZone.UTC)
         val habit = Habit(
             id = habitId,
             name = "Test Habit",
@@ -62,7 +68,8 @@ class GetNextTasksUseCaseTest {
     fun `getNextTaskForHabit should return null for inactive habit`() = runTest {
         // Given
         val habitId = 1L
-        val currentTime = Instant.parse("2024-01-20T10:30:00Z")
+        val currentLocalDateTime = LocalDateTime(2024, 1, 20, 10, 30)
+        val currentTime = currentLocalDateTime.toInstant(TimeZone.UTC)
         val habit = Habit(
             id = habitId,
             name = "Test Habit",
@@ -90,7 +97,8 @@ class GetNextTasksUseCaseTest {
     fun `getNextTaskForHabit should return null when habit not found`() = runTest {
         // Given
         val habitId = 1L
-        val currentTime = Instant.parse("2024-01-20T10:30:00Z")
+        val currentLocalDateTime = LocalDateTime(2024, 1, 20, 10, 30)
+        val currentTime = currentLocalDateTime.toInstant(TimeZone.UTC)
         
         coEvery { mockClock.now() } returns currentTime
         coEvery { mockHabitRepository.getHabit(habitId) } returns null
@@ -105,7 +113,8 @@ class GetNextTasksUseCaseTest {
     @Test
     fun `getNextUpcomingTask should return earliest task across all habits`() = runTest {
         // Given
-        val currentTime = Instant.parse("2024-01-20T10:30:00Z")
+        val currentLocalDateTime = LocalDateTime(2024, 1, 20, 10, 30)
+        val currentTime = currentLocalDateTime.toInstant(TimeZone.UTC)
         val habit1 = Habit(
             id = 1L,
             name = "Habit 1",
@@ -149,7 +158,8 @@ class GetNextTasksUseCaseTest {
     @Test
     fun `getNextUpcomingTask should return null when no active habits`() = runTest {
         // Given
-        val currentTime = Instant.parse("2024-01-20T10:30:00Z")
+        val currentLocalDateTime = LocalDateTime(2024, 1, 20, 10, 30)
+        val currentTime = currentLocalDateTime.toInstant(TimeZone.UTC)
         
         coEvery { mockClock.now() } returns currentTime
         coEvery { mockHabitRepository.getActiveHabits() } returns flowOf(emptyList())
