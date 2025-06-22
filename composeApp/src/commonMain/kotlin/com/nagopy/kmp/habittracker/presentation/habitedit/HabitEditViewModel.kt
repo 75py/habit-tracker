@@ -51,26 +51,26 @@ class HabitEditViewModel(
                 val habit = getHabitUseCase(habitId)
                 if (habit != null) {
                     // Determine the appropriate time unit based on interval minutes and type
-                    val (intervalMinutes, intervalUnit) = when (habit) {
-                        is DailyHabit -> {
+                    val (intervalMinutes, intervalUnit) = when (val detail = habit.detail) {
+                        is HabitDetail.OnceDailyHabitDetail -> {
                             HabitIntervalValidator.VALID_ONCE_DAILY_MINUTES to TimeUnit.HOURS
                         }
-                        is HourlyHabit -> {
-                            habit.intervalMinutes to TimeUnit.HOURS
+                        is HabitDetail.HourlyHabitDetail -> {
+                            detail.intervalMinutes to TimeUnit.HOURS
                         }
-                        is IntervalHabit -> {
-                            if (habit.intervalMinutes % 60 == 0) {
-                                habit.intervalMinutes to TimeUnit.HOURS
+                        is HabitDetail.IntervalHabitDetail -> {
+                            if (detail.intervalMinutes % 60 == 0) {
+                                detail.intervalMinutes to TimeUnit.HOURS
                             } else {
-                                habit.intervalMinutes to TimeUnit.MINUTES
+                                detail.intervalMinutes to TimeUnit.MINUTES
                             }
                         }
                     }
                     
-                    val (scheduledTimes, startTime, endTime) = when (habit) {
-                        is DailyHabit -> Triple(habit.scheduledTimes, null, null)
-                        is HourlyHabit -> Triple(emptyList(), habit.startTime, habit.endTime)
-                        is IntervalHabit -> Triple(emptyList(), habit.startTime, habit.endTime)
+                    val (scheduledTimes, startTime, endTime) = when (val detail = habit.detail) {
+                        is HabitDetail.OnceDailyHabitDetail -> Triple(listOf(detail.scheduledTime), null, null)
+                        is HabitDetail.HourlyHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
+                        is HabitDetail.IntervalHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
                     }
                     
                     _uiState.value = HabitEditUiState.Content(
@@ -284,33 +284,31 @@ class HabitEditViewModel(
                 if (isEditing) {
                     Logger.d("Updating habit: ${currentState.name}", tag = "HabitEdit")
                     
-                    val habitBase = HabitBase(
-                        id = currentState.editHabitId!!,
-                        name = currentState.name.trim(),
-                        description = currentState.description.trim(),
-                        color = currentState.color,
-                        isActive = currentState.isActive,
-                        createdAt = currentState.createdAt ?: Clock.System.todayIn(TimeZone.currentSystemDefault())
-                    )
-                    
-                    val habit: Habit = when (currentState.frequencyType) {
-                        FrequencyType.ONCE_DAILY -> DailyHabit(
-                            base = habitBase,
-                            scheduledTimes = currentState.scheduledTimes
+                    val detail = when (currentState.frequencyType) {
+                        FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
+                            scheduledTime = currentState.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
                         )
-                        FrequencyType.HOURLY -> HourlyHabit(
-                            base = habitBase,
+                        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
                             startTime = currentState.startTime ?: LocalTime(9, 0),
                             endTime = currentState.endTime
                         )
-                        FrequencyType.INTERVAL -> IntervalHabit(
-                            base = habitBase,
+                        FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
                             startTime = currentState.startTime ?: LocalTime(9, 0),
                             endTime = currentState.endTime
                         )
                     }
+                    
+                    val habit = Habit(
+                        id = currentState.editHabitId!!,
+                        name = currentState.name.trim(),
+                        description = currentState.description.trim(),
+                        color = currentState.color,
+                        isActive = currentState.isActive,
+                        createdAt = currentState.createdAt ?: Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                        detail = detail
+                    )
 
                     updateHabitUseCase(habit)
                     val habitId = currentState.editHabitId
@@ -328,32 +326,30 @@ class HabitEditViewModel(
                 } else {
                     Logger.d("Creating new habit: ${currentState.name}", tag = "HabitEdit")
                     
-                    val habitBase = HabitBase(
-                        name = currentState.name.trim(),
-                        description = currentState.description.trim(),
-                        color = currentState.color,
-                        isActive = currentState.isActive,
-                        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault())
-                    )
-                    
-                    val habit: Habit = when (currentState.frequencyType) {
-                        FrequencyType.ONCE_DAILY -> DailyHabit(
-                            base = habitBase,
-                            scheduledTimes = currentState.scheduledTimes
+                    val detail = when (currentState.frequencyType) {
+                        FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
+                            scheduledTime = currentState.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
                         )
-                        FrequencyType.HOURLY -> HourlyHabit(
-                            base = habitBase,
+                        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
                             startTime = currentState.startTime ?: LocalTime(9, 0),
                             endTime = currentState.endTime
                         )
-                        FrequencyType.INTERVAL -> IntervalHabit(
-                            base = habitBase,
+                        FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
                             startTime = currentState.startTime ?: LocalTime(9, 0),
                             endTime = currentState.endTime
                         )
                     }
+                    
+                    val habit = Habit(
+                        name = currentState.name.trim(),
+                        description = currentState.description.trim(),
+                        color = currentState.color,
+                        isActive = currentState.isActive,
+                        createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                        detail = detail
+                    )
 
                     val habitId = addHabitUseCase(habit)
                     

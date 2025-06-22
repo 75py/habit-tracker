@@ -1,9 +1,7 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
-import com.nagopy.kmp.habittracker.domain.model.DailyHabit
-import com.nagopy.kmp.habittracker.domain.model.HourlyHabit
-import com.nagopy.kmp.habittracker.domain.model.IntervalHabit
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
