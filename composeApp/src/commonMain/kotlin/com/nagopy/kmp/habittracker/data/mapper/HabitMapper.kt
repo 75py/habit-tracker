@@ -25,7 +25,7 @@ fun HabitEntity.toDomainModel(): Habit {
     
     val detail = when (detectedFrequencyType) {
         FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
-            scheduledTime = parseScheduledTimes(scheduledTimes).firstOrNull() ?: LocalTime(9, 0)
+            scheduledTimes = parseScheduledTimes(scheduledTimes).ifEmpty { listOf(LocalTime(9, 0)) }
         )
         FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
             intervalMinutes = intervalMinutes,
@@ -64,7 +64,7 @@ fun Habit.toEntity(): HabitEntity {
             is HabitDetail.IntervalHabitDetail -> detail.intervalMinutes
         },
         scheduledTimes = when (val detail = this.detail) {
-            is HabitDetail.OnceDailyHabitDetail -> formatScheduledTimes(listOf(detail.scheduledTime))
+            is HabitDetail.OnceDailyHabitDetail -> formatScheduledTimes(detail.scheduledTimes)
             is HabitDetail.HourlyHabitDetail, is HabitDetail.IntervalHabitDetail -> "" // No scheduled times for interval-based habits
         },
         startTime = when (val detail = this.detail) {

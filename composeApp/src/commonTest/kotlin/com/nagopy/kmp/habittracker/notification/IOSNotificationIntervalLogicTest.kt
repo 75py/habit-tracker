@@ -7,6 +7,11 @@ import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
+import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
+import com.nagopy.kmp.habittracker.domain.model.startTime
+import com.nagopy.kmp.habittracker.domain.model.endTime
 
 /**
  * Test for iOS notification interval logic using the new intervalMinutes constraints.

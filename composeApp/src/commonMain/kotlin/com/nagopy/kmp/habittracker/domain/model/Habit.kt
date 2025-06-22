@@ -18,7 +18,7 @@ data class Habit(
 
 sealed interface HabitDetail {
     data class OnceDailyHabitDetail(
-        val scheduledTime: LocalTime = LocalTime(9, 0) // Single time per day
+        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)) // Scheduled times per day
     ) : HabitDetail
     
     data class HourlyHabitDetail(
@@ -68,9 +68,9 @@ val Habit.frequencyType: FrequencyType
  */
 val Habit.scheduledTimes: List<LocalTime>
     get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> listOf(detail.scheduledTime)
-        is HabitDetail.HourlyHabitDetail -> listOf(detail.startTime)
-        is HabitDetail.IntervalHabitDetail -> listOf(detail.startTime)
+        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes
+        is HabitDetail.HourlyHabitDetail -> emptyList() // HOURLY doesn't use scheduledTimes
+        is HabitDetail.IntervalHabitDetail -> emptyList() // INTERVAL doesn't use scheduledTimes
     }
 
 val Habit.intervalMinutes: Int
@@ -82,7 +82,7 @@ val Habit.intervalMinutes: Int
 
 val Habit.startTime: LocalTime?
     get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTime
+        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes.firstOrNull()
         is HabitDetail.HourlyHabitDetail -> detail.startTime
         is HabitDetail.IntervalHabitDetail -> detail.startTime
     }
@@ -106,7 +106,7 @@ fun Habit(
 ): Habit {
     val detail = when (frequencyType) {
         FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
-            scheduledTime = scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
+            scheduledTimes = scheduledTimes.ifEmpty { listOf(LocalTime(9, 0)) }
         )
         FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
             intervalMinutes = intervalMinutes,

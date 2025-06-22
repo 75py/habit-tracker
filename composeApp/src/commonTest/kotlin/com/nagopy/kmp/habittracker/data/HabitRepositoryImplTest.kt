@@ -6,6 +6,7 @@ import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

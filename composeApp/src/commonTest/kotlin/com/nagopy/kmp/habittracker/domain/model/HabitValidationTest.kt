@@ -52,7 +52,7 @@ class HabitValidationTest {
             name = "Test Habit",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(9, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
         )
         assertEquals(1440, habit.intervalMinutes) // Should return 1440 for compatibility
     }
@@ -67,7 +67,7 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = time)
+                detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(time))
             )
             assertEquals(time, habit.startTime)
             assertEquals(FrequencyType.ONCE_DAILY, habit.frequencyType)

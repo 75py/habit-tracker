@@ -40,7 +40,9 @@ class GetTodayTasksUseCase(
     private suspend fun generateTasksForHabit(habit: Habit, date: LocalDate): List<Task> {
         return when (val detail = habit.detail) {
             is HabitDetail.OnceDailyHabitDetail -> {
-                listOf(createTask(habit, date, detail.scheduledTime))
+                detail.scheduledTimes.map { scheduledTime ->
+                    createTask(habit, date, scheduledTime)
+                }
             }
             is HabitDetail.HourlyHabitDetail -> {
                 generateHourlyTasks(habit, detail, date)

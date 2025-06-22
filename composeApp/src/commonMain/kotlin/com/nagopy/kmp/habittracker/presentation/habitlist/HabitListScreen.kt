@@ -368,7 +368,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#2196F3",
             isActive = true,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(9, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
         ),
         Habit(
             id = 2L,
@@ -377,7 +377,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#4CAF50",
             isActive = true,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(7, 30))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(7, 30)))
         ),
         Habit(
             id = 3L,
@@ -386,7 +386,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#9C27B0",
             isActive = false,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(18, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(18, 0)))
         )
     )
     
@@ -463,7 +463,7 @@ private fun HabitItemPreview() {
         color = "#2196F3",
         isActive = true,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(9, 0))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
     )
     
     MaterialTheme {
@@ -487,7 +487,7 @@ private fun HabitItemInactivePreview() {
         color = "#4CAF50",
         isActive = false,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(7, 30))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(7, 30)))
     )
     
     MaterialTheme {
@@ -511,7 +511,7 @@ private fun HabitItemNoDescriptionPreview() {
         color = "#9C27B0",
         isActive = true,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        detail = HabitDetail.OnceDailyHabitDetail(scheduledTime = LocalTime(18, 0))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(18, 0)))
     )
     
     MaterialTheme {
