@@ -13,6 +13,7 @@ import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -426,5 +427,157 @@ private fun EndTimeConfiguration(
                 }
             }
         )
+    }
+}
+
+// ========== Previews ==========
+
+@Preview
+@Composable
+private fun SchedulingSectionOnceDailyPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            SchedulingSection(
+                frequencyType = FrequencyType.ONCE_DAILY,
+                intervalValue = 24,
+                intervalUnit = TimeUnit.HOURS,
+                scheduledTimes = listOf(LocalTime(9, 0), LocalTime(18, 0)),
+                endTime = null,
+                onFrequencyTypeChange = {},
+                onIntervalValueChange = { _, _ -> },
+                onIntervalUnitChange = {},
+                onScheduledTimesChange = {},
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SchedulingSectionHourlyPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            SchedulingSection(
+                frequencyType = FrequencyType.HOURLY,
+                intervalValue = 2,
+                intervalUnit = TimeUnit.HOURS,
+                scheduledTimes = listOf(LocalTime(8, 0)),
+                endTime = LocalTime(22, 0),
+                onFrequencyTypeChange = {},
+                onIntervalValueChange = { _, _ -> },
+                onIntervalUnitChange = {},
+                onScheduledTimesChange = {},
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SchedulingSectionIntervalPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            SchedulingSection(
+                frequencyType = FrequencyType.INTERVAL,
+                intervalValue = 30,
+                intervalUnit = TimeUnit.MINUTES,
+                scheduledTimes = listOf(LocalTime(9, 0)),
+                endTime = LocalTime(17, 0),
+                onFrequencyTypeChange = {},
+                onIntervalValueChange = { _, _ -> },
+                onIntervalUnitChange = {},
+                onScheduledTimesChange = {},
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun FrequencyTypeSelectionPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            FrequencyTypeSelection(
+                frequencyType = FrequencyType.HOURLY,
+                onFrequencyTypeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalConfigurationPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            IntervalConfiguration(
+                frequencyType = FrequencyType.INTERVAL,
+                intervalValue = 30,
+                intervalUnit = TimeUnit.MINUTES,
+                onIntervalValueChange = { _, _ -> },
+                onIntervalUnitChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ScheduledTimesConfigurationOnceDailyPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            ScheduledTimesConfiguration(
+                frequencyType = FrequencyType.ONCE_DAILY,
+                scheduledTimes = listOf(LocalTime(9, 0), LocalTime(18, 0)),
+                endTime = null,
+                onScheduledTimesChange = {},
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ScheduledTimesConfigurationHourlyPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            ScheduledTimesConfiguration(
+                frequencyType = FrequencyType.HOURLY,
+                scheduledTimes = listOf(LocalTime(8, 0)),
+                endTime = LocalTime(22, 0),
+                onScheduledTimesChange = {},
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun EndTimeConfigurationPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            EndTimeConfiguration(
+                endTime = LocalTime(22, 0),
+                onEndTimeChange = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun EndTimeConfigurationNoTimePreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            EndTimeConfiguration(
+                endTime = null,
+                onEndTimeChange = {}
+            )
+        }
     }
 }

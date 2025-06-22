@@ -18,6 +18,7 @@ import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.selected
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ColorOption(
@@ -57,6 +58,56 @@ fun ColorOption(
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
+        }
+    }
+}
+
+// ========== Previews ==========
+
+@Preview
+@Composable
+private fun ColorOptionSelectedPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            ColorOption(
+                color = "#2196F3",
+                isSelected = true,
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ColorOptionUnselectedPreview() {
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            ColorOption(
+                color = "#4CAF50",
+                isSelected = false,
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ColorOptionRowPreview() {
+    val colors = listOf("#2196F3", "#4CAF50", "#FF9800", "#9C27B0", "#F44336")
+    
+    MaterialTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                colors.forEachIndexed { index, color ->
+                    ColorOption(
+                        color = color,
+                        isSelected = index == 1, // Select the second one
+                        onClick = {}
+                    )
+                }
+            }
         }
     }
 }

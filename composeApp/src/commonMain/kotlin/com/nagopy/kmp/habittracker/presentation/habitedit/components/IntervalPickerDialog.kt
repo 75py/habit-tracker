@@ -18,6 +18,7 @@ import com.nagopy.kmp.habittracker.presentation.habitedit.TimeUnit
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun IntervalPickerDialog(
@@ -228,4 +229,48 @@ fun IntervalPickerDialog(
             }
         }
     )
+}
+
+// ========== Previews ==========
+
+@Preview
+@Composable
+private fun IntervalPickerDialogHourlyPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 2,
+            unit = TimeUnit.HOURS,
+            frequencyType = FrequencyType.HOURLY,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogIntervalMinutesPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 30,
+            unit = TimeUnit.MINUTES,
+            frequencyType = FrequencyType.INTERVAL,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun IntervalPickerDialogIntervalHoursPreview() {
+    MaterialTheme {
+        IntervalPickerDialog(
+            currentValue = 1,
+            unit = TimeUnit.HOURS,
+            frequencyType = FrequencyType.INTERVAL,
+            onValueAndUnitChange = { _, _ -> },
+            onDismiss = {}
+        )
+    }
 }
