@@ -78,14 +78,14 @@ private fun TodayScreenContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> LoadingState()
-                uiState.error != null -> ErrorState(
-                    error = uiState.error,
+            when (uiState) {
+                is TodayUiState.Loading -> LoadingState()
+                is TodayUiState.Error -> ErrorState(
+                    error = uiState.message,
                     onRetry = onRefresh
                 )
-                uiState.tasks.isEmpty() -> EmptyState()
-                else -> TasksList(
+                is TodayUiState.Empty -> EmptyState()
+                is TodayUiState.Content -> TasksList(
                     tasks = uiState.tasks,
                     onTaskComplete = onTaskComplete
                 )
@@ -310,10 +310,8 @@ private fun TodayScreenWithTasksPreview() {
     
     MaterialTheme {
         TodayScreenContent(
-            uiState = TodayUiState(
-                tasks = sampleTasks,
-                isLoading = false,
-                error = null
+            uiState = TodayUiState.Content(
+                tasks = sampleTasks
             ),
             onNavigateBack = {},
             onRefresh = {},
@@ -327,11 +325,7 @@ private fun TodayScreenWithTasksPreview() {
 private fun TodayScreenEmptyStatePreview() {
     MaterialTheme {
         TodayScreenContent(
-            uiState = TodayUiState(
-                tasks = emptyList(),
-                isLoading = false,
-                error = null
-            ),
+            uiState = TodayUiState.Empty,
             onNavigateBack = {},
             onRefresh = {},
             onTaskComplete = {}
@@ -344,11 +338,7 @@ private fun TodayScreenEmptyStatePreview() {
 private fun TodayScreenLoadingStatePreview() {
     MaterialTheme {
         TodayScreenContent(
-            uiState = TodayUiState(
-                tasks = emptyList(),
-                isLoading = true,
-                error = null
-            ),
+            uiState = TodayUiState.Loading,
             onNavigateBack = {},
             onRefresh = {},
             onTaskComplete = {}
@@ -361,10 +351,8 @@ private fun TodayScreenLoadingStatePreview() {
 private fun TodayScreenErrorStatePreview() {
     MaterialTheme {
         TodayScreenContent(
-            uiState = TodayUiState(
-                tasks = emptyList(),
-                isLoading = false,
-                error = "Failed to load today's tasks"
+            uiState = TodayUiState.Error(
+                message = "Failed to load today's tasks"
             ),
             onNavigateBack = {},
             onRefresh = {},

@@ -7,6 +7,7 @@ import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ManageNotificationsUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.ScheduleNextNotificationUseCase
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ class TodayViewModel(
     private val scheduleNextNotificationUseCase: ScheduleNextNotificationUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TodayUiState())
+    private val _uiState = MutableStateFlow<TodayUiState>(TodayUiState.Loading)
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
 
     init {
@@ -34,29 +35,35 @@ class TodayViewModel(
 
     private fun loadTasks() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = TodayUiState.Loading
             
             getTodayTasksUseCase()
                 .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Unknown error occurred"
+                    _uiState.value = TodayUiState.Error(
+                        message = exception.message ?: "Unknown error occurred"
                     )
                 }
                 .collect { tasksFromDatabase ->
-                    // Merge database state with UI completion state
-                    val currentCompletedKeys = _uiState.value.completedTaskKeys
-                    val mergedTasks = tasksFromDatabase.map { task ->
-                        val taskKey = createTaskKey(task)
-                        val isCompletedInUI = currentCompletedKeys.contains(taskKey)
-                        task.copy(isCompleted = task.isCompleted || isCompletedInUI)
+                    if (tasksFromDatabase.isEmpty()) {
+                        _uiState.value = TodayUiState.Empty
+                    } else {
+                        // Merge database state with UI completion state
+                        val currentCompletedKeys = when (val currentState = _uiState.value) {
+                            is TodayUiState.Content -> currentState.completedTaskKeys
+                            else -> emptySet()
+                        }
+                        
+                        val mergedTasks = tasksFromDatabase.map { task ->
+                            val taskKey = createTaskKey(task)
+                            val isCompletedInUI = currentCompletedKeys.contains(taskKey)
+                            task.copy(isCompleted = task.isCompleted || isCompletedInUI)
+                        }
+                        
+                        _uiState.value = TodayUiState.Content(
+                            tasks = mergedTasks,
+                            completedTaskKeys = currentCompletedKeys
+                        )
                     }
-                    
-                    _uiState.value = _uiState.value.copy(
-                        tasks = mergedTasks,
-                        isLoading = false,
-                        error = null
-                    )
                 }
         }
     }
@@ -64,9 +71,12 @@ class TodayViewModel(
     fun completeTask(task: Task) {
         viewModelScope.launch {
             try {
+                val currentState = _uiState.value
+                if (currentState !is TodayUiState.Content) return@launch
+                
                 // Immediately update UI state to show task as completed
                 val taskKey = createTaskKey(task)
-                val updatedTasks = _uiState.value.tasks.map { existingTask ->
+                val updatedTasks = currentState.tasks.map { existingTask ->
                     if (createTaskKey(existingTask) == taskKey) {
                         existingTask.copy(isCompleted = true)
                     } else {
@@ -74,9 +84,9 @@ class TodayViewModel(
                     }
                 }
                 
-                _uiState.value = _uiState.value.copy(
+                _uiState.value = TodayUiState.Content(
                     tasks = updatedTasks,
-                    completedTaskKeys = _uiState.value.completedTaskKeys + taskKey
+                    completedTaskKeys = currentState.completedTaskKeys + taskKey
                 )
                 
                 // Complete the task in the backend
@@ -86,28 +96,16 @@ class TodayViewModel(
                 manageNotificationsUseCase.cancelTaskNotification(task)
                 
             } catch (exception: Exception) {
-                // Revert the UI state change if backend call failed
-                val taskKey = createTaskKey(task)
-                val revertedTasks = _uiState.value.tasks.map { existingTask ->
-                    if (createTaskKey(existingTask) == taskKey) {
-                        existingTask.copy(isCompleted = false)
-                    } else {
-                        existingTask
-                    }
-                }
-                
-                _uiState.value = _uiState.value.copy(
-                    tasks = revertedTasks,
-                    completedTaskKeys = _uiState.value.completedTaskKeys - taskKey,
-                    error = "Failed to complete task: ${exception.message}"
+                Logger.e(exception, "Failed to complete task", tag = "TodayViewModel")
+                _uiState.value = TodayUiState.Error(
+                    message = "Failed to complete task: ${exception.message}"
                 )
             }
         }
     }
 
     fun refresh() {
-        // Clear UI completion state when refreshing to start fresh
-        _uiState.value = _uiState.value.copy(completedTaskKeys = emptySet())
+        // Clear UI completion state when refreshing to start fresh and reload
         loadTasks()
         scheduleNotifications()
     }
@@ -137,11 +135,30 @@ class TodayViewModel(
 }
 
 /**
- * UI state for the Today screen
+ * UI state for the Today screen using sealed class pattern
  */
-data class TodayUiState(
-    val tasks: List<Task> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val completedTaskKeys: Set<String> = emptySet()
-)
+sealed interface TodayUiState {
+    
+    /**
+     * Loading state when fetching tasks
+     */
+    data object Loading : TodayUiState
+    
+    /**
+     * Error state when task loading fails
+     */
+    data class Error(val message: String) : TodayUiState
+    
+    /**
+     * Empty state when no tasks are scheduled for today
+     */
+    data object Empty : TodayUiState
+    
+    /**
+     * Content state when tasks are successfully loaded
+     */
+    data class Content(
+        val tasks: List<Task>,
+        val completedTaskKeys: Set<String> = emptySet()
+    ) : TodayUiState
+}
