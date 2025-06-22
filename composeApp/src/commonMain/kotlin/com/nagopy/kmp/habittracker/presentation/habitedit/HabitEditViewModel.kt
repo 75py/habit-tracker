@@ -67,6 +67,7 @@ class HabitEditViewModel(
                         intervalMinutes = habit.intervalMinutes,
                         intervalUnit = intervalUnit,
                         scheduledTimes = habit.scheduledTimes,
+                        startTime = habit.startTime,
                         endTime = habit.endTime
                     )
                 } else {
@@ -124,9 +125,35 @@ class HabitEditViewModel(
                 FrequencyType.INTERVAL -> currentState.intervalMinutes
             }
             
+            // When switching frequency types, clear inappropriate data
+            val newScheduledTimes = if (frequencyType == FrequencyType.ONCE_DAILY) {
+                if (currentState.scheduledTimes.isEmpty()) {
+                    listOf(LocalTime(9, 0)) // Default for ONCE_DAILY
+                } else {
+                    currentState.scheduledTimes
+                }
+            } else {
+                emptyList() // Clear for HOURLY/INTERVAL
+            }
+            
+            val newStartTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
+                currentState.startTime ?: LocalTime(9, 0) // Default for HOURLY/INTERVAL
+            } else {
+                null // Clear for ONCE_DAILY
+            }
+            
+            val newEndTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
+                currentState.endTime // Keep current end time for HOURLY/INTERVAL
+            } else {
+                null // Clear for ONCE_DAILY
+            }
+            
             _uiState.value = currentState.copy(
                 frequencyType = frequencyType,
-                intervalMinutes = newIntervalMinutes
+                intervalMinutes = newIntervalMinutes,
+                scheduledTimes = newScheduledTimes,
+                startTime = newStartTime,
+                endTime = newEndTime
             )
         }
     }
@@ -188,6 +215,13 @@ class HabitEditViewModel(
         }
     }
 
+    fun updateStartTime(startTime: LocalTime?) {
+        val currentState = _uiState.value
+        if (currentState is HabitEditUiState.Content) {
+            _uiState.value = currentState.copy(startTime = startTime)
+        }
+    }
+
     fun updateEndTime(endTime: LocalTime?) {
         val currentState = _uiState.value
         if (currentState is HabitEditUiState.Content) {
@@ -206,6 +240,22 @@ class HabitEditViewModel(
         if (currentState.name.isBlank()) {
             _uiState.value = currentState.copy(nameError = "Name is required")
             return
+        }
+        
+        // Validate scheduled times based on frequency type
+        when (currentState.frequencyType) {
+            FrequencyType.ONCE_DAILY -> {
+                if (currentState.scheduledTimes.isEmpty()) {
+                    _uiState.value = currentState.copy(saveError = "At least one scheduled time is required")
+                    return
+                }
+            }
+            FrequencyType.HOURLY, FrequencyType.INTERVAL -> {
+                if (currentState.startTime == null) {
+                    _uiState.value = currentState.copy(saveError = "Start time is required")
+                    return
+                }
+            }
         }
 
         _uiState.value = currentState.copy(isSaving = true, saveError = null)
@@ -226,8 +276,21 @@ class HabitEditViewModel(
                         createdAt = currentState.createdAt ?: Clock.System.todayIn(TimeZone.currentSystemDefault()),
                         frequencyType = currentState.frequencyType,
                         intervalMinutes = currentState.intervalMinutes,
-                        scheduledTimes = currentState.scheduledTimes,
-                        endTime = currentState.endTime
+                        scheduledTimes = if (currentState.frequencyType == FrequencyType.ONCE_DAILY) {
+                            currentState.scheduledTimes
+                        } else {
+                            emptyList()
+                        },
+                        startTime = if (currentState.frequencyType != FrequencyType.ONCE_DAILY) {
+                            currentState.startTime
+                        } else {
+                            null
+                        },
+                        endTime = if (currentState.frequencyType != FrequencyType.ONCE_DAILY) {
+                            currentState.endTime
+                        } else {
+                            null
+                        }
                     )
 
                     updateHabitUseCase(habit)
@@ -254,8 +317,21 @@ class HabitEditViewModel(
                         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
                         frequencyType = currentState.frequencyType,
                         intervalMinutes = currentState.intervalMinutes,
-                        scheduledTimes = currentState.scheduledTimes,
-                        endTime = currentState.endTime
+                        scheduledTimes = if (currentState.frequencyType == FrequencyType.ONCE_DAILY) {
+                            currentState.scheduledTimes
+                        } else {
+                            emptyList()
+                        },
+                        startTime = if (currentState.frequencyType != FrequencyType.ONCE_DAILY) {
+                            currentState.startTime
+                        } else {
+                            null
+                        },
+                        endTime = if (currentState.frequencyType != FrequencyType.ONCE_DAILY) {
+                            currentState.endTime
+                        } else {
+                            null
+                        }
                     )
 
                     val habitId = addHabitUseCase(habit)
@@ -329,8 +405,9 @@ sealed interface HabitEditUiState {
         val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
         val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
         val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
-        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
-        val endTime: LocalTime? = null, // End time for interval-based habits
+        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // For ONCE_DAILY
+        val startTime: LocalTime? = LocalTime(9, 0), // For HOURLY/INTERVAL
+        val endTime: LocalTime? = null, // For HOURLY/INTERVAL
         val nameError: String? = null,
         val saveError: String? = null,
         val isSaving: Boolean = false

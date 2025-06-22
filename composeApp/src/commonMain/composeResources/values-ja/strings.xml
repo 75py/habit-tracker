@@ -41,6 +41,9 @@
     <string name="set_start_time">開始時刻を設定</string>
     <string name="change_end_time">終了時刻を変更</string>
     <string name="set_end_time">終了時刻を設定</string>
+    <string name="change_time">時刻を変更</string>
+    <string name="set_time">時刻を設定</string>
+    <string name="scheduled_times_required">少なくとも1つの予定時刻が必要です</string>
     <string name="active">有効</string>
     <string name="enable_tracking">この習慣のトラッキングを有効にする</string>
     <string name="selected">選択済み</string>

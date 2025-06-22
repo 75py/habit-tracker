@@ -212,6 +212,29 @@ class HabitEditViewModelTest {
     }
 
     @Test
+    fun `saveHabit should fail when scheduled times is empty`() = runTest {
+        // Given
+        viewModel.updateName("Morning Exercise")
+        viewModel.updateScheduledTimes(emptyList()) // Empty scheduled times
+
+        var successCalled = false
+        var errorCalled = false
+
+        // When
+        viewModel.saveHabit(
+            onSuccess = { successCalled = true },
+            onError = { errorCalled = true }
+        )
+
+        // Then
+        assertFalse(successCalled)
+        assertFalse(errorCalled)
+        val uiState = viewModel.uiState.value
+        assertTrue(uiState is HabitEditUiState.Content)
+        assertEquals("At least one scheduled time is required", uiState.saveError)
+    }
+
+    @Test
     fun `saveHabit should succeed with valid data`() = runTest {
         // Given
         val expectedHabitId = 123L

@@ -30,8 +30,21 @@ fun HabitEntity.toDomainModel(): Habit {
         createdAt = LocalDate.parse(createdAt),
         frequencyType = detectedFrequencyType,
         intervalMinutes = intervalMinutes,
-        scheduledTimes = parseScheduledTimes(scheduledTimes),
-        endTime = endTime?.let { parseTime(it) }
+        scheduledTimes = if (detectedFrequencyType == FrequencyType.ONCE_DAILY) {
+            parseScheduledTimes(scheduledTimes)
+        } else {
+            emptyList() // For HOURLY/INTERVAL, don't use scheduledTimes
+        },
+        startTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
+            startTime?.let { parseTime(it) }
+        } else {
+            null // For ONCE_DAILY, don't use startTime
+        },
+        endTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
+            endTime?.let { parseTime(it) }
+        } else {
+            null // For ONCE_DAILY, don't use endTime
+        }
     )
 }
 
@@ -44,8 +57,21 @@ fun Habit.toEntity(): HabitEntity {
         isActive = isActive,
         createdAt = createdAt.toString(),
         intervalMinutes = intervalMinutes,
-        scheduledTimes = formatScheduledTimes(scheduledTimes),
-        endTime = endTime?.let { formatTime(it) }
+        scheduledTimes = if (frequencyType == FrequencyType.ONCE_DAILY) {
+            formatScheduledTimes(scheduledTimes)
+        } else {
+            "" // For HOURLY/INTERVAL, don't store scheduledTimes
+        },
+        startTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
+            startTime?.let { formatTime(it) }
+        } else {
+            null // For ONCE_DAILY, don't store startTime
+        },
+        endTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
+            endTime?.let { formatTime(it) }
+        } else {
+            null // For ONCE_DAILY, don't store endTime
+        }
     )
 }
 

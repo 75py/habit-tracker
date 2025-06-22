@@ -15,8 +15,9 @@ data class Habit(
     val createdAt: LocalDate,
     val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
     val intervalMinutes: Int = 1440, // For hourly/interval-based habits (default 24 hours = 1440 minutes)
-    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // Default 9:00 AM
-    val endTime: LocalTime? = null // End time for interval-based habits
+    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // For ONCE_DAILY: multiple times per day
+    val startTime: LocalTime? = LocalTime(9, 0), // For HOURLY/INTERVAL: start time
+    val endTime: LocalTime? = null // For HOURLY/INTERVAL: end time
 ) {
     init {
         // Validate interval minutes based on frequency type

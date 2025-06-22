@@ -55,6 +55,7 @@ fun HabitEditScreen(
         onIntervalValueChange = viewModel::updateIntervalValue,
         onIntervalUnitChange = viewModel::updateIntervalUnit,
         onScheduledTimesChange = viewModel::updateScheduledTimes,
+        onStartTimeChange = viewModel::updateStartTime,
         onEndTimeChange = viewModel::updateEndTime,
         onActiveChange = viewModel::updateIsActive,
         onSave = {
@@ -81,6 +82,7 @@ private fun HabitEditContent(
     onIntervalValueChange: (Int, TimeUnit) -> Unit,
     onIntervalUnitChange: (TimeUnit) -> Unit,
     onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onStartTimeChange: (LocalTime?) -> Unit,
     onEndTimeChange: (LocalTime?) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onSave: () -> Unit,
@@ -120,6 +122,7 @@ private fun HabitEditContent(
                     onIntervalValueChange = onIntervalValueChange,
                     onIntervalUnitChange = onIntervalUnitChange,
                     onScheduledTimesChange = onScheduledTimesChange,
+                    onStartTimeChange = onStartTimeChange,
                     onEndTimeChange = onEndTimeChange,
                     onActiveChange = onActiveChange,
                     onClearFocus = { focusManager.clearFocus() }
@@ -216,6 +219,7 @@ private fun HabitEditForm(
     onIntervalValueChange: (Int, TimeUnit) -> Unit,
     onIntervalUnitChange: (TimeUnit) -> Unit,
     onScheduledTimesChange: (List<LocalTime>) -> Unit,
+    onStartTimeChange: (LocalTime?) -> Unit,
     onEndTimeChange: (LocalTime?) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     onClearFocus: () -> Unit
@@ -260,11 +264,13 @@ private fun HabitEditForm(
             intervalValue = uiState.intervalValue,
             intervalUnit = uiState.intervalUnit,
             scheduledTimes = uiState.scheduledTimes,
+            startTime = uiState.startTime,
             endTime = uiState.endTime,
             onFrequencyTypeChange = onFrequencyTypeChange,
             onIntervalValueChange = onIntervalValueChange,
             onIntervalUnitChange = onIntervalUnitChange,
             onScheduledTimesChange = onScheduledTimesChange,
+            onStartTimeChange = onStartTimeChange,
             onEndTimeChange = onEndTimeChange
         )
 
@@ -425,7 +431,8 @@ private fun HabitEditScreenAddModePreview() {
                 frequencyType = FrequencyType.ONCE_DAILY,
                 intervalMinutes = 1440,
                 intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = listOf(LocalTime(9, 0)),
+                scheduledTimes = listOf(LocalTime(9, 0)), // ONCE_DAILY uses scheduledTimes
+                startTime = null, // ONCE_DAILY doesn't use startTime
                 endTime = null,
                 nameError = null,
                 saveError = null,
@@ -438,6 +445,7 @@ private fun HabitEditScreenAddModePreview() {
             onIntervalValueChange = { _, _ -> },
             onIntervalUnitChange = {},
             onScheduledTimesChange = {},
+            onStartTimeChange = {},
             onEndTimeChange = {},
             onActiveChange = {},
             onSave = {},
@@ -460,7 +468,8 @@ private fun HabitEditScreenEditModePreview() {
                 frequencyType = FrequencyType.HOURLY,
                 intervalMinutes = 120,
                 intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = listOf(LocalTime(8, 0)),
+                scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
+                startTime = LocalTime(8, 0), // HOURLY uses startTime
                 endTime = LocalTime(22, 0),
                 nameError = null,
                 saveError = null,
@@ -473,6 +482,7 @@ private fun HabitEditScreenEditModePreview() {
             onIntervalValueChange = { _, _ -> },
             onIntervalUnitChange = {},
             onScheduledTimesChange = {},
+            onStartTimeChange = {},
             onEndTimeChange = {},
             onActiveChange = {},
             onSave = {},
@@ -495,7 +505,8 @@ private fun HabitEditScreenErrorStatePreview() {
                 frequencyType = FrequencyType.ONCE_DAILY,
                 intervalMinutes = 1440,
                 intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = listOf(LocalTime(9, 0)),
+                scheduledTimes = listOf(LocalTime(9, 0)), // ONCE_DAILY uses scheduledTimes
+                startTime = null, // ONCE_DAILY doesn't use startTime
                 endTime = null,
                 nameError = "Name is required",
                 saveError = "Failed to save habit",
@@ -508,6 +519,7 @@ private fun HabitEditScreenErrorStatePreview() {
             onIntervalValueChange = { _, _ -> },
             onIntervalUnitChange = {},
             onScheduledTimesChange = {},
+            onStartTimeChange = {},
             onEndTimeChange = {},
             onActiveChange = {},
             onSave = {},
@@ -529,6 +541,7 @@ private fun HabitEditScreenLoadingStatePreview() {
             onIntervalValueChange = { _, _ -> },
             onIntervalUnitChange = {},
             onScheduledTimesChange = {},
+            onStartTimeChange = {},
             onEndTimeChange = {},
             onActiveChange = {},
             onSave = {},
@@ -552,6 +565,7 @@ private fun HabitEditScreenErrorLoadingPreview() {
             onIntervalValueChange = { _, _ -> },
             onIntervalUnitChange = {},
             onScheduledTimesChange = {},
+            onStartTimeChange = {},
             onEndTimeChange = {},
             onActiveChange = {},
             onSave = {},
