@@ -465,11 +465,11 @@ private fun HabitEditScreenEditModePreview() {
                 description = "Stay hydrated throughout the day",
                 color = "#2196F3",
                 isActive = true,
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 120,
                 intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
-                startTime = LocalTime(8, 0), // HOURLY uses startTime
+                scheduledTimes = emptyList(), // INTERVAL doesn't use scheduledTimes
+                startTime = LocalTime(8, 0), // INTERVAL uses startTime
                 endTime = LocalTime(22, 0),
                 nameError = null,
                 saveError = null,
