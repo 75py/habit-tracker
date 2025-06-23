@@ -156,7 +156,7 @@ class IOSNotificationScheduler(
                 }
             }
             FrequencyType.HOURLY -> {
-                val startTime = habit.scheduledTimes.firstOrNull() ?: return notifications
+                val startTime = habit.startTime ?: return notifications
                 val endTime = habit.endTime ?: LocalTime(23, 59)
                 val minute = startTime.minute
                 
@@ -182,22 +182,22 @@ class IOSNotificationScheduler(
             FrequencyType.INTERVAL -> {
                 val intervalMinutes = habit.intervalMinutes
                 val endTime = habit.endTime ?: LocalTime(23, 59)
+                val startTime = habit.startTime ?: return notifications
                 
                 val notificationTimes = mutableSetOf<LocalTime>()
                 
-                habit.scheduledTimes.forEach { startTime ->
-                    if (startTime <= endTime) {
-                        var time = startTime
+                if (startTime <= endTime) {
+                    var time = startTime
+                    
+                    while (time <= endTime) {
+                        notificationTimes.add(time)
                         
-                        while (time <= endTime) {
-                            notificationTimes.add(time)
-                            
-                            val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
-                            val newHour = (totalMinutes / 60) % 24
-                            val newMinute = totalMinutes % 60
-                            time = LocalTime(newHour, newMinute)
-                            
-                            if (totalMinutes >= 24 * 60) break
+                        val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
+                        val newHour = (totalMinutes / 60) % 24
+                        val newMinute = totalMinutes % 60
+                        time = LocalTime(newHour, newMinute)
+                        
+                        if (totalMinutes >= 24 * 60) break
                         }
                     }
                 }

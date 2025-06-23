@@ -5,6 +5,11 @@ import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
+import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
+import com.nagopy.kmp.habittracker.domain.model.startTime
+import com.nagopy.kmp.habittracker.domain.model.endTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlin.test.Test

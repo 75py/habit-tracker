@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.presentation.ui.parseColor
 import habittracker.composeapp.generated.resources.Res
@@ -367,8 +368,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#2196F3",
             isActive = true,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
         ),
         Habit(
             id = 2L,
@@ -377,8 +377,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#4CAF50",
             isActive = true,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            scheduledTimes = listOf(LocalTime(7, 30))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(7, 30)))
         ),
         Habit(
             id = 3L,
@@ -387,8 +386,7 @@ private fun HabitListScreenWithHabitsPreview() {
             color = "#9C27B0",
             isActive = false,
             createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            scheduledTimes = listOf(LocalTime(18, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(18, 0)))
         )
     )
     
@@ -465,8 +463,7 @@ private fun HabitItemPreview() {
         color = "#2196F3",
         isActive = true,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
-        scheduledTimes = listOf(LocalTime(9, 0))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
     )
     
     MaterialTheme {
@@ -490,8 +487,7 @@ private fun HabitItemInactivePreview() {
         color = "#4CAF50",
         isActive = false,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
-        scheduledTimes = listOf(LocalTime(7, 30))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(7, 30)))
     )
     
     MaterialTheme {
@@ -515,8 +511,7 @@ private fun HabitItemNoDescriptionPreview() {
         color = "#9C27B0",
         isActive = true,
         createdAt = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        frequencyType = FrequencyType.ONCE_DAILY,
-        scheduledTimes = listOf(LocalTime(18, 0))
+        detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(18, 0)))
     )
     
     MaterialTheme {
