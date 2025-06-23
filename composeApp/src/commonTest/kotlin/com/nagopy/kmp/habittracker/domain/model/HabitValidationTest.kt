@@ -27,7 +27,7 @@ class HabitValidationTest {
 
     @Test
     fun `Habit creation should fail with invalid INTERVAL values`() {
-        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 150, 270, 330, 400, 500, 750)
         
         invalidIntervalMinutes.forEach { intervalMinutes ->
             val exception = assertFailsWith<IllegalArgumentException> {
@@ -41,7 +41,7 @@ class HabitValidationTest {
                 )
             }
             assertEquals(
-                "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. Valid values: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60], got: $intervalMinutes",
+                "INTERVAL frequency type requires intervalMinutes to be a valid interval. Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes",
                 exception.message
             )
         }

@@ -98,7 +98,9 @@ class GetTodayTasksUseCaseTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            intervalMinutes = 60, // Every hour
+            scheduledTimes = emptyList(),
+            startTime = LocalTime(9, 0)
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -161,7 +163,9 @@ class GetTodayTasksUseCaseTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            intervalMinutes = 60, // Every hour
+            scheduledTimes = emptyList(),
+            startTime = LocalTime(9, 0)
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -199,7 +203,9 @@ class GetTodayTasksUseCaseTest {
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
             frequencyType = FrequencyType.INTERVAL,
-            scheduledTimes = listOf(LocalTime(9, 0)),
+            intervalMinutes = 60, // Every hour
+            scheduledTimes = emptyList(),
+            startTime = LocalTime(9, 0),
             endTime = LocalTime(17, 0) // 5 PM
         )
         

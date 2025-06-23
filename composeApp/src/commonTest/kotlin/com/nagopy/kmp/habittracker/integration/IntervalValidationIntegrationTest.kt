@@ -21,9 +21,9 @@ import kotlin.test.assertTrue
 class IntervalValidationIntegrationTest {
 
     @Test
-    fun `complete workflow - INTERVAL type should be restricted to valid divisors of 60`() {
-        // Verify all expected valid divisors
-        val expectedValidValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
+    fun `complete workflow - INTERVAL type should be restricted to valid interval values`() {
+        // Verify all expected valid values (divisors of 60 and hourly multiples)
+        val expectedValidValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
         assertEquals(expectedValidValues, HabitIntervalValidator.VALID_INTERVAL_MINUTES)
         
         // Test domain model validation
@@ -40,7 +40,7 @@ class IntervalValidationIntegrationTest {
         }
         
         // Test domain model rejection of invalid values
-        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 150, 270, 330, 500, 750)
         invalidValues.forEach { invalidValue ->
             assertFailsWith<IllegalArgumentException> {
                 Habit(
@@ -81,16 +81,16 @@ class IntervalValidationIntegrationTest {
             "Expected ${intervalState.intervalMinutes} to be a valid divisor of 60"
         )
         
-        // Test HOURLY frequency auto-correction
+        // Test INTERVAL frequency auto-correction
         viewModel.updateFrequencyType(FrequencyType.INTERVAL)
-        viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
+        viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 30 (closer than 60)
         val hourlyState = viewModel.uiState.value
         assertTrue(hourlyState is HabitEditUiState.Content)
         assertTrue(
             HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, hourlyState.intervalMinutes),
-            "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
+            "Expected ${hourlyState.intervalMinutes} to be a valid interval"
         )
-        assertEquals(60, hourlyState.intervalMinutes)
+        assertEquals(30, hourlyState.intervalMinutes) // 30 is closer to 45 than 60
         
         // Test ONCE_DAILY frequency auto-correction
         viewModel.updateFrequencyType(FrequencyType.ONCE_DAILY)
