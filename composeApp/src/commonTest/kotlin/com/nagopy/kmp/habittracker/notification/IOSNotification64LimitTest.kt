@@ -24,9 +24,10 @@ class IOSNotification64LimitTest {
                 id = 1L,
                 name = "Hourly Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 60,
-                scheduledTimes = listOf(LocalTime(0, 30)) // Every hour at :30
+                scheduledTimes = emptyList(),
+                startTime = LocalTime(0, 30) // Every hour starting at :30
             ),
             // 15-minute interval habit - generates 96 notifications (4 per hour * 24 hours)
             Habit(
@@ -35,7 +36,8 @@ class IOSNotification64LimitTest {
                 createdAt = LocalDate(2024, 1, 1),
                 frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 15,
-                scheduledTimes = listOf(LocalTime(0, 0)) // 0, 15, 30, 45 minutes
+                scheduledTimes = emptyList(),
+                startTime = LocalTime(0, 0) // 0, 15, 30, 45 minutes
             )
         )
         
@@ -157,51 +159,23 @@ class IOSNotification64LimitTest {
                     )
                 }
             }
-            FrequencyType.HOURLY -> {
-                val startTime = habit.scheduledTimes.firstOrNull() ?: return notifications
-                val endTime = habit.endTime ?: LocalTime(23, 59)
-                val minute = startTime.minute
-                
-                var currentHour = startTime.hour
-                var triggerIndex = 0
-                
-                while (true) {
-                    val time = LocalTime(currentHour, minute)
-                    if (time > endTime) break
-                    
-                    val identifier = "habit_${habit.id}_hourly_$triggerIndex"
-                    val distance = calculateTestTimeDistance(currentTime, time)
-                    notifications.add(
-                        TestNotification(habit, time, identifier, distance)
-                    )
-                    
-                    currentHour++
-                    if (currentHour > 23) currentHour = 0
-                    triggerIndex++
-                    if (triggerIndex >= 24) break
-                }
-            }
             FrequencyType.INTERVAL -> {
                 val intervalMinutes = habit.intervalMinutes
                 val endTime = habit.endTime ?: LocalTime(23, 59)
+                val startTime = habit.startTime ?: habit.scheduledTimes.firstOrNull() ?: LocalTime(9, 0)
                 
                 val notificationTimes = mutableSetOf<LocalTime>()
+                var time = startTime
                 
-                habit.scheduledTimes.forEach { startTime ->
-                    if (startTime <= endTime) {
-                        var time = startTime
-                        
-                        while (time <= endTime) {
-                            notificationTimes.add(time)
-                            
-                            val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
-                            val newHour = (totalMinutes / 60) % 24
-                            val newMinute = totalMinutes % 60
-                            time = LocalTime(newHour, newMinute)
-                            
-                            if (totalMinutes >= 24 * 60) break
-                        }
-                    }
+                while (time <= endTime) {
+                    notificationTimes.add(time)
+                    
+                    val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
+                    val newHour = (totalMinutes / 60) % 24
+                    val newMinute = totalMinutes % 60
+                    time = LocalTime(newHour, newMinute)
+                    
+                    if (totalMinutes >= 24 * 60) break
                 }
                 
                 notificationTimes.forEachIndexed { index, time ->

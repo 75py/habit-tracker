@@ -82,12 +82,12 @@ class IntervalValidationIntegrationTest {
         )
         
         // Test HOURLY frequency auto-correction
-        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
         val hourlyState = viewModel.uiState.value
         assertTrue(hourlyState is HabitEditUiState.Content)
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, hourlyState.intervalMinutes),
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, hourlyState.intervalMinutes),
             "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
         )
         assertEquals(60, hourlyState.intervalMinutes)
@@ -123,7 +123,7 @@ class IntervalValidationIntegrationTest {
             name = "Test Hourly",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 120 // Valid for HOURLY (2 hours)
         )
         assertEquals(120, habit2.intervalMinutes)
@@ -157,7 +157,7 @@ class IntervalValidationIntegrationTest {
                 name = "Invalid Hourly",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 90 // Invalid for HOURLY (not multiple of 60)
             )
         }
