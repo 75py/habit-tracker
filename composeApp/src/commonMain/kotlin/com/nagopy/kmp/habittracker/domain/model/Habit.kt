@@ -26,11 +26,8 @@ data class Habit(
                 FrequencyType.ONCE_DAILY -> {
                     "ONCE_DAILY frequency type requires intervalMinutes to be exactly 1440 (24 hours). Got: $intervalMinutes"
                 }
-                FrequencyType.HOURLY -> {
-                    "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes"
-                }
                 FrequencyType.INTERVAL -> {
-                    "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. " +
+                    "INTERVAL frequency type requires intervalMinutes to be a valid interval. " +
                     "Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes"
                 }
             }
@@ -43,8 +40,7 @@ data class Habit(
  */
 enum class FrequencyType {
     ONCE_DAILY,    // Once per day at specific time(s)
-    HOURLY,        // Every N hours starting from first scheduled time
-    INTERVAL       // Custom interval in hours
+    INTERVAL       // Custom interval in minutes
 }
 
 /**
@@ -53,9 +49,9 @@ enum class FrequencyType {
 object HabitIntervalValidator {
     /**
      * Valid interval minutes for INTERVAL frequency type.
-     * These are the divisors of 60: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60
+     * Extended to include common hourly intervals: divisors of 60 and multiples of 60 up to 12 hours
      */
-    val VALID_INTERVAL_MINUTES = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
+    val VALID_INTERVAL_MINUTES = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
     
     /**
      * Valid interval minutes for ONCE_DAILY frequency type.
@@ -69,7 +65,6 @@ object HabitIntervalValidator {
     fun isValidIntervalMinutes(frequencyType: FrequencyType, intervalMinutes: Int): Boolean {
         return when (frequencyType) {
             FrequencyType.ONCE_DAILY -> intervalMinutes == VALID_ONCE_DAILY_MINUTES
-            FrequencyType.HOURLY -> intervalMinutes > 0 && intervalMinutes % 60 == 0
             FrequencyType.INTERVAL -> intervalMinutes in VALID_INTERVAL_MINUTES
         }
     }
@@ -80,15 +75,6 @@ object HabitIntervalValidator {
     fun getClosestValidIntervalMinutes(frequencyType: FrequencyType, intervalMinutes: Int): Int {
         return when (frequencyType) {
             FrequencyType.ONCE_DAILY -> VALID_ONCE_DAILY_MINUTES
-            FrequencyType.HOURLY -> {
-                if (intervalMinutes <= 0) {
-                    60 // Default to 1 hour
-                } else {
-                    // Round to nearest hour
-                    val hours = (intervalMinutes + 30) / 60 // Add 30 for rounding
-                    kotlin.math.max(1, hours) * 60
-                }
-            }
             FrequencyType.INTERVAL -> {
                 if (intervalMinutes <= 0) return VALID_INTERVAL_MINUTES.first()
                 

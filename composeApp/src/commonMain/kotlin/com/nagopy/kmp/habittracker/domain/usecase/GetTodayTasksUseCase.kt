@@ -43,36 +43,10 @@ class GetTodayTasksUseCase(
                     createTask(habit, date, time)
                 }
             }
-            FrequencyType.HOURLY -> {
-                generateHourlyTasks(habit, date)
-            }
             FrequencyType.INTERVAL -> {
                 generateIntervalTasks(habit, date)
             }
         }
-    }
-    
-    private suspend fun generateHourlyTasks(habit: Habit, date: LocalDate): List<Task> {
-        val tasks = mutableListOf<Task>()
-        val startTime = habit.startTime ?: LocalTime(9, 0)
-        val intervalMinutes = 60 // Hourly = every 60 minutes
-        
-        var currentTime = startTime
-        val endTime = habit.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
-        
-        while (currentTime <= endTime) {
-            tasks.add(createTask(habit, date, currentTime))
-            
-            // Calculate next time by adding 60 minutes
-            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
-            val newHour = totalMinutes / 60
-            val newMinute = totalMinutes % 60
-            
-            if (newHour >= 24) break
-            currentTime = LocalTime(newHour, newMinute)
-        }
-        
-        return tasks
     }
     
     private suspend fun generateIntervalTasks(habit: Habit, date: LocalDate): List<Task> {
@@ -104,9 +78,9 @@ class GetTodayTasksUseCase(
         val existingLog = habitRepository.getHabitLog(habit.id, date)
         val isCompleted = when (habit.frequencyType) {
             FrequencyType.ONCE_DAILY -> existingLog?.isCompleted == true
-            // For hourly/interval habits, we assume individual completion tracking
+            // For interval habits, we assume individual completion tracking
             // would require enhancement to the data layer
-            FrequencyType.HOURLY, FrequencyType.INTERVAL -> false
+            FrequencyType.INTERVAL -> false
         }
         
         return Task(

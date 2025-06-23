@@ -17,8 +17,7 @@ fun HabitEntity.toDomainModel(): Habit {
     // Auto-detect frequency type based on intervalMinutes
     val detectedFrequencyType = when {
         intervalMinutes == 1440 -> FrequencyType.ONCE_DAILY // 24 hours = once daily
-        intervalMinutes % 60 == 0 -> FrequencyType.HOURLY // Multiples of 60 minutes = hourly
-        else -> FrequencyType.INTERVAL // Custom intervals
+        else -> FrequencyType.INTERVAL // All other intervals (including previous HOURLY cases)
     }
     
     return Habit(
@@ -33,7 +32,7 @@ fun HabitEntity.toDomainModel(): Habit {
         scheduledTimes = if (detectedFrequencyType == FrequencyType.ONCE_DAILY) {
             parseScheduledTimes(scheduledTimes)
         } else {
-            emptyList() // For HOURLY/INTERVAL, don't use scheduledTimes
+            emptyList() // For INTERVAL, don't use scheduledTimes
         },
         startTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
             startTime?.let { parseTime(it) }
@@ -60,7 +59,7 @@ fun Habit.toEntity(): HabitEntity {
         scheduledTimes = if (frequencyType == FrequencyType.ONCE_DAILY) {
             formatScheduledTimes(scheduledTimes)
         } else {
-            "" // For HOURLY/INTERVAL, don't store scheduledTimes
+            "" // For INTERVAL, don't store scheduledTimes
         },
         startTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
             startTime?.let { formatTime(it) }

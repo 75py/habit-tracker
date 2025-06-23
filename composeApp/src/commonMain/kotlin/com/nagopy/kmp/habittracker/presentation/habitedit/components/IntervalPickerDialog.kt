@@ -240,7 +240,7 @@ private fun IntervalPickerDialogHourlyPreview() {
         IntervalPickerDialog(
             currentValue = 2,
             unit = TimeUnit.HOURS,
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             onValueAndUnitChange = { _, _ -> },
             onDismiss = {}
         )
