@@ -55,7 +55,7 @@ class MultipleTasksIntegrationTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 60, // 1 hour = 60 minutes
             scheduledTimes = emptyList(), // For HOURLY, use startTime instead
             startTime = LocalTime(9, 0) // Start at 9 AM

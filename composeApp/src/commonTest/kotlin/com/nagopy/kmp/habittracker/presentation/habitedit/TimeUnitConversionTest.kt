@@ -75,7 +75,7 @@ class TimeUnitConversionTest {
         )
         
         // Set frequency type to HOURLY to allow hour-based intervals
-        viewModel.updateFrequencyType(com.nagopy.kmp.habittracker.domain.model.FrequencyType.HOURLY)
+        viewModel.updateFrequencyType(com.nagopy.kmp.habittracker.domain.model.FrequencyType.INTERVAL)
         viewModel.updateIntervalValue(3, TimeUnit.HOURS)
         
         val state = viewModel.uiState.value

@@ -9,40 +9,20 @@ class HabitIntervalValidatorTest {
 
     @Test
     fun `isValidIntervalMinutes should work correctly for INTERVAL frequency type`() {
-        val validValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
-        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        val validValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
+        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 110, 150, 270, 330)
         
         validValues.forEach { value ->
             assertTrue(
                 HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, value),
-                "Expected $value to be valid divisor of 60 for INTERVAL type"
+                "Expected $value to be valid interval for INTERVAL type"
             )
         }
         
         invalidValues.forEach { value ->
             assertFalse(
                 HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, value),
-                "Expected $value to be invalid divisor of 60 for INTERVAL type"
-            )
-        }
-    }
-
-    @Test
-    fun `isValidIntervalMinutes should work correctly for HOURLY frequency type`() {
-        val validValues = listOf(60, 120, 180, 240, 300, 360, 420, 480, 540, 600)
-        val invalidValues = listOf(30, 45, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250)
-        
-        validValues.forEach { value ->
-            assertTrue(
-                HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, value),
-                "Expected $value to be valid multiple of 60 for HOURLY type"
-            )
-        }
-        
-        invalidValues.forEach { value ->
-            assertFalse(
-                HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, value),
-                "Expected $value to be invalid multiple of 60 for HOURLY type"
+                "Expected $value to be invalid interval for INTERVAL type"
             )
         }
     }
@@ -77,17 +57,6 @@ class HabitIntervalValidatorTest {
     }
 
     @Test
-    fun `getClosestValidIntervalMinutes should work correctly for HOURLY frequency type`() {
-        assertEquals(60, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 0))
-        assertEquals(60, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, -5))
-        assertEquals(60, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 30))  // 0.5 hours rounds to 1 hour
-        assertEquals(60, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 45))  // 0.75 hours rounds to 1 hour
-        assertEquals(120, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 90))  // 1.5 hours rounds to 2 hours -> 120
-        assertEquals(180, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 150)) // 2.5 hours rounds to 3 hours
-        assertEquals(240, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.HOURLY, 210)) // 3.5 hours rounds to 4 hours
-    }
-
-    @Test
     fun `getClosestValidIntervalMinutes should work correctly for ONCE_DAILY frequency type`() {
         assertEquals(1440, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.ONCE_DAILY, 0))
         assertEquals(1440, HabitIntervalValidator.getClosestValidIntervalMinutes(FrequencyType.ONCE_DAILY, 720))
@@ -98,9 +67,9 @@ class HabitIntervalValidatorTest {
 
 
     @Test
-    fun `VALID_INTERVAL_MINUTES should contain all divisors of 60`() {
-        val expectedDivisors = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
-        assertEquals(expectedDivisors, HabitIntervalValidator.VALID_INTERVAL_MINUTES)
+    fun `VALID_INTERVAL_MINUTES should contain all divisors of 60 and common hourly intervals`() {
+        val expectedValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
+        assertEquals(expectedValues, HabitIntervalValidator.VALID_INTERVAL_MINUTES)
     }
 
     @Test
@@ -109,9 +78,13 @@ class HabitIntervalValidatorTest {
     }
 
     @Test
-    fun `all values in VALID_INTERVAL_MINUTES should actually divide 60 evenly`() {
+    fun `short interval values should divide 60 evenly and long intervals should be multiples of 60`() {
         HabitIntervalValidator.VALID_INTERVAL_MINUTES.forEach { value ->
-            assertEquals(0, 60 % value, "60 should be divisible by $value")
+            if (value <= 60) {
+                assertEquals(0, 60 % value, "60 should be divisible by $value")
+            } else {
+                assertEquals(0, value % 60, "$value should be a multiple of 60")
+            }
         }
     }
 }

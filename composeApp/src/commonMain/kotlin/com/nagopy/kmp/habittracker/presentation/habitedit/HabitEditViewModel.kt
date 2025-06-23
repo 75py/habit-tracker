@@ -120,7 +120,6 @@ class HabitEditViewModel(
         val currentState = _uiState.value
         if (currentState is HabitEditUiState.Content) {
             val newIntervalMinutes = when (frequencyType) {
-                FrequencyType.HOURLY -> 60  // Default to 1 hour
                 FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
                 FrequencyType.INTERVAL -> currentState.intervalMinutes
             }
@@ -250,7 +249,7 @@ class HabitEditViewModel(
                     return
                 }
             }
-            FrequencyType.HOURLY, FrequencyType.INTERVAL -> {
+            FrequencyType.INTERVAL -> {
                 if (currentState.startTime == null) {
                     _uiState.value = currentState.copy(saveError = "Start time is required")
                     return
