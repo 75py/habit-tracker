@@ -124,7 +124,7 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 120,
             scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
             startTime = LocalTime(7, 0), // HOURLY uses startTime
@@ -287,7 +287,7 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
+        assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as HOURLY
         assertEquals(60, domain.intervalMinutes)
         assertEquals(emptyList(), domain.scheduledTimes) // HOURLY doesn't use scheduledTimes
         assertEquals(LocalTime(9, 0), domain.startTime) // HOURLY uses startTime
@@ -314,7 +314,7 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
+        assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as HOURLY
         assertEquals(120, domain.intervalMinutes)
         assertEquals(emptyList(), domain.scheduledTimes) // HOURLY doesn't use scheduledTimes
         assertEquals(LocalTime(9, 0), domain.startTime) // HOURLY uses startTime

@@ -29,7 +29,7 @@ class IOSNotification64LimitTest {
                 id = 1L,
                 name = "Hourly Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 60,
                 scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
                 startTime = LocalTime(0, 30) // Every hour at :30
@@ -165,7 +165,7 @@ class IOSNotification64LimitTest {
                     )
                 }
             }
-            FrequencyType.HOURLY -> {
+            FrequencyType.INTERVAL -> {
                 val startTime = habit.startTime ?: return notifications
                 val endTime = habit.endTime ?: LocalTime(23, 59)
                 val minute = startTime.minute

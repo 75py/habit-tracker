@@ -122,12 +122,12 @@ class HabitEditViewModelTest {
     @Test
     fun `updateFrequencyType should update frequency type`() {
         // When
-        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
 
         // Then
         val uiState = viewModel.uiState.value
         assertTrue(uiState is HabitEditUiState.Content)
-        assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
+        assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
     }
 
     @Test
@@ -139,12 +139,12 @@ class HabitEditViewModelTest {
         assertEquals(240, initialState.intervalMinutes)
 
         // When
-        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
 
         // Then
         val uiState = viewModel.uiState.value
         assertTrue(uiState is HabitEditUiState.Content)
-        assertEquals(FrequencyType.HOURLY, uiState.frequencyType)
+        assertEquals(FrequencyType.INTERVAL, uiState.frequencyType)
         assertEquals(60, uiState.intervalMinutes) // 1 hour = 60 minutes
     }
 

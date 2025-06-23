@@ -84,7 +84,7 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
+                detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
             assertEquals(intervalMinutes, habit.intervalMinutes)
         }
@@ -101,7 +101,7 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
+                    detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
             assertEquals(

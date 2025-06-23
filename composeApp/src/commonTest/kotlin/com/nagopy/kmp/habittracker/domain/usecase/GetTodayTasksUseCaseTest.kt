@@ -97,7 +97,7 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             scheduledTimes = listOf(LocalTime(9, 0))
         )
         
@@ -160,7 +160,7 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             scheduledTimes = listOf(LocalTime(9, 0))
         )
         
@@ -198,7 +198,7 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             scheduledTimes = listOf(LocalTime(9, 0)),
             endTime = LocalTime(17, 0) // 5 PM
         )
