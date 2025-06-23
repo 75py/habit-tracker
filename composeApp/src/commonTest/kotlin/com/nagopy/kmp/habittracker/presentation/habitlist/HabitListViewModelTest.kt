@@ -132,7 +132,7 @@ class HabitListViewModelTest {
                 color = "#2196F3",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-02"),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 60,
                 scheduledTimes = listOf(LocalTime(10, 0))
             )

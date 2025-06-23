@@ -19,6 +19,11 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
+import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
+import com.nagopy.kmp.habittracker.domain.model.startTime
+import com.nagopy.kmp.habittracker.domain.model.endTime
 
 /**
  * Integration test demonstrating the new multiple daily tasks functionality.
@@ -55,7 +60,7 @@ class MultipleTasksIntegrationTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 60, // 1 hour = 60 minutes
             scheduledTimes = emptyList(), // For HOURLY, use startTime instead
             startTime = LocalTime(9, 0) // Start at 9 AM

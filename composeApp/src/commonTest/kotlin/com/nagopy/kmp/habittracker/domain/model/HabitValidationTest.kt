@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class HabitValidationTest {
 
@@ -18,8 +19,7 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.INTERVAL,
-                intervalMinutes = intervalMinutes
+                detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
             assertEquals(intervalMinutes, habit.intervalMinutes)
         }
@@ -27,7 +27,8 @@ class HabitValidationTest {
 
     @Test
     fun `Habit creation should fail with invalid INTERVAL values`() {
-        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        // Only include values that are neither divisors of 60 nor multiples of 60
+        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45) // Removed 90, 120
         
         invalidIntervalMinutes.forEach { intervalMinutes ->
             val exception = assertFailsWith<IllegalArgumentException> {
@@ -36,13 +37,12 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.INTERVAL,
-                    intervalMinutes = intervalMinutes
+                    detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
-            assertEquals(
-                "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. Valid values: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60], got: $intervalMinutes",
-                exception.message
+            assertTrue(
+                exception.message!!.contains("INTERVAL frequency type requires intervalMinutes to be valid"),
+                "Expected error message about unified INTERVAL validation, got: ${exception.message}"
             )
         }
     }
@@ -54,31 +54,25 @@ class HabitValidationTest {
             name = "Test Habit",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440 // Only 1440 is valid for ONCE_DAILY
+            detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
         )
-        assertEquals(1440, habit.intervalMinutes)
+        assertEquals(1440, habit.intervalMinutes) // Should return 1440 for compatibility
     }
 
     @Test
-    fun `Habit creation should fail with invalid ONCE_DAILY values`() {
-        val invalidIntervalMinutes = listOf(720, 1200, 1439, 1441, 2880)
+    fun `Habit creation should succeed with different ONCE_DAILY times`() {
+        val times = listOf(LocalTime(6, 0), LocalTime(12, 30), LocalTime(18, 45))
         
-        invalidIntervalMinutes.forEach { intervalMinutes ->
-            val exception = assertFailsWith<IllegalArgumentException> {
-                Habit(
-                    id = 1L,
-                    name = "Test Habit",
-                    description = "Test",
-                    createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.ONCE_DAILY,
-                    intervalMinutes = intervalMinutes
-                )
-            }
-            assertEquals(
-                "ONCE_DAILY frequency type requires intervalMinutes to be exactly 1440 (24 hours). Got: $intervalMinutes",
-                exception.message
+        times.forEach { time ->
+            val habit = Habit(
+                id = 1L,
+                name = "Test Habit",
+                description = "Test",
+                createdAt = LocalDate.parse("2024-01-01"),
+                detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(time))
             )
+            assertEquals(time, habit.startTime)
+            assertEquals(FrequencyType.ONCE_DAILY, habit.frequencyType)
         }
     }
 
@@ -92,16 +86,16 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.HOURLY,
-                intervalMinutes = intervalMinutes
+                detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
             assertEquals(intervalMinutes, habit.intervalMinutes)
         }
     }
 
     @Test
-    fun `Habit creation should fail with invalid HOURLY values`() {
-        val invalidIntervalMinutes = listOf(30, 45, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250)
+    fun `Habit creation should fail with invalid INTERVAL values for unified type`() {
+        // Only include values that are invalid for both sub-hour and multi-hour intervals
+        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250)
         
         invalidIntervalMinutes.forEach { intervalMinutes ->
             val exception = assertFailsWith<IllegalArgumentException> {
@@ -110,13 +104,12 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.HOURLY,
-                    intervalMinutes = intervalMinutes
+                    detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
-            assertEquals(
-                "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes",
-                exception.message
+            assertTrue(
+                exception.message!!.contains("INTERVAL frequency type requires intervalMinutes to be valid"),
+                "Expected error message about INTERVAL validation, got: ${exception.message}"
             )
         }
     }

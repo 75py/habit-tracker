@@ -7,6 +7,11 @@ import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
+import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
+import com.nagopy.kmp.habittracker.domain.model.startTime
+import com.nagopy.kmp.habittracker.domain.model.endTime
 
 /**
  * Test for iOS notification 64-limit prioritization logic
@@ -24,9 +29,10 @@ class IOSNotification64LimitTest {
                 id = 1L,
                 name = "Hourly Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 60,
-                scheduledTimes = listOf(LocalTime(0, 30)) // Every hour at :30
+                scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
+                startTime = LocalTime(0, 30) // Every hour at :30
             ),
             // 15-minute interval habit - generates 96 notifications (4 per hour * 24 hours)
             Habit(
@@ -35,7 +41,8 @@ class IOSNotification64LimitTest {
                 createdAt = LocalDate(2024, 1, 1),
                 frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 15,
-                scheduledTimes = listOf(LocalTime(0, 0)) // 0, 15, 30, 45 minutes
+                scheduledTimes = emptyList(), // INTERVAL doesn't use scheduledTimes
+                startTime = LocalTime(0, 0) // 0, 15, 30, 45 minutes
             )
         )
         
@@ -115,7 +122,8 @@ class IOSNotification64LimitTest {
             createdAt = LocalDate(2024, 1, 1),
             frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 30,
-            scheduledTimes = listOf(LocalTime(9, 0)),
+            scheduledTimes = emptyList(), // INTERVAL doesn't use scheduledTimes
+            startTime = LocalTime(9, 0),
             endTime = LocalTime(12, 0)
         )
         
@@ -157,8 +165,8 @@ class IOSNotification64LimitTest {
                     )
                 }
             }
-            FrequencyType.HOURLY -> {
-                val startTime = habit.scheduledTimes.firstOrNull() ?: return notifications
+            FrequencyType.INTERVAL -> {
+                val startTime = habit.startTime ?: return notifications
                 val endTime = habit.endTime ?: LocalTime(23, 59)
                 val minute = startTime.minute
                 
@@ -184,23 +192,22 @@ class IOSNotification64LimitTest {
             FrequencyType.INTERVAL -> {
                 val intervalMinutes = habit.intervalMinutes
                 val endTime = habit.endTime ?: LocalTime(23, 59)
+                val startTime = habit.startTime ?: return notifications
                 
                 val notificationTimes = mutableSetOf<LocalTime>()
                 
-                habit.scheduledTimes.forEach { startTime ->
-                    if (startTime <= endTime) {
-                        var time = startTime
+                if (startTime <= endTime) {
+                    var time = startTime
+                    
+                    while (time <= endTime) {
+                        notificationTimes.add(time)
                         
-                        while (time <= endTime) {
-                            notificationTimes.add(time)
-                            
-                            val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
-                            val newHour = (totalMinutes / 60) % 24
-                            val newMinute = totalMinutes % 60
-                            time = LocalTime(newHour, newMinute)
-                            
-                            if (totalMinutes >= 24 * 60) break
-                        }
+                        val totalMinutes = time.hour * 60 + time.minute + intervalMinutes
+                        val newHour = (totalMinutes / 60) % 24
+                        val newMinute = totalMinutes % 60
+                        time = LocalTime(newHour, newMinute)
+                        
+                        if (totalMinutes >= 24 * 60) break
                     }
                 }
                 

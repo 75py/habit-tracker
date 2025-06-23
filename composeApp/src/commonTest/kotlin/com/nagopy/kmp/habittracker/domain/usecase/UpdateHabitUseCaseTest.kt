@@ -31,9 +31,14 @@ class UpdateHabitUseCaseTest {
             intervalMinutes = 1440,
             scheduledTimes = listOf(LocalTime(7, 0))
         )
-        val updatedHabit = existingHabit.copy(
+        val updatedHabit = Habit(
+            id = existingHabit.id,
             name = "Updated Morning Workout",
             description = "45 minutes of exercise",
+            color = existingHabit.color,
+            isActive = existingHabit.isActive,
+            createdAt = existingHabit.createdAt,
+            frequencyType = FrequencyType.ONCE_DAILY,
             scheduledTimes = listOf(LocalTime(7, 30))
         )
         coEvery { mockRepository.getHabit(1L) } returns existingHabit

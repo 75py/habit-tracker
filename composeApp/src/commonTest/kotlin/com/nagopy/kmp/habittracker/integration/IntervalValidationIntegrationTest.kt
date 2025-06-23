@@ -17,6 +17,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
+import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
+import com.nagopy.kmp.habittracker.domain.model.startTime
+import com.nagopy.kmp.habittracker.domain.model.endTime
 
 class IntervalValidationIntegrationTest {
 
@@ -24,7 +29,7 @@ class IntervalValidationIntegrationTest {
     fun `complete workflow - INTERVAL type should be restricted to valid divisors of 60`() {
         // Verify all expected valid divisors
         val expectedValidValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
-        assertEquals(expectedValidValues, HabitIntervalValidator.VALID_INTERVAL_MINUTES)
+        assertEquals(expectedValidValues, HabitIntervalValidator.VALID_SUB_HOUR_INTERVAL_MINUTES)
         
         // Test domain model validation
         expectedValidValues.forEach { validValue ->
@@ -82,12 +87,12 @@ class IntervalValidationIntegrationTest {
         )
         
         // Test HOURLY frequency auto-correction
-        viewModel.updateFrequencyType(FrequencyType.HOURLY)
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
         viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
         val hourlyState = viewModel.uiState.value
         assertTrue(hourlyState is HabitEditUiState.Content)
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, hourlyState.intervalMinutes),
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, hourlyState.intervalMinutes),
             "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
         )
         assertEquals(60, hourlyState.intervalMinutes)
@@ -123,7 +128,7 @@ class IntervalValidationIntegrationTest {
             name = "Test Hourly",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
+            frequencyType = FrequencyType.INTERVAL,
             intervalMinutes = 120 // Valid for HOURLY (2 hours)
         )
         assertEquals(120, habit2.intervalMinutes)
@@ -157,7 +162,7 @@ class IntervalValidationIntegrationTest {
                 name = "Invalid Hourly",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 intervalMinutes = 90 // Invalid for HOURLY (not multiple of 60)
             )
         }
