@@ -3,6 +3,8 @@ package com.nagopy.kmp.habittracker.notification
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import com.nagopy.kmp.habittracker.domain.usecase.CompleteTaskFromNotificationUseCase
@@ -147,7 +149,8 @@ class IOSNotificationScheduler(
         
         when (habit.frequencyType) {
             FrequencyType.ONCE_DAILY -> {
-                habit.scheduledTimes.forEachIndexed { index, scheduledTime ->
+                val detail = habit.detail as HabitDetail.OnceDailyHabitDetail
+                detail.scheduledTimes.forEachIndexed { index, scheduledTime ->
                     val identifier = "habit_${habit.id}_daily_$index"
                     val distance = calculateTimeDistance(currentTime, scheduledTime)
                     notifications.add(
@@ -156,8 +159,9 @@ class IOSNotificationScheduler(
                 }
             }
             FrequencyType.HOURLY -> {
-                val startTime = habit.startTime ?: return notifications
-                val endTime = habit.endTime ?: LocalTime(23, 59)
+                val detail = habit.detail as HabitDetail.HourlyHabitDetail
+                val startTime = detail.startTime
+                val endTime = detail.endTime ?: LocalTime(23, 59)
                 val minute = startTime.minute
                 
                 var currentHour = startTime.hour
@@ -180,9 +184,10 @@ class IOSNotificationScheduler(
                 }
             }
             FrequencyType.INTERVAL -> {
-                val intervalMinutes = habit.intervalMinutes
-                val endTime = habit.endTime ?: LocalTime(23, 59)
-                val startTime = habit.startTime ?: return notifications
+                val detail = habit.detail as HabitDetail.IntervalHabitDetail
+                val intervalMinutes = detail.intervalMinutes
+                val endTime = detail.endTime ?: LocalTime(23, 59)
+                val startTime = detail.startTime
                 
                 val notificationTimes = mutableSetOf<LocalTime>()
                 
@@ -198,7 +203,6 @@ class IOSNotificationScheduler(
                         time = LocalTime(newHour, newMinute)
                         
                         if (totalMinutes >= 24 * 60) break
-                        }
                     }
                 }
                 

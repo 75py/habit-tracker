@@ -2,10 +2,10 @@ package com.nagopy.kmp.habittracker.presentation.permission
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import habittracker.composeapp.generated.resources.Res
 import habittracker.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Dialog explaining why notification permissions are needed before requesting them.
