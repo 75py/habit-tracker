@@ -2,16 +2,13 @@ package com.nagopy.kmp.habittracker.notification
 
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import com.nagopy.kmp.habittracker.domain.model.frequencyType
-import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
-import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
-import com.nagopy.kmp.habittracker.domain.model.startTime
-import com.nagopy.kmp.habittracker.domain.model.endTime
 
 /**
  * Test for iOS notification 64-limit prioritization logic
@@ -29,20 +26,19 @@ class IOSNotification64LimitTest {
                 id = 1L,
                 name = "Hourly Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.HOURLY,
-                intervalMinutes = 60,
-                scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
-                startTime = LocalTime(0, 30) // Every hour at :30
+                detail = HabitDetail.HourlyHabitDetail(
+                    startTime = LocalTime(0, 30), // Every hour at :30
+                )
             ),
             // 15-minute interval habit - generates 96 notifications (4 per hour * 24 hours)
             Habit(
                 id = 2L,
                 name = "15-min Interval Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.INTERVAL,
-                intervalMinutes = 15,
-                scheduledTimes = emptyList(), // INTERVAL doesn't use scheduledTimes
-                startTime = LocalTime(0, 0) // 0, 15, 30, 45 minutes
+                detail = HabitDetail.IntervalHabitDetail(
+                    intervalMinutes = 15,
+                    startTime = LocalTime(0, 0) // 0, 15, 30, 45 minutes
+                )
             )
         )
         
@@ -99,9 +95,9 @@ class IOSNotification64LimitTest {
             id = 1L,
             name = "Daily Habit",
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(9, 0))
+            )
         )
         
         val notifications = generateTestNotificationsForHabit(habit, currentTime)
@@ -120,11 +116,11 @@ class IOSNotification64LimitTest {
             id = 1L,
             name = "Limited Interval Habit",
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 30,
-            scheduledTimes = emptyList(), // INTERVAL doesn't use scheduledTimes
-            startTime = LocalTime(9, 0),
-            endTime = LocalTime(12, 0)
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 30,
+                startTime = LocalTime(9, 0), // Start at 9:00 AM
+                endTime = LocalTime(12, 0) // End at 12:00 PM
+            )
         )
         
         val notifications = generateTestNotificationsForHabit(habit, currentTime)
@@ -157,7 +153,7 @@ class IOSNotification64LimitTest {
         
         when (habit.frequencyType) {
             FrequencyType.ONCE_DAILY -> {
-                habit.scheduledTimes.forEachIndexed { index, scheduledTime ->
+                (habit.detail as HabitDetail.OnceDailyHabitDetail).scheduledTimes.forEachIndexed { index, scheduledTime ->
                     val identifier = "habit_${habit.id}_daily_$index"
                     val distance = calculateTestTimeDistance(currentTime, scheduledTime)
                     notifications.add(
@@ -166,8 +162,9 @@ class IOSNotification64LimitTest {
                 }
             }
             FrequencyType.HOURLY -> {
-                val startTime = habit.startTime ?: return notifications
-                val endTime = habit.endTime ?: LocalTime(23, 59)
+                val habitDetail = habit.detail as HabitDetail.HourlyHabitDetail
+                val startTime = habitDetail.startTime
+                val endTime = habitDetail.endTime ?: LocalTime(23, 59)
                 val minute = startTime.minute
                 
                 var currentHour = startTime.hour
@@ -190,9 +187,10 @@ class IOSNotification64LimitTest {
                 }
             }
             FrequencyType.INTERVAL -> {
-                val intervalMinutes = habit.intervalMinutes
-                val endTime = habit.endTime ?: LocalTime(23, 59)
-                val startTime = habit.startTime ?: return notifications
+                val habitDetail = habit.detail as HabitDetail.IntervalHabitDetail
+                val intervalMinutes = habitDetail.intervalMinutes
+                val endTime = habitDetail.endTime ?: LocalTime(23, 59)
+                val startTime = habitDetail.startTime
                 
                 val notificationTimes = mutableSetOf<LocalTime>()
                 

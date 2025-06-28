@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
@@ -17,10 +18,6 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import com.nagopy.kmp.habittracker.domain.model.frequencyType
-import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
-import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
-import com.nagopy.kmp.habittracker.domain.model.startTime
-import com.nagopy.kmp.habittracker.domain.model.endTime
 
 class ScheduleNextNotificationUseCaseTest {
 
@@ -122,9 +119,9 @@ class ScheduleNextNotificationUseCaseTest {
                 color = "#FF0000",
                 isActive = true,
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 1440,
-                scheduledTimes = listOf(LocalTime(9, 0))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(9, 0))
+                )
             ),
             Habit(
                 id = 2L,
@@ -133,9 +130,9 @@ class ScheduleNextNotificationUseCaseTest {
                 color = "#00FF00",
                 isActive = true,
                 createdAt = LocalDate(2024, 1, 1),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 1440,
-                scheduledTimes = listOf(LocalTime(10, 0))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(10, 0))
+                )
             )
         )
         

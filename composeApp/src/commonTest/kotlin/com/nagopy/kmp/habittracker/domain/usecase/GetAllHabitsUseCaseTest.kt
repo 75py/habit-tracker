@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -13,10 +14,6 @@ import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import com.nagopy.kmp.habittracker.domain.model.frequencyType
-import com.nagopy.kmp.habittracker.domain.model.intervalMinutes
-import com.nagopy.kmp.habittracker.domain.model.scheduledTimes
-import com.nagopy.kmp.habittracker.domain.model.startTime
-import com.nagopy.kmp.habittracker.domain.model.endTime
 
 class GetAllHabitsUseCaseTest {
 
@@ -31,9 +28,9 @@ class GetAllHabitsUseCaseTest {
                 color = "#FF5722",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 1440,
-                scheduledTimes = listOf(LocalTime(7, 0))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(7, 0))
+                )
             ),
             Habit(
                 id = 2,
@@ -42,9 +39,9 @@ class GetAllHabitsUseCaseTest {
                 color = "#2196F3",
                 isActive = false,
                 createdAt = LocalDate.parse("2024-01-02"),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 1440,
-                scheduledTimes = listOf(LocalTime(20, 0))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(20, 0))
+                )
             )
         )
         val mockRepository = mockk<HabitRepository>()

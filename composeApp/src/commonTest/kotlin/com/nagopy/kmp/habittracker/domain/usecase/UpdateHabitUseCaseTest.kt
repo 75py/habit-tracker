@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -27,9 +28,9 @@ class UpdateHabitUseCaseTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(7, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 0))
+            )
         )
         val updatedHabit = Habit(
             id = existingHabit.id,
@@ -38,8 +39,9 @@ class UpdateHabitUseCaseTest {
             color = existingHabit.color,
             isActive = existingHabit.isActive,
             createdAt = existingHabit.createdAt,
-            frequencyType = FrequencyType.ONCE_DAILY,
-            scheduledTimes = listOf(LocalTime(7, 30))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 30))
+            )
         )
         coEvery { mockRepository.getHabit(1L) } returns existingHabit
         coEvery { mockRepository.updateHabit(updatedHabit) } just runs
@@ -65,9 +67,9 @@ class UpdateHabitUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-02"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(20, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(20, 0))
+            )
         )
         val deactivatedHabit = existingHabit.copy(isActive = false)
         coEvery { mockRepository.getHabit(2L) } returns existingHabit
@@ -95,9 +97,9 @@ class UpdateHabitUseCaseTest {
             color = "#2196F3",
             isActive = false,
             createdAt = LocalDate.parse("2024-01-03"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(20, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(20, 0))
+            )
         )
         val updatedHabit = existingHabit.copy(description = "Read for 45 minutes")
         coEvery { mockRepository.getHabit(3L) } returns existingHabit
@@ -124,9 +126,9 @@ class UpdateHabitUseCaseTest {
             color = "#2196F3",
             isActive = false,
             createdAt = LocalDate.parse("2024-01-04"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(20, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(20, 0))
+            )
         )
         coEvery { mockRepository.getHabit(999L) } returns null
         coEvery { mockRepository.updateHabit(habit) } just runs

@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class HabitValidationTest {
 
@@ -20,7 +21,9 @@ class HabitValidationTest {
                 createdAt = LocalDate.parse("2024-01-01"),
                 detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
-            assertEquals(intervalMinutes, habit.intervalMinutes)
+            assertEquals(FrequencyType.INTERVAL, habit.frequencyType)
+            assertTrue(habit.detail is HabitDetail.IntervalHabitDetail)
+            assertEquals(intervalMinutes, habit.detail.intervalMinutes)
         }
     }
 
@@ -54,7 +57,10 @@ class HabitValidationTest {
             createdAt = LocalDate.parse("2024-01-01"),
             detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(LocalTime(9, 0)))
         )
-        assertEquals(1440, habit.intervalMinutes) // Should return 1440 for compatibility
+        assertEquals(FrequencyType.ONCE_DAILY, habit.frequencyType)
+        assertTrue(habit.detail is HabitDetail.OnceDailyHabitDetail)
+        assertEquals(1, habit.detail.scheduledTimes.size) // Should have exactly one scheduled time
+        assertEquals(LocalTime(9, 0), habit.detail.scheduledTimes[0])
     }
 
     @Test
@@ -69,8 +75,9 @@ class HabitValidationTest {
                 createdAt = LocalDate.parse("2024-01-01"),
                 detail = HabitDetail.OnceDailyHabitDetail(scheduledTimes = listOf(time))
             )
-            assertEquals(time, habit.startTime)
             assertEquals(FrequencyType.ONCE_DAILY, habit.frequencyType)
+            assertTrue(habit.detail is HabitDetail.OnceDailyHabitDetail)
+            assertEquals(time, habit.detail.scheduledTimes[0])
         }
     }
 
@@ -86,7 +93,9 @@ class HabitValidationTest {
                 createdAt = LocalDate.parse("2024-01-01"),
                 detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
             )
-            assertEquals(intervalMinutes, habit.intervalMinutes)
+            assertEquals(FrequencyType.HOURLY, habit.frequencyType)
+            assertTrue(habit.detail is HabitDetail.HourlyHabitDetail)
+            assertEquals(intervalMinutes, habit.detail.intervalMinutes)
         }
     }
 

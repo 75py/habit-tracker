@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.presentation.habitedit
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.GetHabitUseCase
@@ -432,10 +433,10 @@ class HabitEditViewModelTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 6, // 6 minutes - valid divisor of 60
-            scheduledTimes = listOf(LocalTime(9, 0)),
-            endTime = null
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 6, // 6 minutes - valid divisor of 60
+                startTime = LocalTime(9, 0)
+            )
         )
         
         coEvery { mockGetHabitUseCase(1L) } returns habit
@@ -462,10 +463,10 @@ class HabitEditViewModelTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 60, // 60 minutes = 1 hour (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(9, 0)),
-            endTime = null
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60, // 60 minutes - valid divisor of 60
+                startTime = LocalTime(9, 0)
+            )
         )
         
         coEvery { mockGetHabitUseCase(1L) } returns habit
@@ -492,10 +493,10 @@ class HabitEditViewModelTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 60, // Exactly 1 hour
-            scheduledTimes = listOf(LocalTime(9, 0)),
-            endTime = null
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60, // 60 minutes
+                startTime = LocalTime(9, 0)
+            )
         )
         
         coEvery { mockGetHabitUseCase(1L) } returns habit
@@ -523,10 +524,10 @@ class HabitEditViewModelTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 10, // 10-minute interval (valid divisor of 60)
-            scheduledTimes = listOf(LocalTime(9, 0)),
-            endTime = null
+            detail = HabitDetail.IntervalHabitDetail(
+            intervalMinutes = 10, // 10 minutes - valid divisor of 60
+                startTime = LocalTime(9, 0)
+            )
         )
         
         coEvery { mockGetHabitUseCase(1L) } returns habit
