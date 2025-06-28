@@ -81,7 +81,7 @@ class GetTodayTasksUseCase(
         val intervalMinutes = detail.intervalMinutes.coerceAtLeast(1)
         val endTime = detail.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
         
-        for (startTime in detail.scheduledTimes) {
+        for (startTime in listOf(detail.startTime)) {
             var currentTime = startTime
             
             while (currentTime <= endTime) {

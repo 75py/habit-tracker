@@ -35,7 +35,7 @@ sealed interface HabitDetail {
     
     data class IntervalHabitDetail(
         val intervalMinutes: Int = 60, // Custom interval in minutes
-        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // Start times for interval habits
+        val startTime: LocalTime = LocalTime(9, 0), // Start time for interval habits
         val endTime: LocalTime? = null // Optional end time for interval habits
     ) : HabitDetail {
         init {
@@ -62,81 +62,6 @@ val HabitDetail.frequencyType: FrequencyType
  */
 val Habit.frequencyType: FrequencyType
     get() = detail.frequencyType
-
-/**
- * Convenience extension properties for backwards compatibility with existing code
- */
-val Habit.scheduledTimes: List<LocalTime>
-    get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes
-        is HabitDetail.HourlyHabitDetail -> emptyList() // HOURLY doesn't use scheduledTimes
-        is HabitDetail.IntervalHabitDetail -> detail.scheduledTimes // INTERVAL uses scheduledTimes as starting points
-    }
-
-val Habit.intervalMinutes: Int
-    get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> 1440 // 24 hours for daily habits
-        is HabitDetail.HourlyHabitDetail -> detail.intervalMinutes
-        is HabitDetail.IntervalHabitDetail -> detail.intervalMinutes
-    }
-
-val Habit.startTime: LocalTime?
-    get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes.firstOrNull()
-        is HabitDetail.HourlyHabitDetail -> detail.startTime
-        is HabitDetail.IntervalHabitDetail -> detail.scheduledTimes.firstOrNull()
-    }
-
-/**
- * Factory function for creating Habit instances from the old structure
- * This helps with migration from the previous API
- */
-fun Habit(
-    id: Long = 0,
-    name: String,
-    description: String = "",
-    color: String = "#2196F3",
-    isActive: Boolean = true,
-    createdAt: LocalDate,
-    frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-    intervalMinutes: Int = 1440,
-    scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)),
-    startTime: LocalTime? = LocalTime(9, 0),
-    endTime: LocalTime? = null
-): Habit {
-    val detail = when (frequencyType) {
-        FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
-            scheduledTimes = scheduledTimes.ifEmpty { listOf(LocalTime(9, 0)) }
-        )
-        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
-            intervalMinutes = intervalMinutes,
-            startTime = startTime ?: LocalTime(9, 0),
-            endTime = endTime
-        )
-        FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
-            intervalMinutes = intervalMinutes,
-            scheduledTimes = scheduledTimes.ifEmpty { listOf(startTime ?: LocalTime(9, 0)) },
-            endTime = endTime
-        )
-    }
-    
-    return Habit(
-        id = id,
-        name = name,
-        description = description,
-        color = color,
-        isActive = isActive,
-        createdAt = createdAt,
-        detail = detail
-    )
-}
-
-val Habit.endTime: LocalTime?
-    get() = when (val detail = this.detail) {
-        is HabitDetail.OnceDailyHabitDetail -> null
-        is HabitDetail.HourlyHabitDetail -> detail.endTime
-        is HabitDetail.IntervalHabitDetail -> detail.endTime
-    }
 
 /**
  * Enum representing different frequency types for habits.

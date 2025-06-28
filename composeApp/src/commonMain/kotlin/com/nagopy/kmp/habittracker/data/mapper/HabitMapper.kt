@@ -34,11 +34,7 @@ fun HabitEntity.toDomainModel(): Habit {
         )
         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
             intervalMinutes = intervalMinutes,
-            scheduledTimes = if (startTime != null) {
-                parseTime(startTime)?.let { listOf(it) } ?: listOf(LocalTime(9, 0))
-            } else {
-                listOf(LocalTime(9, 0))
-            },
+            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
             endTime = endTime?.let { parseTime(it) }
         )
     }
@@ -70,12 +66,12 @@ fun Habit.toEntity(): HabitEntity {
         scheduledTimes = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> formatScheduledTimes(detail.scheduledTimes)
             is HabitDetail.HourlyHabitDetail -> "" // No scheduled times for hourly habits
-            is HabitDetail.IntervalHabitDetail -> formatScheduledTimes(detail.scheduledTimes)
+            is HabitDetail.IntervalHabitDetail -> "" // No scheduled times for interval habits
         },
         startTime = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> null // No start time for daily habits
             is HabitDetail.HourlyHabitDetail -> formatTime(detail.startTime)
-            is HabitDetail.IntervalHabitDetail -> detail.scheduledTimes.firstOrNull()?.let { formatTime(it) }
+            is HabitDetail.IntervalHabitDetail -> formatTime(detail.startTime)
         },
         endTime = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> null // No end time for daily habits
