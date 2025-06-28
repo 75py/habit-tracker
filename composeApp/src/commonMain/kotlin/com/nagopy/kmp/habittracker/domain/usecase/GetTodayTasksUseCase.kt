@@ -78,22 +78,23 @@ class GetTodayTasksUseCase(
     
     private suspend fun generateIntervalTasks(habit: Habit, detail: HabitDetail.IntervalHabitDetail, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
-        val startTime = detail.startTime
         val intervalMinutes = detail.intervalMinutes.coerceAtLeast(1)
-        
-        var currentTime = startTime
         val endTime = detail.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
         
-        while (currentTime <= endTime) {
-            tasks.add(createTask(habit, date, currentTime))
+        for (startTime in detail.scheduledTimes) {
+            var currentTime = startTime
             
-            // Calculate next time by adding interval minutes
-            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
-            val newHour = totalMinutes / 60
-            val newMinute = totalMinutes % 60
-            
-            if (newHour >= 24) break
-            currentTime = LocalTime(newHour, newMinute)
+            while (currentTime <= endTime) {
+                tasks.add(createTask(habit, date, currentTime))
+                
+                // Calculate next time by adding interval minutes
+                val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
+                val newHour = totalMinutes / 60
+                val newMinute = totalMinutes % 60
+                
+                if (newHour >= 24) break
+                currentTime = LocalTime(newHour, newMinute)
+            }
         }
         
         return tasks

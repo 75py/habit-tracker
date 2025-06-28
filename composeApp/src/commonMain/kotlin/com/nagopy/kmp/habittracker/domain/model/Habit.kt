@@ -35,7 +35,7 @@ sealed interface HabitDetail {
     
     data class IntervalHabitDetail(
         val intervalMinutes: Int = 60, // Custom interval in minutes
-        val startTime: LocalTime = LocalTime(9, 0), // Start time for interval habits
+        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // Start times for interval habits
         val endTime: LocalTime? = null // Optional end time for interval habits
     ) : HabitDetail {
         init {
@@ -70,7 +70,7 @@ val Habit.scheduledTimes: List<LocalTime>
     get() = when (val detail = this.detail) {
         is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes
         is HabitDetail.HourlyHabitDetail -> emptyList() // HOURLY doesn't use scheduledTimes
-        is HabitDetail.IntervalHabitDetail -> emptyList() // INTERVAL doesn't use scheduledTimes
+        is HabitDetail.IntervalHabitDetail -> detail.scheduledTimes // INTERVAL uses scheduledTimes as starting points
     }
 
 val Habit.intervalMinutes: Int
@@ -84,7 +84,7 @@ val Habit.startTime: LocalTime?
     get() = when (val detail = this.detail) {
         is HabitDetail.OnceDailyHabitDetail -> detail.scheduledTimes.firstOrNull()
         is HabitDetail.HourlyHabitDetail -> detail.startTime
-        is HabitDetail.IntervalHabitDetail -> detail.startTime
+        is HabitDetail.IntervalHabitDetail -> detail.scheduledTimes.firstOrNull()
     }
 
 /**
@@ -115,7 +115,7 @@ fun Habit(
         )
         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
             intervalMinutes = intervalMinutes,
-            startTime = startTime ?: LocalTime(9, 0),
+            scheduledTimes = scheduledTimes.ifEmpty { listOf(startTime ?: LocalTime(9, 0)) },
             endTime = endTime
         )
     }

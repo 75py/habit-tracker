@@ -71,7 +71,7 @@ class HabitEditViewModel(
                     val (scheduledTimes, startTime, endTime) = when (val detail = habit.detail) {
                         is HabitDetail.OnceDailyHabitDetail -> Triple(detail.scheduledTimes, null, null)
                         is HabitDetail.HourlyHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
-                        is HabitDetail.IntervalHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
+                        is HabitDetail.IntervalHabitDetail -> Triple(detail.scheduledTimes, detail.scheduledTimes.firstOrNull(), detail.endTime)
                     }
                     
                     _uiState.value = HabitEditUiState.Content(
@@ -296,7 +296,7 @@ class HabitEditViewModel(
                         )
                         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
-                            startTime = currentState.startTime ?: LocalTime(9, 0),
+                            scheduledTimes = currentState.startTime?.let { listOf(it) } ?: listOf(LocalTime(9, 0)),
                             endTime = currentState.endTime
                         )
                     }
@@ -338,7 +338,7 @@ class HabitEditViewModel(
                         )
                         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
-                            startTime = currentState.startTime ?: LocalTime(9, 0),
+                            scheduledTimes = currentState.startTime?.let { listOf(it) } ?: listOf(LocalTime(9, 0)),
                             endTime = currentState.endTime
                         )
                     }
