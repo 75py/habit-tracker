@@ -6,6 +6,8 @@ import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -35,9 +37,9 @@ class HabitRepositoryImplTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(7, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 0))
+            ),
         )
         val expectedId = 1L
         coEvery { habitDao.insertHabit(any()) } returns expectedId

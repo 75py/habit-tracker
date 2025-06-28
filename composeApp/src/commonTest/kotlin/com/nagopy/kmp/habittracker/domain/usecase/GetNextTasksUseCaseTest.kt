@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -18,6 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 
 class GetNextTasksUseCaseTest {
 
@@ -45,10 +47,9 @@ class GetNextTasksUseCaseTest {
             color = "#FF0000",
             isActive = true,
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(9, 0), LocalTime(14, 0), LocalTime(18, 0)),
-            endTime = null
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(9, 0), LocalTime(14, 0), LocalTime(18, 0))
+            )
         )
         
         coEvery { mockClock.now() } returns currentTime
@@ -77,10 +78,9 @@ class GetNextTasksUseCaseTest {
             color = "#FF0000",
             isActive = false, // Inactive habit
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(14, 0)),
-            endTime = null
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(14, 0))
+            )
         )
         
         coEvery { mockClock.now() } returns currentTime
@@ -122,10 +122,9 @@ class GetNextTasksUseCaseTest {
             color = "#FF0000",
             isActive = true,
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(16, 0)), // 16:00
-            endTime = null
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(16, 0)) // 16:00
+            )
         )
         val habit2 = Habit(
             id = 2L,
@@ -134,10 +133,9 @@ class GetNextTasksUseCaseTest {
             color = "#00FF00",
             isActive = true,
             createdAt = LocalDate(2024, 1, 1),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(14, 0)), // 14:00 - earlier
-            endTime = null
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(14, 0)) // 14:00 - earlier than habit 1
+            )
         )
         
         coEvery { mockClock.now() } returns currentTime

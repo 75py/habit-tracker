@@ -5,6 +5,8 @@ import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlin.test.Test
@@ -38,10 +40,12 @@ class HabitMapperTest {
         assertEquals(true, domain.isActive)
         assertEquals(LocalDate.parse("2024-01-01"), domain.createdAt)
         assertEquals(FrequencyType.ONCE_DAILY, domain.frequencyType) // 1440 minutes should be ONCE_DAILY
-        assertEquals(1440, domain.intervalMinutes) // 24 hours = 1440 minutes
-        assertEquals(2, domain.scheduledTimes.size)
-        assertEquals(LocalTime(7, 0), domain.scheduledTimes[0])
-        assertEquals(LocalTime(19, 0), domain.scheduledTimes[1])
+        assertTrue(domain.detail is HabitDetail.OnceDailyHabitDetail)
+        domain.detail.let {
+            assertEquals(2, it.scheduledTimes.size) // Should have 2 scheduled times
+            assertEquals(LocalTime(7, 0), it.scheduledTimes[0])
+            assertEquals(LocalTime(19, 0), it.scheduledTimes[1])
+        }
     }
 
     @Test
@@ -83,8 +87,11 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(1, domain.scheduledTimes.size)
-        assertEquals(LocalTime(9, 0), domain.scheduledTimes[0]) // Should default to 9:00
+        assertTrue(domain.detail is HabitDetail.OnceDailyHabitDetail)
+        domain.detail.let {
+            assertEquals(1, it.scheduledTimes.size) // Should default to one scheduled time
+            assertEquals(LocalTime(9, 0), it.scheduledTimes[0]) // Default time should be 9:00
+        }
     }
 
     @Test
@@ -105,8 +112,11 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(1, domain.scheduledTimes.size)
-        assertEquals(LocalTime(7, 0), domain.scheduledTimes[0]) // Should only parse valid time
+        assertTrue(domain.detail is HabitDetail.OnceDailyHabitDetail)
+        domain.detail.let {
+            assertEquals(1, it.scheduledTimes.size) // Should only parse valid time
+            assertEquals(LocalTime(7, 0), it.scheduledTimes[0]) // Should only parse valid time
+        }
     }
 
     @Test
@@ -119,11 +129,11 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            intervalMinutes = 120,
-            scheduledTimes = emptyList(), // HOURLY doesn't use scheduledTimes
-            startTime = LocalTime(7, 0), // HOURLY uses startTime
-            endTime = LocalTime(19, 30) // HOURLY can have endTime
+            detail = HabitDetail.HourlyHabitDetail(
+                intervalMinutes = 120, // 2 hours = 120 minutes
+                startTime = LocalTime(7, 0), // HOURLY uses startTime
+                endTime = LocalTime(19, 30) // HOURLY can have endTime
+            )
         )
 
         // When
@@ -152,11 +162,9 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(7, 0), LocalTime(19, 30)), // ONCE_DAILY uses scheduledTimes
-            startTime = null, // ONCE_DAILY doesn't use startTime
-            endTime = null // ONCE_DAILY doesn't use endTime
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 0), LocalTime(19, 30)) // ONCE_DAILY uses scheduledTimes
+            )
         )
 
         // When
@@ -233,9 +241,12 @@ class HabitMapperTest {
         val domain = entity.toDomainModel()
 
         // Then
-        assertEquals(2, domain.scheduledTimes.size)
-        assertEquals(LocalTime(7, 5), domain.scheduledTimes[0])
-        assertEquals(LocalTime(12, 30), domain.scheduledTimes[1])
+        assertTrue(domain.detail is HabitDetail.OnceDailyHabitDetail)
+        domain.detail.let {
+            assertEquals(2, it.scheduledTimes.size)
+            assertEquals(LocalTime(7, 5), it.scheduledTimes[0])
+            assertEquals(LocalTime(12, 30), it.scheduledTimes[1])
+        }
     }
 
     @Test
@@ -248,11 +259,9 @@ class HabitMapperTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440,
-            scheduledTimes = listOf(LocalTime(7, 5), LocalTime(12, 30)),
-            startTime = null, // ONCE_DAILY doesn't use startTime
-            endTime = null // ONCE_DAILY doesn't use endTime
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 5), LocalTime(12, 30)) // Times with single digit hours and minutes
+            )
         )
 
         // When
@@ -283,10 +292,12 @@ class HabitMapperTest {
 
         // Then
         assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
-        assertEquals(60, domain.intervalMinutes)
-        assertEquals(emptyList(), domain.scheduledTimes) // HOURLY doesn't use scheduledTimes
-        assertEquals(LocalTime(9, 0), domain.startTime) // HOURLY uses startTime
-        assertEquals(null, domain.endTime)
+        assertTrue(domain.detail is HabitDetail.HourlyHabitDetail)
+        domain.detail.let {
+            assertEquals(60, it.intervalMinutes) // Should have 60 minute interval
+            assertEquals(LocalTime(9, 0), it.startTime) // HOURLY uses startTime
+            assertEquals(null, it.endTime) // HOURLY can have no end time
+        }
     }
 
     @Test
@@ -310,10 +321,12 @@ class HabitMapperTest {
 
         // Then
         assertEquals(FrequencyType.HOURLY, domain.frequencyType) // Should detect as HOURLY
-        assertEquals(120, domain.intervalMinutes)
-        assertEquals(emptyList(), domain.scheduledTimes) // HOURLY doesn't use scheduledTimes
-        assertEquals(LocalTime(9, 0), domain.startTime) // HOURLY uses startTime
-        assertEquals(null, domain.endTime)
+        assertTrue(domain.detail is HabitDetail.HourlyHabitDetail)
+        domain.detail.let {
+            assertEquals(120, it.intervalMinutes) // Should have 120 minute interval
+            assertEquals(LocalTime(9, 0), it.startTime) // HOURLY uses startTime
+            assertEquals(null, it.endTime) // HOURLY can have no end time
+        }
     }
 
     @Test
@@ -337,10 +350,12 @@ class HabitMapperTest {
 
         // Then
         assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as INTERVAL
-        assertEquals(30, domain.intervalMinutes)
-        assertEquals(emptyList(), domain.scheduledTimes) // INTERVAL doesn't use scheduledTimes
-        assertEquals(LocalTime(9, 0), domain.startTime) // INTERVAL uses startTime
-        assertEquals(null, domain.endTime)
+        assertTrue(domain.detail is HabitDetail.IntervalHabitDetail)
+        domain.detail.let {
+            assertEquals(30, it.intervalMinutes) // Should have 30 minute interval
+            assertEquals(LocalTime(9, 0), it.startTime) // INTERVAL uses startTime
+            assertEquals(null, it.endTime) // INTERVAL can have no end time
+        }
     }
 
     @Test
@@ -364,9 +379,11 @@ class HabitMapperTest {
 
         // Then
         assertEquals(FrequencyType.INTERVAL, domain.frequencyType) // Should detect as INTERVAL
-        assertEquals(30, domain.intervalMinutes)
-        assertEquals(emptyList(), domain.scheduledTimes) // INTERVAL doesn't use scheduledTimes
-        assertEquals(LocalTime(9, 0), domain.startTime) // INTERVAL uses startTime
-        assertEquals(null, domain.endTime)
+        assertTrue(domain.detail is HabitDetail.IntervalHabitDetail)
+        domain.detail.let {
+            assertEquals(30, it.intervalMinutes) // Should have 30 minute interval
+            assertEquals(LocalTime(9, 0), it.startTime) // INTERVAL uses startTime
+            assertEquals(null, it.endTime) // INTERVAL can have no end time
+        }
     }
 }

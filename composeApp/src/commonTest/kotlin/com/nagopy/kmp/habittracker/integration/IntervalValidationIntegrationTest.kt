@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.integration
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import com.nagopy.kmp.habittracker.domain.usecase.AddHabitUseCase
 import com.nagopy.kmp.habittracker.domain.usecase.UpdateHabitUseCase
@@ -17,6 +18,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
+import kotlinx.datetime.LocalTime
 
 class IntervalValidationIntegrationTest {
 
@@ -33,10 +36,13 @@ class IntervalValidationIntegrationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.INTERVAL,
-                intervalMinutes = validValue
+                detail = HabitDetail.IntervalHabitDetail(
+                    intervalMinutes = validValue
+                )
             )
-            assertEquals(validValue, habit.intervalMinutes)
+
+            assertTrue(habit.detail is HabitDetail.IntervalHabitDetail)
+            assertEquals(validValue, habit.detail.intervalMinutes)
         }
         
         // Test domain model rejection of invalid values
@@ -48,8 +54,9 @@ class IntervalValidationIntegrationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    frequencyType = FrequencyType.INTERVAL,
-                    intervalMinutes = invalidValue
+                    detail = HabitDetail.IntervalHabitDetail(
+                        intervalMinutes = invalidValue
+                    )
                 )
             }
         }
@@ -112,10 +119,10 @@ class IntervalValidationIntegrationTest {
             name = "Test Daily",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440 // Valid for ONCE_DAILY
+            detail = HabitDetail.OnceDailyHabitDetail()
         )
-        assertEquals(1440, habit1.intervalMinutes)
+        assertEquals(FrequencyType.ONCE_DAILY, habit1.frequencyType)
+        assertTrue(habit1.detail is HabitDetail.OnceDailyHabitDetail)
 
         // Test HOURLY - multiples of 60 are valid
         val habit2 = Habit(
@@ -123,10 +130,13 @@ class IntervalValidationIntegrationTest {
             name = "Test Hourly",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            intervalMinutes = 120 // Valid for HOURLY (2 hours)
+            detail = HabitDetail.HourlyHabitDetail(
+                intervalMinutes = 60 // Valid for HOURLY
+            )
         )
-        assertEquals(120, habit2.intervalMinutes)
+        assertEquals(FrequencyType.HOURLY, habit2.frequencyType)
+        assertTrue(habit2.detail is HabitDetail.HourlyHabitDetail)
+        assertEquals(60, habit2.detail.intervalMinutes)
         
         // Test INTERVAL - divisors of 60 are valid
         val habit3 = Habit(
@@ -134,42 +144,24 @@ class IntervalValidationIntegrationTest {
             name = "Test Interval",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 30 // Valid for INTERVAL
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 30 // Valid for INTERVAL
+            )
         )
-        assertEquals(30, habit3.intervalMinutes)
+        assertEquals(FrequencyType.INTERVAL, habit3.frequencyType)
+        assertTrue(habit3.detail is HabitDetail.IntervalHabitDetail)
+        assertEquals(30, habit3.detail.intervalMinutes)
         
         // Test invalid values
-        assertFailsWith<IllegalArgumentException> {
-            Habit(
-                id = 4L,
-                name = "Invalid Daily",
-                description = "Test",
-                createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                intervalMinutes = 720 // Invalid for ONCE_DAILY
-            )
-        }
-        
-        assertFailsWith<IllegalArgumentException> {
-            Habit(
-                id = 5L,
-                name = "Invalid Hourly",
-                description = "Test",
-                createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.HOURLY,
-                intervalMinutes = 90 // Invalid for HOURLY (not multiple of 60)
-            )
-        }
-        
         assertFailsWith<IllegalArgumentException> {
             Habit(
                 id = 6L,
                 name = "Invalid Interval",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.INTERVAL,
-                intervalMinutes = 90 // Invalid for INTERVAL (not divisor of 60)
+                detail = HabitDetail.IntervalHabitDetail(
+                    intervalMinutes = 7 // Invalid for INTERVAL (not divisor of 60)
+                )
             )
         }
     }

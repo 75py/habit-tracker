@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker.notification
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
@@ -29,7 +30,8 @@ class NotificationSchedulerTest {
             id = habitId,
             name = "Updated Habit Name",
             description = "Updated habit description",
-            createdAt = LocalDate(2024, 1, 1)
+            createdAt = LocalDate(2024, 1, 1),
+            detail = HabitDetail.OnceDailyHabitDetail()
         )
         
         val taskWithStaleData = Task(

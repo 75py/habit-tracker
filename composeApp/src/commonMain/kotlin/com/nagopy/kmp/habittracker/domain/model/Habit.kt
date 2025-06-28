@@ -13,30 +13,55 @@ data class Habit(
     val color: String = "#2196F3", // Default blue color
     val isActive: Boolean = true,
     val createdAt: LocalDate,
-    val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-    val intervalMinutes: Int = 1440, // For hourly/interval-based habits (default 24 hours = 1440 minutes)
-    val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // For ONCE_DAILY: multiple times per day
-    val startTime: LocalTime? = LocalTime(9, 0), // For HOURLY/INTERVAL: start time
-    val endTime: LocalTime? = null // For HOURLY/INTERVAL: end time
-) {
-    init {
-        // Validate interval minutes based on frequency type
-        require(HabitIntervalValidator.isValidIntervalMinutes(frequencyType, intervalMinutes)) {
-            when (frequencyType) {
-                FrequencyType.ONCE_DAILY -> {
-                    "ONCE_DAILY frequency type requires intervalMinutes to be exactly 1440 (24 hours). Got: $intervalMinutes"
-                }
-                FrequencyType.HOURLY -> {
-                    "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes"
-                }
-                FrequencyType.INTERVAL -> {
-                    "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. " +
-                    "Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes"
-                }
+    val detail: HabitDetail
+)
+
+sealed interface HabitDetail {
+    data class OnceDailyHabitDetail(
+        val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)) // Scheduled times per day
+    ) : HabitDetail
+    
+    data class HourlyHabitDetail(
+        val intervalMinutes: Int = 60, // Default to 1 hour
+        val startTime: LocalTime = LocalTime(9, 0), // Start time for hourly habits
+        val endTime: LocalTime? = null // Optional end time for hourly habits
+    ) : HabitDetail {
+        init {
+            require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, intervalMinutes)) {
+                "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes"
+            }
+        }
+    }
+    
+    data class IntervalHabitDetail(
+        val intervalMinutes: Int = 60, // Custom interval in minutes
+        val startTime: LocalTime = LocalTime(9, 0), // Start time for interval habits
+        val endTime: LocalTime? = null // Optional end time for interval habits
+    ) : HabitDetail {
+        init {
+            require(HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalMinutes)) {
+                "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. " +
+                "Valid values: ${HabitIntervalValidator.VALID_INTERVAL_MINUTES}, got: $intervalMinutes"
             }
         }
     }
 }
+
+/**
+ * Convenience extension property to get the frequency type from habit detail
+ */
+val HabitDetail.frequencyType: FrequencyType
+    get() = when (this) {
+        is HabitDetail.OnceDailyHabitDetail -> FrequencyType.ONCE_DAILY
+        is HabitDetail.HourlyHabitDetail -> FrequencyType.HOURLY
+        is HabitDetail.IntervalHabitDetail -> FrequencyType.INTERVAL
+    }
+
+/**
+ * Convenience extension property to get the frequency type from habit
+ */
+val Habit.frequencyType: FrequencyType
+    get() = detail.frequencyType
 
 /**
  * Enum representing different frequency types for habits.

@@ -3,8 +3,10 @@ package com.nagopy.kmp.habittracker.data.mapper
 import com.nagopy.kmp.habittracker.data.local.HabitEntity
 import com.nagopy.kmp.habittracker.data.local.LogEntity
 import com.nagopy.kmp.habittracker.domain.model.Habit
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -21,6 +23,22 @@ fun HabitEntity.toDomainModel(): Habit {
         else -> FrequencyType.INTERVAL // Custom intervals
     }
     
+    val detail = when (detectedFrequencyType) {
+        FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
+            scheduledTimes = parseScheduledTimes(scheduledTimes).ifEmpty { listOf(LocalTime(9, 0)) }
+        )
+        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
+            intervalMinutes = intervalMinutes,
+            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
+            endTime = endTime?.let { parseTime(it) }
+        )
+        FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
+            intervalMinutes = intervalMinutes,
+            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
+            endTime = endTime?.let { parseTime(it) }
+        )
+    }
+    
     return Habit(
         id = id,
         name = name,
@@ -28,23 +46,7 @@ fun HabitEntity.toDomainModel(): Habit {
         color = color,
         isActive = isActive,
         createdAt = LocalDate.parse(createdAt),
-        frequencyType = detectedFrequencyType,
-        intervalMinutes = intervalMinutes,
-        scheduledTimes = if (detectedFrequencyType == FrequencyType.ONCE_DAILY) {
-            parseScheduledTimes(scheduledTimes)
-        } else {
-            emptyList() // For HOURLY/INTERVAL, don't use scheduledTimes
-        },
-        startTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
-            startTime?.let { parseTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't use startTime
-        },
-        endTime = if (detectedFrequencyType != FrequencyType.ONCE_DAILY) {
-            endTime?.let { parseTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't use endTime
-        }
+        detail = detail
     )
 }
 
@@ -56,21 +58,25 @@ fun Habit.toEntity(): HabitEntity {
         color = color,
         isActive = isActive,
         createdAt = createdAt.toString(),
-        intervalMinutes = intervalMinutes,
-        scheduledTimes = if (frequencyType == FrequencyType.ONCE_DAILY) {
-            formatScheduledTimes(scheduledTimes)
-        } else {
-            "" // For HOURLY/INTERVAL, don't store scheduledTimes
+        intervalMinutes = when (val detail = this.detail) {
+            is HabitDetail.OnceDailyHabitDetail -> HabitIntervalValidator.VALID_ONCE_DAILY_MINUTES
+            is HabitDetail.HourlyHabitDetail -> detail.intervalMinutes
+            is HabitDetail.IntervalHabitDetail -> detail.intervalMinutes
         },
-        startTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
-            startTime?.let { formatTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't store startTime
+        scheduledTimes = when (val detail = this.detail) {
+            is HabitDetail.OnceDailyHabitDetail -> formatScheduledTimes(detail.scheduledTimes)
+            is HabitDetail.HourlyHabitDetail -> "" // No scheduled times for hourly habits
+            is HabitDetail.IntervalHabitDetail -> "" // No scheduled times for interval habits
         },
-        endTime = if (frequencyType != FrequencyType.ONCE_DAILY) {
-            endTime?.let { formatTime(it) }
-        } else {
-            null // For ONCE_DAILY, don't store endTime
+        startTime = when (val detail = this.detail) {
+            is HabitDetail.OnceDailyHabitDetail -> null // No start time for daily habits
+            is HabitDetail.HourlyHabitDetail -> formatTime(detail.startTime)
+            is HabitDetail.IntervalHabitDetail -> formatTime(detail.startTime)
+        },
+        endTime = when (val detail = this.detail) {
+            is HabitDetail.OnceDailyHabitDetail -> null // No end time for daily habits
+            is HabitDetail.HourlyHabitDetail -> detail.endTime?.let { formatTime(it) }
+            is HabitDetail.IntervalHabitDetail -> detail.endTime?.let { formatTime(it) }
         }
     )
 }

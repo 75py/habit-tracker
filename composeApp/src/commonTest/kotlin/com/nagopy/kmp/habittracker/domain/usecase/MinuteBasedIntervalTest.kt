@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
 import io.mockk.every
@@ -18,6 +19,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 
 class MinuteBasedIntervalTest {
 
@@ -37,9 +39,10 @@ class MinuteBasedIntervalTest {
             color = "#4CAF50",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 30, // Every 30 minutes
-            scheduledTimes = listOf(LocalTime(9, 0)) // Start at 9:00 AM
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 30, // Every 30 minutes
+                startTime = LocalTime(9, 0) // Start at 9:00 AM
+            )
         )
         
         // Mock repository
@@ -89,10 +92,10 @@ class MinuteBasedIntervalTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 20, // Every 20 minutes (valid divisor of 60)
-            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
-            startTime = LocalTime(8, 15) // Start at 8:15 AM
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 20, // Every 20 minutes (valid divisor of 60)
+                startTime = LocalTime(8, 15) // Start at 8:15 AM
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()

@@ -2,6 +2,7 @@ package com.nagopy.kmp.habittracker.integration
 
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.usecase.GetTodayTasksUseCase
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
@@ -19,6 +20,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.nagopy.kmp.habittracker.domain.model.frequencyType
 
 /**
  * Integration test demonstrating the new multiple daily tasks functionality.
@@ -43,9 +45,9 @@ class MultipleTasksIntegrationTest {
             color = "#FF5722",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.ONCE_DAILY,
-            intervalMinutes = 1440, // 24 hours = 1440 minutes
-            scheduledTimes = listOf(LocalTime(7, 0))
+            detail = HabitDetail.OnceDailyHabitDetail(
+                scheduledTimes = listOf(LocalTime(7, 0)) // Scheduled for 7 AM
+            )
         )
         
         val drinkWaterHourly = Habit(
@@ -55,10 +57,9 @@ class MultipleTasksIntegrationTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            intervalMinutes = 60, // 1 hour = 60 minutes
-            scheduledTimes = emptyList(), // For HOURLY, use startTime instead
-            startTime = LocalTime(9, 0) // Start at 9 AM
+            detail = HabitDetail.HourlyHabitDetail(
+                startTime = LocalTime(9, 0), // Start at 9 AM, every hour
+            )
         )
         
         val readingInterval = Habit(
@@ -68,10 +69,10 @@ class MultipleTasksIntegrationTest {
             color = "#4CAF50",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 30, // Every 30 minutes (valid divisor of 60)
-            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
-            startTime = LocalTime(8, 0) // Start at 8 AM
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 30, // Every 30 minutes (valid divisor of 60)
+                startTime = LocalTime(8, 0) // Start at 8 AM
+            )
         )
         
         val habits = listOf(onceDaily, drinkWaterHourly, readingInterval)

@@ -3,6 +3,7 @@ package com.nagopy.kmp.habittracker.domain.usecase
 import com.nagopy.kmp.habittracker.domain.model.Habit
 import com.nagopy.kmp.habittracker.domain.model.Task
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
+import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.repository.HabitRepository
 import io.mockk.coEvery
 import io.mockk.every
@@ -40,8 +41,9 @@ class GetTodayTasksUseCaseTest {
                 color = "#FF5722",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-01"),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                scheduledTimes = listOf(LocalTime(7, 0))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(7, 0))
+                )
             ),
             Habit(
                 id = 2,
@@ -50,8 +52,9 @@ class GetTodayTasksUseCaseTest {
                 color = "#4CAF50",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-03"),
-                frequencyType = FrequencyType.ONCE_DAILY,
-                scheduledTimes = listOf(LocalTime(8, 30))
+                detail = HabitDetail.OnceDailyHabitDetail(
+                    scheduledTimes = listOf(LocalTime(8, 30))
+                )
             )
         )
         
@@ -97,8 +100,9 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            detail = HabitDetail.HourlyHabitDetail(
+                startTime = LocalTime(9, 0)
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -160,8 +164,9 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            scheduledTimes = listOf(LocalTime(9, 0))
+            detail = HabitDetail.HourlyHabitDetail(
+                startTime = LocalTime(9, 0)
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -198,9 +203,10 @@ class GetTodayTasksUseCaseTest {
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.HOURLY,
-            scheduledTimes = listOf(LocalTime(9, 0)),
-            endTime = LocalTime(17, 0) // 5 PM
+            detail = HabitDetail.HourlyHabitDetail(
+                startTime = LocalTime(9, 0), // Start at 9:00 AM
+                endTime = LocalTime(17, 0) // End at 5:00 PM
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -245,11 +251,11 @@ class GetTodayTasksUseCaseTest {
             color = "#9C27B0",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 30, // 30 minutes (valid divisor of 60)
-            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
-            startTime = LocalTime(8, 0), // Start at 8:00 AM
-            endTime = LocalTime(20, 0) // 8 PM
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 30, // 30 minutes (valid divisor of 60)
+                startTime = LocalTime(8, 0), // Start at 8:00 AM
+                endTime = LocalTime(20, 0) // End at 8:00 PM
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()
@@ -305,11 +311,11 @@ class GetTodayTasksUseCaseTest {
             color = "#607D8B",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            frequencyType = FrequencyType.INTERVAL,
-            intervalMinutes = 20, // 20 minutes (valid divisor of 60)
-            scheduledTimes = emptyList(), // For INTERVAL, use startTime instead
-            startTime = LocalTime(6, 0), // Start at 6:00 AM
-            endTime = null // No end time
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 20, // 20 minutes (valid divisor of 60)
+                startTime = LocalTime(6, 0), // Start at 6:00 AM
+                endTime = null // No end time, should generate tasks until end of day
+            )
         )
         
         val mockRepository = mockk<HabitRepository>()
