@@ -215,10 +215,9 @@ export TESTER_GROUPS=internal-testers
 
 ### 4. スクリプトの実行
 
-```bash
-# 環境変数ファイルを使用する場合（推奨）
-source .env.firebase
+スクリプトは自動的に`.env.firebase`ファイルを読み込みます：
 
+```bash
 # Android のみ配信
 ./scripts/firebase-distribute.sh android "Androidテストビルド"
 
@@ -232,8 +231,11 @@ source .env.firebase
 ./scripts/firebase-distribute.sh
 
 # iOS証明書とプロファイルの確認（デバッグ用）
-fastlane ios check_setup
+# .env.firebaseが自動で読み込まれない場合は手動でsourceしてください
+source .env.firebase && fastlane ios check_setup
 ```
+
+**注意**: `firebase-distribute.sh`スクリプトはプロジェクトルートの`.env.firebase`ファイルを自動的に検出して読み込みます。手動で`source`する必要はありません。
 
 ## セキュリティの注意事項
 

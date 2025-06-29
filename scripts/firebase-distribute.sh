@@ -4,6 +4,24 @@
 # 使用方法: ./scripts/firebase-distribute.sh [platform] [release-notes]
 # platform: android, ios, both (default: both)
 
+# スクリプトのディレクトリを取得
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+
+# .env.firebase ファイルを読み込む
+if [ -f "$PROJECT_ROOT/.env.firebase" ]; then
+    echo "📋 .env.firebase から環境変数を読み込んでいます..."
+    source "$PROJECT_ROOT/.env.firebase"
+elif [ -f ".env.firebase" ]; then
+    echo "📋 .env.firebase から環境変数を読み込んでいます..."
+    source ".env.firebase"
+else
+    echo "⚠️  警告: .env.firebase ファイルが見つかりません"
+    echo "💡 ヒント: .env.firebase.template をコピーして設定してください"
+    echo "   cp .env.firebase.template .env.firebase"
+    echo ""
+fi
+
 # デフォルト値
 PLATFORM=${1:-both}
 RELEASE_NOTES=${2:-"開発者PCからのテストビルド"}
@@ -28,9 +46,18 @@ if ! command -v fastlane &> /dev/null; then
     exit 1
 fi
 
-# サービスアカウントファイルの設定
-export FIREBASE_SERVICE_ACCOUNT_FILE="firebase-service-account.json"
+# サービスアカウントファイルの設定（.env.firebaseで上書きされない場合のデフォルト値）
+export FIREBASE_SERVICE_ACCOUNT_FILE="${FIREBASE_SERVICE_ACCOUNT_FILE:-firebase-service-account.json}"
 export RELEASE_NOTES="$RELEASE_NOTES"
+
+# 必要な環境変数をすべてエクスポート（fastlaneに渡すため）
+export FIREBASE_APP_ID
+export FIREBASE_APP_ID_IOS
+export TEAM_ID
+export P12_PATH
+export P12_PASSWORD
+export PROVISIONING_PROFILE_PATH
+export TESTER_GROUPS
 
 # プラットフォーム別にfastlaneを実行
 case $PLATFORM in
