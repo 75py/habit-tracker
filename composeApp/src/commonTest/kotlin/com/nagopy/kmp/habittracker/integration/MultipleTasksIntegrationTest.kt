@@ -50,15 +50,16 @@ class MultipleTasksIntegrationTest {
             )
         )
         
-        val drinkWaterHourly = Habit(
+        val drinkWaterInterval = Habit(
             id = 2L,
             name = "Drink Water",
             description = "Stay hydrated",
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.HourlyHabitDetail(
-                startTime = LocalTime(9, 0), // Start at 9 AM, every hour
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60, // Every hour
+                startTime = LocalTime(9, 0) // Start at 9 AM
             )
         )
         
@@ -75,7 +76,7 @@ class MultipleTasksIntegrationTest {
             )
         )
         
-        val habits = listOf(onceDaily, drinkWaterHourly, readingInterval)
+        val habits = listOf(onceDaily, drinkWaterInterval, readingInterval)
         
         // Mock repository
         val mockRepository = mockk<HabitRepository>()
@@ -96,7 +97,7 @@ class MultipleTasksIntegrationTest {
         assertEquals(1, exerciseTasks.size)
         assertEquals(LocalTime(7, 0), exerciseTasks[0].scheduledTime)
         
-        // Water: Hourly - should have many tasks (9 AM to 11 PM = 15 hours)
+        // Water: Hourly interval - should have many tasks (9 AM to 11 PM = 15 hours)
         assertTrue(waterTasks.size >= 15, "Expected at least 15 water tasks, got ${waterTasks.size}")
         assertEquals(LocalTime(9, 0), waterTasks[0].scheduledTime)
         assertEquals(LocalTime(10, 0), waterTasks[1].scheduledTime)

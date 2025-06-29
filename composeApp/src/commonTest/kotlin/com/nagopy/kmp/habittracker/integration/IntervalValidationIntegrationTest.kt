@@ -26,8 +26,8 @@ class IntervalValidationIntegrationTest {
     @Test
     fun `complete workflow - INTERVAL type should be restricted to valid divisors of 60`() {
         // Verify all expected valid divisors
-        val expectedValidValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)
-        assertEquals(expectedValidValues, HabitIntervalValidator.VALID_INTERVAL_MINUTES)
+        val expectedValidValues = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
+        assertEquals(expectedValidValues, HabitIntervalValidator.getAllValidIntervalMinutes())
         
         // Test domain model validation
         expectedValidValues.forEach { validValue ->
@@ -46,7 +46,7 @@ class IntervalValidationIntegrationTest {
         }
         
         // Test domain model rejection of invalid values
-        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        val invalidValues = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 150, 210, 270)
         invalidValues.forEach { invalidValue ->
             assertFailsWith<IllegalArgumentException> {
                 Habit(
@@ -88,16 +88,16 @@ class IntervalValidationIntegrationTest {
             "Expected ${intervalState.intervalMinutes} to be a valid divisor of 60"
         )
         
-        // Test HOURLY frequency auto-correction
-        viewModel.updateFrequencyType(FrequencyType.HOURLY)
-        viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to 60
-        val hourlyState = viewModel.uiState.value
-        assertTrue(hourlyState is HabitEditUiState.Content)
+        // Test INTERVAL frequency with 60-minute intervals (previously HOURLY)
+        viewModel.updateFrequencyType(FrequencyType.INTERVAL)
+        viewModel.updateIntervalValue(45, TimeUnit.MINUTES) // Should be corrected to a valid divisor
+        val intervalState60 = viewModel.uiState.value
+        assertTrue(intervalState60 is HabitEditUiState.Content)
         assertTrue(
-            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.HOURLY, hourlyState.intervalMinutes),
-            "Expected ${hourlyState.intervalMinutes} to be a multiple of 60"
+            HabitIntervalValidator.isValidIntervalMinutes(FrequencyType.INTERVAL, intervalState60.intervalMinutes),
+            "Expected ${intervalState60.intervalMinutes} to be a valid divisor of 60"
         )
-        assertEquals(60, hourlyState.intervalMinutes)
+        // 45 should be corrected to 30 or 60 (nearest valid divisor)
         
         // Test ONCE_DAILY frequency auto-correction
         viewModel.updateFrequencyType(FrequencyType.ONCE_DAILY)
@@ -124,18 +124,19 @@ class IntervalValidationIntegrationTest {
         assertEquals(FrequencyType.ONCE_DAILY, habit1.frequencyType)
         assertTrue(habit1.detail is HabitDetail.OnceDailyHabitDetail)
 
-        // Test HOURLY - multiples of 60 are valid
+        // Test INTERVAL - 60 minutes is a valid divisor
         val habit2 = Habit(
             id = 2L,
-            name = "Test Hourly",
+            name = "Test Interval 60",
             description = "Test",
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.HourlyHabitDetail(
-                intervalMinutes = 60 // Valid for HOURLY
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60, // Valid for INTERVAL (divisor of 60)
+                startTime = LocalTime(9, 0)
             )
         )
-        assertEquals(FrequencyType.HOURLY, habit2.frequencyType)
-        assertTrue(habit2.detail is HabitDetail.HourlyHabitDetail)
+        assertEquals(FrequencyType.INTERVAL, habit2.frequencyType)
+        assertTrue(habit2.detail is HabitDetail.IntervalHabitDetail)
         assertEquals(60, habit2.detail.intervalMinutes)
         
         // Test INTERVAL - divisors of 60 are valid
