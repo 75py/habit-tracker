@@ -36,6 +36,11 @@ class GetTodayTasksUseCase(
     
     /**
      * Generates task instances for a specific habit on a given date.
+     * 
+     * Note: The previous generateHourlyTasks function has been removed and its functionality
+     * has been unified into generateIntervalTasks. All interval-based habits (including
+     * those with 60-minute multiples that were previously HOURLY) are now handled by
+     * the INTERVAL branch.
      */
     private suspend fun generateTasksForHabit(habit: Habit, date: LocalDate): List<Task> {
         return when (val detail = habit.detail) {
@@ -44,38 +49,17 @@ class GetTodayTasksUseCase(
                     createTask(habit, date, scheduledTime)
                 }
             }
-            is HabitDetail.HourlyHabitDetail -> {
-                generateHourlyTasks(habit, detail, date)
-            }
             is HabitDetail.IntervalHabitDetail -> {
                 generateIntervalTasks(habit, detail, date)
             }
         }
     }
     
-    private suspend fun generateHourlyTasks(habit: Habit, detail: HabitDetail.HourlyHabitDetail, date: LocalDate): List<Task> {
-        val tasks = mutableListOf<Task>()
-        val startTime = detail.startTime
-        val intervalMinutes = detail.intervalMinutes
-        
-        var currentTime = startTime
-        val endTime = detail.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
-        
-        while (currentTime <= endTime) {
-            tasks.add(createTask(habit, date, currentTime))
-            
-            // Calculate next time by adding interval minutes
-            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
-            val newHour = totalMinutes / 60
-            val newMinute = totalMinutes % 60
-            
-            if (newHour >= 24) break
-            currentTime = LocalTime(newHour, newMinute)
-        }
-        
-        return tasks
-    }
-    
+    /**
+     * Generates tasks for interval-based habits.
+     * This function now handles all interval types, including hourly intervals (60, 120, 180 minutes, etc.)
+     * that were previously handled by the removed generateHourlyTasks function.
+     */
     private suspend fun generateIntervalTasks(habit: Habit, detail: HabitDetail.IntervalHabitDetail, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
         val intervalMinutes = detail.intervalMinutes.coerceAtLeast(1)
@@ -106,9 +90,9 @@ class GetTodayTasksUseCase(
         val existingLog = habitRepository.getHabitLog(habit.id, date)
         val isCompleted = when (habit.detail) {
             is HabitDetail.OnceDailyHabitDetail -> existingLog?.isCompleted == true
-            // For hourly/interval habits, we assume individual completion tracking
+            // For interval habits (including previous hourly habits), we assume individual completion tracking
             // would require enhancement to the data layer
-            is HabitDetail.HourlyHabitDetail, is HabitDetail.IntervalHabitDetail -> false
+            is HabitDetail.IntervalHabitDetail -> false
         }
         
         return Task(

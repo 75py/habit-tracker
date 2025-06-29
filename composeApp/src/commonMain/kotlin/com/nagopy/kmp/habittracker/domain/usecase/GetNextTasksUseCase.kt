@@ -91,43 +91,22 @@ class GetNextTasksUseCase(
                     createTask(habit, date, scheduledTime)
                 }
             }
-            is HabitDetail.HourlyHabitDetail -> {
-                generateHourlyTasks(habit, detail, date)
-            }
+            // HOURLY type has been removed and merged into INTERVAL
             is HabitDetail.IntervalHabitDetail -> {
                 generateIntervalTasks(habit, detail, date)
             }
         }
     }
     
-    private suspend fun generateHourlyTasks(habit: Habit, detail: HabitDetail.HourlyHabitDetail, date: LocalDate): List<Task> {
-        val tasks = mutableListOf<Task>()
-        val startTime = detail.startTime
-        val intervalMinutes = detail.intervalMinutes
-        
-        var currentTime = startTime
-        val endTime = detail.endTime ?: LocalTime(23, 59)
-        
-        while (currentTime <= endTime) {
-            tasks.add(createTask(habit, date, currentTime))
-            
-            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
-            val newHour = totalMinutes / 60
-            val newMinute = totalMinutes % 60
-            
-            if (newHour >= 24) break
-            currentTime = LocalTime(newHour, newMinute)
-        }
-        
-        return tasks
-    }
+    // generateHourlyTasks function removed - HOURLY type has been merged into INTERVAL
     
     private suspend fun generateIntervalTasks(habit: Habit, detail: HabitDetail.IntervalHabitDetail, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
         val intervalMinutes = detail.intervalMinutes.coerceAtLeast(1)
         val endTime = detail.endTime ?: LocalTime(23, 59)
         
-        for (startTime in listOf(detail.startTime)) {
+        val startTime = detail.startTime
+        run {
             var currentTime = startTime
             
             while (currentTime <= endTime) {
@@ -151,7 +130,7 @@ class GetNextTasksUseCase(
         val isCompleted = when (habit.detail) {
             is HabitDetail.OnceDailyHabitDetail -> existingLog?.isCompleted == true
             // For hourly/interval habits, we assume individual completion tracking
-            is HabitDetail.HourlyHabitDetail, is HabitDetail.IntervalHabitDetail -> false
+            is HabitDetail.IntervalHabitDetail -> false
         }
         
         return Task(

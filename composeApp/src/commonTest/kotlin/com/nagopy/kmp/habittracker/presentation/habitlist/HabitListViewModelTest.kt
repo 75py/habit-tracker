@@ -133,7 +133,8 @@ class HabitListViewModelTest {
                 color = "#2196F3",
                 isActive = true,
                 createdAt = LocalDate.parse("2024-01-02"),
-                detail = HabitDetail.HourlyHabitDetail(
+                detail = HabitDetail.IntervalHabitDetail(
+                    intervalMinutes = 60,
                     startTime = LocalTime(10, 0)
                 )
             )

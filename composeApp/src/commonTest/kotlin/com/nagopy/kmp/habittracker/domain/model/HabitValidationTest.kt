@@ -29,7 +29,7 @@ class HabitValidationTest {
 
     @Test
     fun `Habit creation should fail with invalid INTERVAL values`() {
-        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 90, 120)
+        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 17, 18, 19, 21, 25, 45, 150, 210, 270)
         
         invalidIntervalMinutes.forEach { intervalMinutes ->
             val exception = assertFailsWith<IllegalArgumentException> {
@@ -42,7 +42,7 @@ class HabitValidationTest {
                 )
             }
             assertEquals(
-                "INTERVAL frequency type requires intervalMinutes to be a divisor of 60. Valid values: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60], got: $intervalMinutes",
+                "INTERVAL frequency type requires intervalMinutes to be a valid interval. Valid values: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720], got: $intervalMinutes",
                 exception.message
             )
         }
@@ -82,8 +82,8 @@ class HabitValidationTest {
     }
 
     @Test
-    fun `Habit creation should succeed with valid HOURLY values`() {
-        val validIntervalMinutes = listOf(60, 120, 180, 240, 300, 360, 420, 480, 540, 600)
+    fun `Habit creation should succeed with valid INTERVAL values including hourly intervals`() {
+        val validIntervalMinutes = listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720)
         
         validIntervalMinutes.forEach { intervalMinutes ->
             val habit = Habit(
@@ -91,17 +91,17 @@ class HabitValidationTest {
                 name = "Test Habit",
                 description = "Test",
                 createdAt = LocalDate.parse("2024-01-01"),
-                detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
+                detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
             )
-            assertEquals(FrequencyType.HOURLY, habit.frequencyType)
-            assertTrue(habit.detail is HabitDetail.HourlyHabitDetail)
+            assertEquals(FrequencyType.INTERVAL, habit.frequencyType)
+            assertTrue(habit.detail is HabitDetail.IntervalHabitDetail)
             assertEquals(intervalMinutes, habit.detail.intervalMinutes)
         }
     }
 
     @Test
-    fun `Habit creation should fail with invalid HOURLY values`() {
-        val invalidIntervalMinutes = listOf(30, 45, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250)
+    fun `Habit creation should fail with invalid INTERVAL values - extended test`() {
+        val invalidIntervalMinutes = listOf(7, 8, 9, 11, 13, 14, 16, 40, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250)
         
         invalidIntervalMinutes.forEach { intervalMinutes ->
             val exception = assertFailsWith<IllegalArgumentException> {
@@ -110,12 +110,11 @@ class HabitValidationTest {
                     name = "Test Habit",
                     description = "Test",
                     createdAt = LocalDate.parse("2024-01-01"),
-                    detail = HabitDetail.HourlyHabitDetail(intervalMinutes = intervalMinutes)
+                    detail = HabitDetail.IntervalHabitDetail(intervalMinutes = intervalMinutes)
                 )
             }
-            assertEquals(
-                "HOURLY frequency type requires intervalMinutes to be a multiple of 60. Got: $intervalMinutes",
-                exception.message
+            assertTrue(
+                exception.message?.contains("INTERVAL frequency type requires intervalMinutes to be a valid interval") == true
             )
         }
     }

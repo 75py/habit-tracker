@@ -21,13 +21,14 @@ class IOSNotification64LimitTest {
         
         // Create habits that would generate many notifications
         val habits = listOf(
-            // Hourly habit - generates 24 notifications (every hour at :30)
+            // Interval habit with hourly intervals - generates 24 notifications (every hour at :30)
             Habit(
                 id = 1L,
-                name = "Hourly Habit",
+                name = "Hourly Interval Habit",
                 createdAt = LocalDate(2024, 1, 1),
-                detail = HabitDetail.HourlyHabitDetail(
-                    startTime = LocalTime(0, 30), // Every hour at :30
+                detail = HabitDetail.IntervalHabitDetail(
+                    intervalMinutes = 60,
+                    startTime = LocalTime(0, 30) // Every hour at :30
                 )
             ),
             // 15-minute interval habit - generates 96 notifications (4 per hour * 24 hours)
@@ -161,31 +162,7 @@ class IOSNotification64LimitTest {
                     )
                 }
             }
-            FrequencyType.HOURLY -> {
-                val habitDetail = habit.detail as HabitDetail.HourlyHabitDetail
-                val startTime = habitDetail.startTime
-                val endTime = habitDetail.endTime ?: LocalTime(23, 59)
-                val minute = startTime.minute
-                
-                var currentHour = startTime.hour
-                var triggerIndex = 0
-                
-                while (true) {
-                    val time = LocalTime(currentHour, minute)
-                    if (time > endTime) break
-                    
-                    val identifier = "habit_${habit.id}_hourly_$triggerIndex"
-                    val distance = calculateTestTimeDistance(currentTime, time)
-                    notifications.add(
-                        TestNotification(habit, time, identifier, distance)
-                    )
-                    
-                    currentHour++
-                    if (currentHour > 23) currentHour = 0
-                    triggerIndex++
-                    if (triggerIndex >= 24) break
-                }
-            }
+            // HOURLY type has been removed and merged into INTERVAL
             FrequencyType.INTERVAL -> {
                 val habitDetail = habit.detail as HabitDetail.IntervalHabitDetail
                 val intervalMinutes = habitDetail.intervalMinutes

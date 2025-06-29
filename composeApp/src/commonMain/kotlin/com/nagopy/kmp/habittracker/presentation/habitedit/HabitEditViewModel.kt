@@ -56,9 +56,7 @@ class HabitEditViewModel(
                         is HabitDetail.OnceDailyHabitDetail -> {
                             HabitIntervalValidator.VALID_ONCE_DAILY_MINUTES to TimeUnit.HOURS
                         }
-                        is HabitDetail.HourlyHabitDetail -> {
-                            detail.intervalMinutes to TimeUnit.HOURS
-                        }
+                        // HOURLY type has been removed and merged into INTERVAL
                         is HabitDetail.IntervalHabitDetail -> {
                             if (detail.intervalMinutes % 60 == 0) {
                                 detail.intervalMinutes to TimeUnit.HOURS
@@ -70,7 +68,7 @@ class HabitEditViewModel(
                     
                     val (scheduledTimes, startTime, endTime) = when (val detail = habit.detail) {
                         is HabitDetail.OnceDailyHabitDetail -> Triple(detail.scheduledTimes, null, null)
-                        is HabitDetail.HourlyHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
+                        // HOURLY type has been removed and merged into INTERVAL
                         is HabitDetail.IntervalHabitDetail -> Triple(emptyList(), detail.startTime, detail.endTime)
                     }
                     
@@ -138,7 +136,6 @@ class HabitEditViewModel(
         val currentState = _uiState.value
         if (currentState is HabitEditUiState.Content) {
             val newIntervalMinutes = when (frequencyType) {
-                FrequencyType.HOURLY -> 60  // Default to 1 hour
                 FrequencyType.ONCE_DAILY -> 1440  // Default to 24 hours
                 FrequencyType.INTERVAL -> currentState.intervalMinutes
             }
@@ -268,7 +265,7 @@ class HabitEditViewModel(
                     return
                 }
             }
-            FrequencyType.HOURLY, FrequencyType.INTERVAL -> {
+            FrequencyType.INTERVAL -> {
                 if (currentState.startTime == null) {
                     _uiState.value = currentState.copy(saveError = "Start time is required")
                     return
@@ -288,11 +285,6 @@ class HabitEditViewModel(
                     val detail = when (currentState.frequencyType) {
                         FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
                             scheduledTimes = currentState.scheduledTimes.ifEmpty { listOf(LocalTime(9, 0)) }
-                        )
-                        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
-                            intervalMinutes = currentState.intervalMinutes,
-                            startTime = currentState.startTime ?: LocalTime(9, 0),
-                            endTime = currentState.endTime
                         )
                         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
@@ -330,11 +322,6 @@ class HabitEditViewModel(
                     val detail = when (currentState.frequencyType) {
                         FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
                             scheduledTimes = currentState.scheduledTimes.ifEmpty { listOf(LocalTime(9, 0)) }
-                        )
-                        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
-                            intervalMinutes = currentState.intervalMinutes,
-                            startTime = currentState.startTime ?: LocalTime(9, 0),
-                            endTime = currentState.endTime
                         )
                         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
                             intervalMinutes = currentState.intervalMinutes,
