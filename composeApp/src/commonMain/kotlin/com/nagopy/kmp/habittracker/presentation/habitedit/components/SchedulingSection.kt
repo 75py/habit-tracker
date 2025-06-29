@@ -95,7 +95,6 @@ private fun FrequencyTypeSelection(
                     label = { 
                         Text(when(frequency) {
                             FrequencyType.ONCE_DAILY -> stringResource(Res.string.once_daily)
-                            FrequencyType.HOURLY -> stringResource(Res.string.hourly)
                             FrequencyType.INTERVAL -> stringResource(Res.string.custom_interval)
                         })
                     },
@@ -115,10 +114,6 @@ private fun IntervalConfiguration(
     onIntervalValueChange: (Int, TimeUnit) -> Unit,
     onIntervalUnitChange: (TimeUnit) -> Unit
 ) {
-    // For HOURLY, don't show the interval configuration as per requirement
-    if (frequencyType == FrequencyType.HOURLY) {
-        return
-    }
     
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -236,14 +231,14 @@ private fun ScheduledTimesConfiguration(
                 onScheduledTimesChange = onScheduledTimesChange
             )
         } else {
-            // HOURLY and INTERVAL: Use start time configuration
+            // INTERVAL: Use start time configuration
             StartTimeConfiguration(
                 startTime = startTime,
                 onStartTimeChange = onStartTimeChange
             )
             
             // End time configuration for interval-based habits
-            if (frequencyType == FrequencyType.HOURLY || frequencyType == FrequencyType.INTERVAL) {
+            if (frequencyType == FrequencyType.INTERVAL) {
                 EndTimeConfiguration(
                     endTime = endTime,
                     onEndTimeChange = onEndTimeChange
@@ -575,28 +570,6 @@ private fun SchedulingSectionOnceDailyPreview() {
     }
 }
 
-@Preview
-@Composable
-private fun SchedulingSectionHourlyPreview() {
-    MaterialTheme {
-        Surface(modifier = Modifier.padding(16.dp)) {
-            SchedulingSection(
-                frequencyType = FrequencyType.HOURLY,
-                intervalValue = 2,
-                intervalUnit = TimeUnit.HOURS,
-                scheduledTimes = emptyList(),
-                startTime = LocalTime(8, 0),
-                endTime = LocalTime(22, 0),
-                onFrequencyTypeChange = {},
-                onIntervalValueChange = { _, _ -> },
-                onIntervalUnitChange = {},
-                onScheduledTimesChange = {},
-                onStartTimeChange = {},
-                onEndTimeChange = {}
-            )
-        }
-    }
-}
 
 @Preview
 @Composable
@@ -627,7 +600,7 @@ private fun FrequencyTypeSelectionPreview() {
     MaterialTheme {
         Surface(modifier = Modifier.padding(16.dp)) {
             FrequencyTypeSelection(
-                frequencyType = FrequencyType.HOURLY,
+                frequencyType = FrequencyType.INTERVAL,
                 onFrequencyTypeChange = {}
             )
         }
@@ -668,23 +641,6 @@ private fun ScheduledTimesConfigurationOnceDailyPreview() {
     }
 }
 
-@Preview
-@Composable
-private fun ScheduledTimesConfigurationHourlyPreview() {
-    MaterialTheme {
-        Surface(modifier = Modifier.padding(16.dp)) {
-            ScheduledTimesConfiguration(
-                frequencyType = FrequencyType.HOURLY,
-                scheduledTimes = emptyList(),
-                startTime = LocalTime(8, 0),
-                endTime = LocalTime(22, 0),
-                onScheduledTimesChange = {},
-                onStartTimeChange = {},
-                onEndTimeChange = {}
-            )
-        }
-    }
-}
 
 @Preview
 @Composable
