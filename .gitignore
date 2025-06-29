@@ -22,3 +22,5 @@ google-services.json
 GoogleService-Info.plist
 firebase-service-account.json
 **/firebase-service-account*.json
+fastlane/README.md
+fastlane/report.xml
