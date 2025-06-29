@@ -56,7 +56,7 @@ class HabitEditViewModelTest {
         assertEquals("#2196F3", uiState.color)
         assertTrue(uiState.isActive)
         assertEquals(FrequencyType.ONCE_DAILY, uiState.frequencyType)
-        assertEquals(1440, uiState.intervalMinutes) // 24 hours = 1440 minutes
+        assertEquals(60, uiState.intervalMinutes) // 1 hour = 60 minutes
         assertEquals(listOf(LocalTime(9, 0)), uiState.scheduledTimes)
         assertNull(uiState.nameError)
         assertNull(uiState.saveError)
