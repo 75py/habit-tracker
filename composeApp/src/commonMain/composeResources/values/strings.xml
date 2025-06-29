@@ -27,7 +27,6 @@
     <string name="schedule">Schedule</string>
     <string name="frequency">Frequency</string>
     <string name="once_daily">Once Daily</string>
-    <string name="hourly">Hourly</string>
     <string name="custom_interval">Custom Interval</string>
     <string name="every">Every</string>
     <string name="interval">Interval:</string>
