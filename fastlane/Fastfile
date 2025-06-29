@@ -53,29 +53,61 @@ platform :ios do
     release_notes = options[:release_notes] || ENV["RELEASE_NOTES"] || "最新のテストビルドです"
     groups = options[:groups] || ENV["TESTER_GROUPS"] || "internal-testers"
     
+    # Certificate and provisioning profile settings
+    p12_path = ENV["P12_PATH"]
+    p12_password = ENV["P12_PASSWORD"]
+    provisioning_profile_path = ENV["PROVISIONING_PROFILE_PATH"]
+    team_id = ENV["TEAM_ID"] # Apple Developer Team ID (例: "ABC123DEF")
+
     # Validate required parameters
     UI.user_error!("FIREBASE_APP_ID_IOS or FIREBASE_APP_ID environment variable is required") if firebase_app_id.nil? || firebase_app_id.empty?
-    
+    UI.user_error!("TEAM_ID environment variable is required. Find it in Apple Developer Portal") if team_id.nil? || team_id.empty?
+    UI.user_error!("P12 certificate file not found: #{p12_path}") unless File.exist?(p12_path)
+    UI.user_error!("Provisioning profile not found: #{provisioning_profile_path}") unless File.exist?(provisioning_profile_path)
+
     # Check service account file path (adjust for fastlane directory context)
     service_account_check_path = service_account_file.start_with?("/") ? service_account_file : "../#{service_account_file}"
     UI.user_error!("Firebase service account file not found: #{service_account_file}") unless File.exist?(service_account_check_path)
     UI.user_error!("GoogleService-Info.plist not found in iosApp/iosApp/") unless File.exist?("../iosApp/iosApp/GoogleService-Info.plist")
-    
+
     UI.message("🚀 Building and distributing iOS app...")
     UI.message("📱 App ID: #{firebase_app_id}")
     UI.message("📝 Release notes: #{release_notes}")
     UI.message("👥 Tester groups: #{groups}")
-    
+    UI.message("🔐 Certificate: #{File.basename(p12_path)}")
+    UI.message("📋 Profile: #{File.basename(provisioning_profile_path)}")
+    UI.message("👥 Team ID: #{team_id}")
+
+    # Install provisioning profile
+    install_provisioning_profile(path: provisioning_profile_path)
+
+    # Import certificate to default keychain
+    import_certificate(
+      certificate_path: p12_path,
+      certificate_password: p12_password,
+      keychain_name: "login.keychain",
+      keychain_password: ""
+    )
+
     # Build iOS app
     build_app(
       scheme: "iosApp",
       project: "iosApp/iosApp.xcodeproj",
       configuration: "Release",
       export_method: "ad-hoc",
+      export_team_id: team_id,
       output_directory: "build/ios",
-      output_name: "HabitTracker.ipa"
+      output_name: "HabitTracker.ipa",
+      export_options: {
+        provisioningProfiles: {
+          "com.nagopy.ios.habittracker" => "HabitTracker AdHoc Distribution"  # Bundle IDとプロファイル名を実際の値に置き換え
+        },
+        compileBitcode: false,
+        uploadBitcode: false,
+        uploadSymbols: false
+      }
     )
-    
+
     # Distribute to Firebase App Distribution
     firebase_app_distribution(
       app: firebase_app_id,
@@ -84,8 +116,50 @@ platform :ios do
       ipa_path: "build/ios/HabitTracker.ipa",
       service_credentials_file: service_account_file
     )
-    
+
     UI.success("✅ iOS app distributed successfully!")
+  end
+
+  # デバッグ用: 証明書とプロファイルの確認
+  desc "Check iOS certificates and provisioning profiles"
+  lane :check_setup do
+    team_id = ENV["TEAM_ID"] # Apple Developer Team ID (例: "ABC123DEF")
+
+    UI.message("🔍 設定の確認を開始します...")
+
+    # 証明書の確認
+    p12_path = ENV["P12_PATH"]
+    if File.exist?(p12_path)
+      UI.success("✅ P12証明書が見つかりました: #{p12_path}")
+      sh("security find-identity -v -p codesigning #{p12_path}")
+    else
+      UI.error("❌ P12証明書が見つかりません: #{p12_path}")
+    end
+
+    # プロビジョニングプロファイルの確認
+    profile_path = ENV["PROVISIONING_PROFILE_PATH"]
+    if File.exist?(profile_path)
+      UI.success("✅ プロビジョニングプロファイルが見つかりました: #{profile_path}")
+      # プロファイルの内容を確認
+      sh("security cms -D -i #{profile_path} | grep -E 'TeamIdentifier|Name|UUID|ExpirationDate' | head -20")
+    else
+      UI.error("❌ プロビジョニングプロファイルが見つかりません: #{profile_path}")
+    end
+
+    # Team IDの確認
+    if team_id && !team_id.empty?
+      UI.success("✅ Team ID: #{team_id}")
+    else
+      UI.error("❌ TEAM_IDが設定されていません")
+      UI.message("💡 Apple Developer Portalで確認してください: https://developer.apple.com/account")
+    end
+
+    # Xcodeプロジェクトの確認
+    if File.exist?("../iosApp/iosApp.xcodeproj")
+      UI.success("✅ Xcodeプロジェクトが見つかりました")
+    else
+      UI.error("❌ Xcodeプロジェクトが見つかりません")
+    end
   end
 end
 

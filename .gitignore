@@ -24,3 +24,4 @@ firebase-service-account.json
 **/firebase-service-account*.json
 fastlane/README.md
 fastlane/report.xml
+.env.firebase
