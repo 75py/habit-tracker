@@ -408,7 +408,7 @@ sealed interface HabitEditUiState {
         val isActive: Boolean = true,
         val createdAt: LocalDate? = null, // Original creation date for editing
         val frequencyType: FrequencyType = FrequencyType.ONCE_DAILY,
-        val intervalMinutes: Int = 1440, // Default 24 hours = 1440 minutes
+        val intervalMinutes: Int = 60, // Default 1 hour = 60 minutes
         val intervalUnit: TimeUnit = TimeUnit.HOURS, // Default to hours for user convenience
         val scheduledTimes: List<LocalTime> = listOf(LocalTime(9, 0)), // For ONCE_DAILY
         val startTime: LocalTime? = LocalTime(9, 0), // For HOURLY/INTERVAL

@@ -20,6 +20,40 @@ import habittracker.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/**
+ * Helper function to convert and clamp value when switching between time units
+ */
+private fun convertAndClampValue(
+    currentValue: Int,
+    fromUnit: TimeUnit,
+    toUnit: TimeUnit,
+    frequencyType: FrequencyType
+): Int {
+    return when {
+        fromUnit == toUnit -> currentValue
+        fromUnit == TimeUnit.HOURS && toUnit == TimeUnit.MINUTES -> {
+            // Convert hours to minutes and clamp to valid range
+            val minutesValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
+            } else {
+                (1..60).toList()
+            }
+            minutesValidValues.minByOrNull { kotlin.math.abs(it - (currentValue * 60)) } ?: 1
+        }
+        fromUnit == TimeUnit.MINUTES && toUnit == TimeUnit.HOURS -> {
+            // Convert minutes to hours and clamp to valid range
+            val hoursValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                listOf(1, 2, 3, 4, 6, 8, 12)
+            } else {
+                (1..24).toList()
+            }
+            val targetHours = currentValue / 60
+            hoursValidValues.minByOrNull { kotlin.math.abs(it - targetHours) } ?: 1
+        }
+        else -> currentValue
+    }
+}
+
 @Composable
 fun IntervalPickerDialog(
     currentValue: Int,
@@ -41,7 +75,7 @@ fun IntervalPickerDialog(
         }
         TimeUnit.HOURS -> {
             if (frequencyType == FrequencyType.INTERVAL) {
-                1 to 1 // For INTERVAL, only allow 1 hour (60 minutes is the only valid hour-divisor)
+                1 to 12 // For INTERVAL, allow 1-12 hours (valid hour intervals)
             } else {
                 1 to 24 // 24 hours
             }
@@ -73,9 +107,7 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.MINUTES) {
-                                // Convert current value from hours to minutes
-                                val convertedValue = (tempValue * 60).coerceIn(1, 1440)
-                                tempValue = convertedValue
+                                tempValue = convertAndClampValue(tempValue, tempUnit, TimeUnit.MINUTES, frequencyType)
                                 tempUnit = TimeUnit.MINUTES
                             }
                         },
@@ -85,9 +117,7 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.HOURS) {
-                                // Convert current value from minutes to hours
-                                val convertedValue = (tempValue / 60).coerceAtLeast(1).coerceAtMost(24)
-                                tempValue = convertedValue
+                                tempValue = convertAndClampValue(tempValue, tempUnit, TimeUnit.HOURS, frequencyType)
                                 tempUnit = TimeUnit.HOURS
                             }
                         },
@@ -111,25 +141,37 @@ fun IntervalPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Define valid values for +/- buttons
+                    val validValues = remember(tempUnit, frequencyType, maxValue) {
+                        when (tempUnit) {
+                            TimeUnit.MINUTES -> {
+                                if (frequencyType == FrequencyType.INTERVAL) {
+                                    HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
+                                } else {
+                                    (1..minOf(maxValue, 60)).toList()
+                                }
+                            }
+                            TimeUnit.HOURS -> {
+                                if (frequencyType == FrequencyType.INTERVAL) {
+                                    listOf(1, 2, 3, 4, 6, 8, 12)
+                                } else {
+                                    (1..maxValue).toList()
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Helper to get current value index
+                    val currentValueIndex = validValues.indexOf(tempValue)
+                    
                     // Decrease button
                     FilledIconButton(
                         onClick = { 
-                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                                // For INTERVAL minutes, jump to previous valid divisor
-                                val currentIndex = HabitIntervalValidator.getAllValidIntervalMinutes().indexOf(tempValue)
-                                if (currentIndex > 0) {
-                                    tempValue = HabitIntervalValidator.getAllValidIntervalMinutes()[currentIndex - 1]
-                                }
-                            } else if (tempValue > minValue) {
-                                tempValue--
+                            if (currentValueIndex > 0) {
+                                tempValue = validValues[currentValueIndex - 1]
                             }
                         },
-                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                            val currentIndex = HabitIntervalValidator.getAllValidIntervalMinutes().indexOf(tempValue)
-                            currentIndex > 0
-                        } else {
-                            tempValue > minValue
-                        }
+                        enabled = currentValueIndex > 0
                     ) {
                         Icon(
                             imageVector = Icons.Default.Remove,
@@ -148,22 +190,11 @@ fun IntervalPickerDialog(
                     // Increase button
                     FilledIconButton(
                         onClick = { 
-                            if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                                // For INTERVAL minutes, jump to next valid divisor
-                                val currentIndex = HabitIntervalValidator.getAllValidIntervalMinutes().indexOf(tempValue)
-                                if (currentIndex >= 0 && currentIndex < HabitIntervalValidator.getAllValidIntervalMinutes().size - 1) {
-                                    tempValue = HabitIntervalValidator.getAllValidIntervalMinutes()[currentIndex + 1]
-                                }
-                            } else if (tempValue < maxValue) {
-                                tempValue++
+                            if (currentValueIndex >= 0 && currentValueIndex < validValues.size - 1) {
+                                tempValue = validValues[currentValueIndex + 1]
                             }
                         },
-                        enabled = if (frequencyType == FrequencyType.INTERVAL && tempUnit == TimeUnit.MINUTES) {
-                            val currentIndex = HabitIntervalValidator.getAllValidIntervalMinutes().indexOf(tempValue)
-                            currentIndex >= 0 && currentIndex < HabitIntervalValidator.getAllValidIntervalMinutes().size - 1
-                        } else {
-                            tempValue < maxValue
-                        }
+                        enabled = currentValueIndex >= 0 && currentValueIndex < validValues.size - 1
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -187,10 +218,8 @@ fun IntervalPickerDialog(
                         }
                         TimeUnit.HOURS -> {
                             if (frequencyType == FrequencyType.INTERVAL) {
-                                // For INTERVAL type, only show valid divisors of 60 that are >= 60 (i.e., only 60 minutes = 1 hour)
-                                HabitIntervalValidator.getAllValidIntervalMinutes()
-                                    .filter { it >= 60 && it % 60 == 0 }
-                                    .map { it / 60 }
+                                // For INTERVAL type, show common hour intervals
+                                listOf(1, 2, 3, 4, 6, 8, 12)
                             } else {
                                 listOf(1, 2, 3, 4, 6, 8, 12, 24)
                             }
@@ -200,7 +229,7 @@ fun IntervalPickerDialog(
                     items(quickValues) { value ->
                         val currentMaxValue = when (tempUnit) {
                             TimeUnit.MINUTES -> if (frequencyType == FrequencyType.INTERVAL) 60 else 1440
-                            TimeUnit.HOURS -> if (frequencyType == FrequencyType.INTERVAL) 1 else 24
+                            TimeUnit.HOURS -> if (frequencyType == FrequencyType.INTERVAL) 12 else 24
                         }
                         if (value <= currentMaxValue) {
                             FilterChip(
