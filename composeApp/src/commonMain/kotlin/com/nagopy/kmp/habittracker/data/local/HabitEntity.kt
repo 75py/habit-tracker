@@ -17,6 +17,6 @@ data class HabitEntity(
     val createdAt: String, // Stored as ISO-8601 string
     val intervalMinutes: Int = 1440, // For interval-based habits (default 24 hours = 1440 minutes)
     val scheduledTimes: String = "09:00", // For ONCE_DAILY: comma-separated list of times in HH:mm format
-    val startTime: String? = "09:00", // For HOURLY/INTERVAL: start time in HH:mm format
-    val endTime: String? = null // For HOURLY/INTERVAL: end time in HH:mm format
+    val startTime: String? = "09:00", // For INTERVAL: start time in HH:mm format
+    val endTime: String? = null // For INTERVAL: end time in HH:mm format
 )

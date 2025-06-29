@@ -19,18 +19,12 @@ fun HabitEntity.toDomainModel(): Habit {
     // Auto-detect frequency type based on intervalMinutes
     val detectedFrequencyType = when {
         intervalMinutes == 1440 -> FrequencyType.ONCE_DAILY // 24 hours = once daily
-        intervalMinutes % 60 == 0 -> FrequencyType.HOURLY // Multiples of 60 minutes = hourly
-        else -> FrequencyType.INTERVAL // Custom intervals
+        else -> FrequencyType.INTERVAL // All other intervals
     }
     
     val detail = when (detectedFrequencyType) {
         FrequencyType.ONCE_DAILY -> HabitDetail.OnceDailyHabitDetail(
             scheduledTimes = parseScheduledTimes(scheduledTimes).ifEmpty { listOf(LocalTime(9, 0)) }
-        )
-        FrequencyType.HOURLY -> HabitDetail.HourlyHabitDetail(
-            intervalMinutes = intervalMinutes,
-            startTime = startTime?.let { parseTime(it) } ?: LocalTime(9, 0),
-            endTime = endTime?.let { parseTime(it) }
         )
         FrequencyType.INTERVAL -> HabitDetail.IntervalHabitDetail(
             intervalMinutes = intervalMinutes,
@@ -60,22 +54,18 @@ fun Habit.toEntity(): HabitEntity {
         createdAt = createdAt.toString(),
         intervalMinutes = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> HabitIntervalValidator.VALID_ONCE_DAILY_MINUTES
-            is HabitDetail.HourlyHabitDetail -> detail.intervalMinutes
             is HabitDetail.IntervalHabitDetail -> detail.intervalMinutes
         },
         scheduledTimes = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> formatScheduledTimes(detail.scheduledTimes)
-            is HabitDetail.HourlyHabitDetail -> "" // No scheduled times for hourly habits
             is HabitDetail.IntervalHabitDetail -> "" // No scheduled times for interval habits
         },
         startTime = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> null // No start time for daily habits
-            is HabitDetail.HourlyHabitDetail -> formatTime(detail.startTime)
             is HabitDetail.IntervalHabitDetail -> formatTime(detail.startTime)
         },
         endTime = when (val detail = this.detail) {
             is HabitDetail.OnceDailyHabitDetail -> null // No end time for daily habits
-            is HabitDetail.HourlyHabitDetail -> detail.endTime?.let { formatTime(it) }
             is HabitDetail.IntervalHabitDetail -> detail.endTime?.let { formatTime(it) }
         }
     )
