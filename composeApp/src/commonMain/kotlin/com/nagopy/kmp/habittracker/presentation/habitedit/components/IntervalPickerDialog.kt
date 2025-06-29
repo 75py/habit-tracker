@@ -112,19 +112,24 @@ fun IntervalPickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Define valid values for +/- buttons
-                    val validValues = when (tempUnit) {
-                        TimeUnit.MINUTES -> {
-                            if (frequencyType == FrequencyType.INTERVAL) {
-                                HabitIntervalValidator.getAllValidIntervalMinutes()
-                            } else {
-                                (1..maxValue).toList()
+                    val validValues = remember(tempUnit, frequencyType, maxValue) {
+                        when (tempUnit) {
+                            TimeUnit.MINUTES -> {
+                                if (frequencyType == FrequencyType.INTERVAL) {
+                                    HabitIntervalValidator.getAllValidIntervalMinutes()
+                                } else {
+                                    (1..maxValue).toList()
+                                }
                             }
-                        }
-                        TimeUnit.HOURS -> {
-                            if (frequencyType == FrequencyType.INTERVAL) {
-                                listOf(1, 2, 3, 4, 6, 8, 12)
-                            } else {
-                                (1..maxValue).toList()
+                            TimeUnit.HOURS -> {
+                                if (frequencyType == FrequencyType.INTERVAL) {
+                                    // Convert valid hour intervals from HabitIntervalValidator
+                                    HabitIntervalValidator.getAllValidIntervalMinutes()
+                                        .filter { it >= 60 && it % 60 == 0 }
+                                        .map { it / 60 }
+                                } else {
+                                    (1..maxValue).toList()
+                                }
                             }
                         }
                     }
@@ -139,7 +144,8 @@ fun IntervalPickerDialog(
                         },
                         enabled = {
                             val currentIndex = validValues.indexOf(tempValue)
-                            currentIndex > 0
+                            val isDecreasable = currentIndex > 0
+                            isDecreasable
                         }()
                     ) {
                         Icon(
@@ -166,7 +172,8 @@ fun IntervalPickerDialog(
                         },
                         enabled = {
                             val currentIndex = validValues.indexOf(tempValue)
-                            currentIndex >= 0 && currentIndex < validValues.size - 1
+                            val isIncreasable = currentIndex >= 0 && currentIndex < validValues.size - 1
+                            isIncreasable
                         }()
                     ) {
                         Icon(
