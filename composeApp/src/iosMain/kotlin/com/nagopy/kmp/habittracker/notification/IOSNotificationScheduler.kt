@@ -158,31 +158,6 @@ class IOSNotificationScheduler(
                     )
                 }
             }
-            FrequencyType.HOURLY -> {
-                val detail = habit.detail as HabitDetail.HourlyHabitDetail
-                val startTime = detail.startTime
-                val endTime = detail.endTime ?: LocalTime(23, 59)
-                val minute = startTime.minute
-                
-                var currentHour = startTime.hour
-                var triggerIndex = 0
-                
-                while (true) {
-                    val time = LocalTime(currentHour, minute)
-                    if (time > endTime) break
-                    
-                    val identifier = "habit_${habit.id}_hourly_$triggerIndex"
-                    val distance = calculateTimeDistance(currentTime, time)
-                    notifications.add(
-                        ScheduledNotification(habit, time, identifier, distance)
-                    )
-                    
-                    currentHour++
-                    if (currentHour > 23) currentHour = 0
-                    triggerIndex++
-                    if (triggerIndex >= 24) break
-                }
-            }
             FrequencyType.INTERVAL -> {
                 val detail = habit.detail as HabitDetail.IntervalHabitDetail
                 val intervalMinutes = detail.intervalMinutes
