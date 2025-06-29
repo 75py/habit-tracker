@@ -142,17 +142,18 @@ fun IntervalPickerDialog(
                         }
                     }
                     
+                    // Helper to get current value index
+                    val currentValueIndex = validValues.indexOf(tempValue)
+                    
                     // Decrease button
                     FilledIconButton(
                         onClick = { 
-                            val currentIndex = validValues.indexOf(tempValue)
-                            if (currentIndex > 0) {
-                                tempValue = validValues[currentIndex - 1]
+                            if (currentValueIndex > 0) {
+                                tempValue = validValues[currentValueIndex - 1]
                             }
                         },
                         enabled = {
-                            val currentIndex = validValues.indexOf(tempValue)
-                            val isDecreasable = currentIndex > 0
+                            val isDecreasable = currentValueIndex > 0
                             isDecreasable
                         }()
                     ) {
@@ -173,14 +174,12 @@ fun IntervalPickerDialog(
                     // Increase button
                     FilledIconButton(
                         onClick = { 
-                            val currentIndex = validValues.indexOf(tempValue)
-                            if (currentIndex >= 0 && currentIndex < validValues.size - 1) {
-                                tempValue = validValues[currentIndex + 1]
+                            if (currentValueIndex >= 0 && currentValueIndex < validValues.size - 1) {
+                                tempValue = validValues[currentValueIndex + 1]
                             }
                         },
                         enabled = {
-                            val currentIndex = validValues.indexOf(tempValue)
-                            val isIncreasable = currentIndex >= 0 && currentIndex < validValues.size - 1
+                            val isIncreasable = currentValueIndex >= 0 && currentValueIndex < validValues.size - 1
                             isIncreasable
                         }()
                     ) {
