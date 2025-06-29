@@ -17,8 +17,8 @@ This process enables continuous improvement of project rules through active inte
 ### Instruction Response Flow
 When receiving instructions from users, follow this flow:
 
-1. **Plan**: First decide what to do
-2. **Explain**: Explain the implementation details
+1. **Plan**: First decide what to do (must include test code modifications if applicable)
+2. **Explain**: Explain the implementation details including test updates
 3. **Confirm**: Get user approval
 4. **Execute**: Implement after approval
 
@@ -35,13 +35,21 @@ When changing code, follow this flow:
 - **Small commits**: Split into logical units for easy review
 - **Japanese messages**: Write commit messages in Japanese
 - **Clear descriptions**: Explain what changed and why
+- **Include Co-Author**: Always add Co-Authored-By: Claude in commit messages
+- **Test updates**: Always update related test code when modifying functionality
 
 ### Commit Message Examples
 ```
 feat: ユーザー認証機能を追加
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 fix: ログイン時のエラーハンドリングを修正
-refactor: データベース接続処理をリファクタリング
-docs: CLAUDE.mdに開発フローを追記
+
+- エラーメッセージの表示を改善
+- 関連するテストケースを更新
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## 📚 Interactive Documentation Update System
