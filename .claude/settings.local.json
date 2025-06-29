@@ -10,7 +10,8 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(rg:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

@@ -12,6 +12,38 @@ When receiving instructions from users that appear to require continuous applica
 
 This process enables continuous improvement of project rules through active interaction.
 
+## 🔄 Development Workflow Rules
+
+### Instruction Response Flow
+When receiving instructions from users, follow this flow:
+
+1. **Plan**: First decide what to do
+2. **Explain**: Explain the implementation details
+3. **Confirm**: Get user approval
+4. **Execute**: Implement after approval
+
+### Commit Flow
+When changing code, follow this flow:
+
+1. **Change**: Implement code changes
+2. **Stage**: Use `git add` to stage changes
+3. **Explain Diff**: Explain staged changes to user
+4. **Propose Commit**: Propose commit message and ask for approval
+5. **Commit**: Execute `git commit` after approval
+
+### Commit Rules
+- **Small commits**: Split into logical units for easy review
+- **Japanese messages**: Write commit messages in Japanese
+- **Clear descriptions**: Explain what changed and why
+
+### Commit Message Examples
+```
+feat: ユーザー認証機能を追加
+fix: ログイン時のエラーハンドリングを修正
+refactor: データベース接続処理をリファクタリング
+docs: CLAUDE.mdに開発フローを追記
+```
+
 ## 📚 Interactive Documentation Update System
 
 This project uses an interactive system to capture and document development knowledge. See `/docs/DOCUMENTATION_UPDATE_SYSTEM.md` for complete details.
