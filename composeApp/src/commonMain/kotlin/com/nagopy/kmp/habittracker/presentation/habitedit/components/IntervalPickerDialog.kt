@@ -20,6 +20,40 @@ import habittracker.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/**
+ * Helper function to convert and clamp value when switching between time units
+ */
+private fun convertAndClampValue(
+    currentValue: Int,
+    fromUnit: TimeUnit,
+    toUnit: TimeUnit,
+    frequencyType: FrequencyType
+): Int {
+    return when {
+        fromUnit == toUnit -> currentValue
+        fromUnit == TimeUnit.HOURS && toUnit == TimeUnit.MINUTES -> {
+            // Convert hours to minutes and clamp to valid range
+            val minutesValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
+            } else {
+                (1..60).toList()
+            }
+            minutesValidValues.minByOrNull { kotlin.math.abs(it - (currentValue * 60)) } ?: 1
+        }
+        fromUnit == TimeUnit.MINUTES && toUnit == TimeUnit.HOURS -> {
+            // Convert minutes to hours and clamp to valid range
+            val hoursValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                listOf(1, 2, 3, 4, 6, 8, 12)
+            } else {
+                (1..24).toList()
+            }
+            val targetHours = currentValue / 60
+            hoursValidValues.minByOrNull { kotlin.math.abs(it - targetHours) } ?: 1
+        }
+        else -> currentValue
+    }
+}
+
 @Composable
 fun IntervalPickerDialog(
     currentValue: Int,
@@ -73,14 +107,8 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.MINUTES) {
+                                tempValue = convertAndClampValue(tempValue, tempUnit, TimeUnit.MINUTES, frequencyType)
                                 tempUnit = TimeUnit.MINUTES
-                                // Clamp value to minutes valid range
-                                val minutesValidValues = if (frequencyType == FrequencyType.INTERVAL) {
-                                    HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
-                                } else {
-                                    (1..60).toList()
-                                }
-                                tempValue = minutesValidValues.minByOrNull { kotlin.math.abs(it - (tempValue * 60)) } ?: 1
                             }
                         },
                         label = { Text(stringResource(Res.string.minutes)) },
@@ -89,16 +117,7 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.HOURS) {
-                                tempUnit = TimeUnit.HOURS
-                                // Clamp value to hours valid range
-                                val hoursValidValues = if (frequencyType == FrequencyType.INTERVAL) {
-                                    listOf(1, 2, 3, 4, 6, 8, 12)
-                                } else {
-                                    (1..24).toList()
-                                }
-                                val targetHours = tempValue / 60
-                                val convertedValue = hoursValidValues.minByOrNull { kotlin.math.abs(it - targetHours) } ?: 1
-                                tempValue = convertedValue
+                                tempValue = convertAndClampValue(tempValue, tempUnit, TimeUnit.HOURS, frequencyType)
                                 tempUnit = TimeUnit.HOURS
                             }
                         },
@@ -152,10 +171,7 @@ fun IntervalPickerDialog(
                                 tempValue = validValues[currentValueIndex - 1]
                             }
                         },
-                        enabled = {
-                            val isDecreasable = currentValueIndex > 0
-                            isDecreasable
-                        }()
+                        enabled = currentValueIndex > 0
                     ) {
                         Icon(
                             imageVector = Icons.Default.Remove,
@@ -178,10 +194,7 @@ fun IntervalPickerDialog(
                                 tempValue = validValues[currentValueIndex + 1]
                             }
                         },
-                        enabled = {
-                            val isIncreasable = currentValueIndex >= 0 && currentValueIndex < validValues.size - 1
-                            isIncreasable
-                        }()
+                        enabled = currentValueIndex >= 0 && currentValueIndex < validValues.size - 1
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
