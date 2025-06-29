@@ -17,9 +17,12 @@ import kotlinx.datetime.LocalTime
 // Habit mappers
 fun HabitEntity.toDomainModel(): Habit {
     // Auto-detect frequency type based on intervalMinutes
+    // Note: The previous HOURLY detection (intervalMinutes % 60 == 0) has been removed.
+    // All non-daily intervals, including hourly ones (60, 120, 180, etc.), are now
+    // treated as INTERVAL type for simplified and unified handling.
     val detectedFrequencyType = when {
         intervalMinutes == 1440 -> FrequencyType.ONCE_DAILY // 24 hours = once daily
-        else -> FrequencyType.INTERVAL // All other intervals
+        else -> FrequencyType.INTERVAL // All other intervals (including previous HOURLY)
     }
     
     val detail = when (detectedFrequencyType) {

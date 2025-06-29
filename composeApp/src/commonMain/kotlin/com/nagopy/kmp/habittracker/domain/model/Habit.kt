@@ -36,7 +36,15 @@ sealed interface HabitDetail {
 }
 
 /**
- * Convenience extension property to get the frequency type from habit detail
+ * Convenience extension property to get the frequency type from habit detail.
+ * 
+ * Frequency type detection:
+ * - OnceDailyHabitDetail -> FrequencyType.ONCE_DAILY
+ * - IntervalHabitDetail -> FrequencyType.INTERVAL (includes all non-daily intervals)
+ * 
+ * Note: The previous HOURLY type has been unified into INTERVAL.
+ * Habits with 60-minute intervals (and multiples like 120, 180, etc.) that were
+ * previously treated as HOURLY are now handled as INTERVAL habits.
  */
 val HabitDetail.frequencyType: FrequencyType
     get() = when (this) {
@@ -45,17 +53,22 @@ val HabitDetail.frequencyType: FrequencyType
     }
 
 /**
- * Convenience extension property to get the frequency type from habit
+ * Convenience extension property to get the frequency type from habit.
+ * See HabitDetail.frequencyType for frequency type detection logic.
  */
 val Habit.frequencyType: FrequencyType
     get() = detail.frequencyType
 
 /**
  * Enum representing different frequency types for habits.
+ * 
+ * Note: The HOURLY frequency type has been removed and unified with INTERVAL.
+ * All interval-based habits (including those with 60-minute multiples that were
+ * previously HOURLY) are now represented as INTERVAL.
  */
 enum class FrequencyType {
-    ONCE_DAILY,    // Once per day at specific time(s)
-    INTERVAL       // Custom interval in minutes or hours
+    ONCE_DAILY,    // Once per day at specific time(s) - intervalMinutes = 1440
+    INTERVAL       // Custom interval in minutes or hours - includes previous HOURLY functionality
 }
 
 /**

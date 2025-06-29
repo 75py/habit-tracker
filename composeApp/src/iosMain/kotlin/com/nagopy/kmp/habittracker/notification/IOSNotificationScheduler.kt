@@ -159,6 +159,9 @@ class IOSNotificationScheduler(
                 }
             }
             FrequencyType.INTERVAL -> {
+                // Note: This branch now handles all interval-based habits, including
+                // those with hourly intervals (60, 120, 180 minutes, etc.) that were
+                // previously handled by the removed HOURLY branch.
                 val detail = habit.detail as HabitDetail.IntervalHabitDetail
                 val intervalMinutes = detail.intervalMinutes
                 val endTime = detail.endTime ?: LocalTime(23, 59)

@@ -36,6 +36,11 @@ class GetTodayTasksUseCase(
     
     /**
      * Generates task instances for a specific habit on a given date.
+     * 
+     * Note: The previous generateHourlyTasks function has been removed and its functionality
+     * has been unified into generateIntervalTasks. All interval-based habits (including
+     * those with 60-minute multiples that were previously HOURLY) are now handled by
+     * the INTERVAL branch.
      */
     private suspend fun generateTasksForHabit(habit: Habit, date: LocalDate): List<Task> {
         return when (val detail = habit.detail) {
@@ -50,7 +55,11 @@ class GetTodayTasksUseCase(
         }
     }
     
-    
+    /**
+     * Generates tasks for interval-based habits.
+     * This function now handles all interval types, including hourly intervals (60, 120, 180 minutes, etc.)
+     * that were previously handled by the removed generateHourlyTasks function.
+     */
     private suspend fun generateIntervalTasks(habit: Habit, detail: HabitDetail.IntervalHabitDetail, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
         val intervalMinutes = detail.intervalMinutes.coerceAtLeast(1)
@@ -81,7 +90,7 @@ class GetTodayTasksUseCase(
         val existingLog = habitRepository.getHabitLog(habit.id, date)
         val isCompleted = when (habit.detail) {
             is HabitDetail.OnceDailyHabitDetail -> existingLog?.isCompleted == true
-            // For hourly/interval habits, we assume individual completion tracking
+            // For interval habits (including previous hourly habits), we assume individual completion tracking
             // would require enhancement to the data layer
             is HabitDetail.IntervalHabitDetail -> false
         }
