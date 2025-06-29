@@ -23,6 +23,15 @@ else
     echo ""
 fi
 
+# 必要な環境変数をすべてエクスポート（fastlaneに渡すため）
+export FIREBASE_APP_ID
+export FIREBASE_APP_ID_IOS
+export TEAM_ID
+export P12_PATH
+export P12_PASSWORD
+export PROVISIONING_PROFILE_PATH
+export TESTER_GROUPS
+
 # デフォルト値
 PLATFORM=${1:-both}
 RELEASE_NOTES=${2:-"開発者PCからのテストビルド"}
@@ -58,15 +67,6 @@ fi
 # サービスアカウントファイルの設定（.env.firebaseで上書きされない場合のデフォルト値）
 export FIREBASE_SERVICE_ACCOUNT_FILE="${FIREBASE_SERVICE_ACCOUNT_FILE:-firebase-service-account.json}"
 export RELEASE_NOTES="$RELEASE_NOTES"
-
-# 必要な環境変数をすべてエクスポート（fastlaneに渡すため）
-export FIREBASE_APP_ID
-export FIREBASE_APP_ID_IOS
-export TEAM_ID
-export P12_PATH
-export P12_PASSWORD
-export PROVISIONING_PROFILE_PATH
-export TESTER_GROUPS
 
 # プラットフォーム別にfastlaneを実行
 case $PLATFORM in
