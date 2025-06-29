@@ -44,37 +44,12 @@ class GetTodayTasksUseCase(
                     createTask(habit, date, scheduledTime)
                 }
             }
-            is HabitDetail.HourlyHabitDetail -> {
-                generateHourlyTasks(habit, detail, date)
-            }
             is HabitDetail.IntervalHabitDetail -> {
                 generateIntervalTasks(habit, detail, date)
             }
         }
     }
     
-    private suspend fun generateHourlyTasks(habit: Habit, detail: HabitDetail.HourlyHabitDetail, date: LocalDate): List<Task> {
-        val tasks = mutableListOf<Task>()
-        val startTime = detail.startTime
-        val intervalMinutes = detail.intervalMinutes
-        
-        var currentTime = startTime
-        val endTime = detail.endTime ?: LocalTime(23, 59) // Use end time if set, otherwise end of day
-        
-        while (currentTime <= endTime) {
-            tasks.add(createTask(habit, date, currentTime))
-            
-            // Calculate next time by adding interval minutes
-            val totalMinutes = currentTime.hour * 60 + currentTime.minute + intervalMinutes
-            val newHour = totalMinutes / 60
-            val newMinute = totalMinutes % 60
-            
-            if (newHour >= 24) break
-            currentTime = LocalTime(newHour, newMinute)
-        }
-        
-        return tasks
-    }
     
     private suspend fun generateIntervalTasks(habit: Habit, detail: HabitDetail.IntervalHabitDetail, date: LocalDate): List<Task> {
         val tasks = mutableListOf<Task>()
@@ -108,7 +83,7 @@ class GetTodayTasksUseCase(
             is HabitDetail.OnceDailyHabitDetail -> existingLog?.isCompleted == true
             // For hourly/interval habits, we assume individual completion tracking
             // would require enhancement to the data layer
-            is HabitDetail.HourlyHabitDetail, is HabitDetail.IntervalHabitDetail -> false
+            is HabitDetail.IntervalHabitDetail -> false
         }
         
         return Task(
