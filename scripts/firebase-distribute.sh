@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Firebase App Distribution ローカル実行スクリプト
-# 使用方法: ./scripts/firebase-distribute.sh [platform] [release-notes]
+# 使用方法: ./scripts/firebase-distribute.sh [platform|check-setup] [release-notes]
 # platform: android, ios, both (default: both)
+# check-setup: iOS証明書とプロファイルの設定を確認
 
 # スクリプトのディレクトリを取得
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -26,10 +27,18 @@ fi
 PLATFORM=${1:-both}
 RELEASE_NOTES=${2:-"開発者PCからのテストビルド"}
 
+# check-setup コマンドの処理
+if [[ "$PLATFORM" == "check-setup" ]]; then
+    echo "🔍 iOS証明書とプロファイルの設定を確認します..."
+    echo ""
+    fastlane ios check_setup
+    exit $?
+fi
+
 # 有効なプラットフォームのチェック
 if [[ "$PLATFORM" != "android" && "$PLATFORM" != "ios" && "$PLATFORM" != "both" ]]; then
     echo "❌ エラー: 無効なプラットフォーム: $PLATFORM"
-    echo "💡 使用可能なプラットフォーム: android, ios, both"
+    echo "💡 使用可能なプラットフォーム: android, ios, both, check-setup"
     exit 1
 fi
 

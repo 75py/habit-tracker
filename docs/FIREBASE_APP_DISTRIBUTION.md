@@ -231,8 +231,7 @@ export TESTER_GROUPS=internal-testers
 ./scripts/firebase-distribute.sh
 
 # iOS証明書とプロファイルの確認（デバッグ用）
-# .env.firebaseが自動で読み込まれない場合は手動でsourceしてください
-source .env.firebase && fastlane ios check_setup
+./scripts/firebase-distribute.sh check-setup
 ```
 
 **注意**: `firebase-distribute.sh`スクリプトはプロジェクトルートの`.env.firebase`ファイルを自動的に検出して読み込みます。手動で`source`する必要はありません。
@@ -286,7 +285,7 @@ source .env.firebase && fastlane ios check_setup
    **デバッグ方法**:
    ```bash
    # 証明書とプロファイルの設定確認
-   fastlane ios check_setup
+   ./scripts/firebase-distribute.sh check-setup
    
    # 詳細ログでビルドを実行
    fastlane ios firebase_distribute --verbose
