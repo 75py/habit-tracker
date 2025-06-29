@@ -85,7 +85,7 @@ class GetTodayTasksUseCaseTest {
     }
 
     @Test
-    fun `invoke should return multiple task instances for hourly habits`() = runTest {
+    fun `invoke should return multiple task instances for interval habits`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
         val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
@@ -93,20 +93,21 @@ class GetTodayTasksUseCaseTest {
             override fun now(): Instant = fixedInstant
         }
         
-        val hourlyHabit = Habit(
+        val intervalHabit = Habit(
             id = 1,
             name = "Drink Water",
             description = "Stay hydrated",
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.HourlyHabitDetail(
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60,
                 startTime = LocalTime(9, 0)
             )
         )
         
         val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(listOf(hourlyHabit))
+        every { mockRepository.getActiveHabits() } returns flowOf(listOf(intervalHabit))
         coEvery { mockRepository.getHabitLog(any(), any()) } returns null
         
         val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
@@ -115,7 +116,7 @@ class GetTodayTasksUseCaseTest {
         val result = useCase().first()
 
         // Then
-        assertTrue(result.size >= 15) // Should have many hourly tasks (9 AM to 11 PM = 15 hours)
+        assertTrue(result.size >= 15) // Should have many interval tasks (9 AM to 11 PM = 15 hours)
         
         // Check first few tasks
         val firstTask = result[0]
@@ -149,7 +150,7 @@ class GetTodayTasksUseCaseTest {
     }
 
     @Test
-    fun `invoke should mark hourly and interval tasks as not completed by default`() = runTest {
+    fun `invoke should mark interval tasks as not completed by default`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
         val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
@@ -157,20 +158,21 @@ class GetTodayTasksUseCaseTest {
             override fun now(): Instant = fixedInstant
         }
         
-        val hourlyHabit = Habit(
+        val intervalHabit = Habit(
             id = 1,
             name = "Drink Water",
             description = "Stay hydrated",
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.HourlyHabitDetail(
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60,
                 startTime = LocalTime(9, 0)
             )
         )
         
         val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(listOf(hourlyHabit))
+        every { mockRepository.getActiveHabits() } returns flowOf(listOf(intervalHabit))
         coEvery { mockRepository.getHabitLog(1, fixedDate) } returns null // No completion log
         
         val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
@@ -178,7 +180,7 @@ class GetTodayTasksUseCaseTest {
         // When
         val result = useCase().first()
 
-        // Then - All hourly tasks should be marked as not completed
+        // Then - All interval tasks should be marked as not completed
         assertTrue(result.isNotEmpty())
         result.forEach { task ->
             assertFalse(task.isCompleted, "Task at ${task.scheduledTime} should not be completed by default")
@@ -188,7 +190,7 @@ class GetTodayTasksUseCaseTest {
     }
 
     @Test
-    fun `hourly habit with end time should only generate tasks within time window`() = runTest {
+    fun `interval habit with end time should only generate tasks within time window for hourly intervals`() = runTest {
         // Given
         val fixedDate = LocalDate.parse("2024-01-20")
         val fixedInstant = fixedDate.atStartOfDayIn(TimeZone.currentSystemDefault())
@@ -196,21 +198,22 @@ class GetTodayTasksUseCaseTest {
             override fun now(): Instant = fixedInstant
         }
         
-        val hourlyHabitWithEndTime = Habit(
+        val intervalHabitWithEndTime = Habit(
             id = 1,
             name = "Drink Water",
             description = "Stay hydrated",
             color = "#2196F3",
             isActive = true,
             createdAt = LocalDate.parse("2024-01-01"),
-            detail = HabitDetail.HourlyHabitDetail(
+            detail = HabitDetail.IntervalHabitDetail(
+                intervalMinutes = 60, // 60 minutes interval
                 startTime = LocalTime(9, 0), // Start at 9:00 AM
                 endTime = LocalTime(17, 0) // End at 5:00 PM
             )
         )
         
         val mockRepository = mockk<HabitRepository>()
-        every { mockRepository.getActiveHabits() } returns flowOf(listOf(hourlyHabitWithEndTime))
+        every { mockRepository.getActiveHabits() } returns flowOf(listOf(intervalHabitWithEndTime))
         coEvery { mockRepository.getHabitLog(any(), any()) } returns null
         
         val useCase = GetTodayTasksUseCase(mockRepository, fixedClock)
