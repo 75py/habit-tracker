@@ -73,10 +73,14 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.MINUTES) {
-                                // Convert current value from hours to minutes
-                                val convertedValue = (tempValue * 60).coerceIn(1, 1440)
-                                tempValue = convertedValue
                                 tempUnit = TimeUnit.MINUTES
+                                // Clamp value to minutes valid range
+                                val minutesValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                                    HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
+                                } else {
+                                    (1..60).toList()
+                                }
+                                tempValue = minutesValidValues.minByOrNull { kotlin.math.abs(it - (tempValue * 60)) } ?: 1
                             }
                         },
                         label = { Text(stringResource(Res.string.minutes)) },
@@ -85,8 +89,15 @@ fun IntervalPickerDialog(
                     FilterChip(
                         onClick = { 
                             if (tempUnit != TimeUnit.HOURS) {
-                                // Convert current value from minutes to hours
-                                val convertedValue = (tempValue / 60).coerceAtLeast(1).coerceAtMost(24)
+                                tempUnit = TimeUnit.HOURS
+                                // Clamp value to hours valid range
+                                val hoursValidValues = if (frequencyType == FrequencyType.INTERVAL) {
+                                    listOf(1, 2, 3, 4, 6, 8, 12)
+                                } else {
+                                    (1..24).toList()
+                                }
+                                val targetHours = tempValue / 60
+                                val convertedValue = hoursValidValues.minByOrNull { kotlin.math.abs(it - targetHours) } ?: 1
                                 tempValue = convertedValue
                                 tempUnit = TimeUnit.HOURS
                             }
@@ -116,17 +127,14 @@ fun IntervalPickerDialog(
                         when (tempUnit) {
                             TimeUnit.MINUTES -> {
                                 if (frequencyType == FrequencyType.INTERVAL) {
-                                    HabitIntervalValidator.getAllValidIntervalMinutes()
+                                    HabitIntervalValidator.getAllValidIntervalMinutes().filter { it <= 60 }
                                 } else {
-                                    (1..maxValue).toList()
+                                    (1..minOf(maxValue, 60)).toList()
                                 }
                             }
                             TimeUnit.HOURS -> {
                                 if (frequencyType == FrequencyType.INTERVAL) {
-                                    // Convert valid hour intervals from HabitIntervalValidator
-                                    HabitIntervalValidator.getAllValidIntervalMinutes()
-                                        .filter { it >= 60 && it % 60 == 0 }
-                                        .map { it / 60 }
+                                    listOf(1, 2, 3, 4, 6, 8, 12)
                                 } else {
                                     (1..maxValue).toList()
                                 }
