@@ -45,6 +45,10 @@ class HabitRepositoryImpl(
         }
     }
 
+    override suspend fun doesHabitExistByName(name: String): Boolean {
+        return habitDao.doesHabitExistByName(name)
+    }
+
     override suspend fun addHabitLog(habitLog: HabitLog): Long {
         return habitDao.insertHabitLog(habitLog.toEntity())
     }

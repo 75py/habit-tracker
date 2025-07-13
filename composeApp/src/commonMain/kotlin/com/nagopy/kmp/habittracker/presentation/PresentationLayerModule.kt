@@ -21,5 +21,5 @@ val presentationModule = module {
     factory { HabitEditViewModel(get(), get(), get(), get(), get()) }
     factory { TodayViewModel(get(), get(), get(), get()) }
     factory { NotificationPermissionViewModel(get(), get()) }
-    single { AppViewModel(get()) }
+    single { AppViewModel(get(), get()) }
 }

@@ -18,6 +18,7 @@ interface HabitRepository {
     suspend fun getHabit(habitId: Long): Habit?
     fun getAllHabits(): Flow<List<Habit>>
     fun getActiveHabits(): Flow<List<Habit>>
+    suspend fun doesHabitExistByName(name: String): Boolean
     
     // Habit log operations
     suspend fun addHabitLog(habitLog: HabitLog): Long

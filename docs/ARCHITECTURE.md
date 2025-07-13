@@ -228,6 +228,7 @@ Use cases encapsulate specific business operations and ensure a single responsib
 - **AddHabitUseCase**: Creates a new habit with validation and business rules
 - **GetTodayTasksUseCase**: Generates task instances from active habits based on their scheduling configuration for today
 - **CompleteTaskUseCase**: Marks a task as completed (creates a habit log entry for the habit and date)
+- **SetupDefaultHabitsUseCase**: Creates default habits for new users (e.g., "水を飲む" with 30-minute intervals) if they don't already exist
 
 **Task Generation Logic:**
 The `GetTodayTasksUseCase` implements sophisticated logic to generate task instances:
@@ -272,6 +273,7 @@ classDiagram
         +getAllHabits() Flow~List~Habit~~
         +getActiveHabits() Flow~List~Habit~~
         +createHabit(habit: Habit) Long
+        +doesHabitExistByName(name: String) Boolean
         +addHabitLog(habitLog: HabitLog) Long
         +getHabitLog(habitId: Long, date: LocalDate) HabitLog?
     }

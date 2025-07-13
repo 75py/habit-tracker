@@ -33,6 +33,9 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE isActive = 1 ORDER BY createdAt DESC")
     fun getActiveHabits(): Flow<List<HabitEntity>>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM habits WHERE name = :name LIMIT 1)")
+    suspend fun doesHabitExistByName(name: String): Boolean
+
     // Habit log operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHabitLog(habitLog: LogEntity): Long
