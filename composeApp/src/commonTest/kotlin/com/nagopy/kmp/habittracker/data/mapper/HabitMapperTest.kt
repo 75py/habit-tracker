@@ -9,6 +9,8 @@ import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.frequencyType
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import com.nagopy.kmp.habittracker.util.TestLoggerConfig
+import com.nagopy.kmp.habittracker.util.TestAntilog
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -385,5 +387,49 @@ class HabitMapperTest {
             assertEquals(LocalTime(9, 0), it.startTime) // INTERVAL uses startTime
             assertEquals(null, it.endTime) // INTERVAL can have no end time
         }
+    }
+
+    @Test
+    fun `parseScheduledTimes should log error on malformed time`() {
+        TestLoggerConfig.setupForTests()
+        val entity = HabitEntity(
+            id = 1,
+            name = "Test",
+            description = "",
+            color = "#FFFFFF",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 1440,
+            scheduledTimes = "invalid"
+        )
+
+        entity.toDomainModel()
+
+        val logged = TestAntilog.logs.any { it.contains("Failed to parse time") }
+        TestLoggerConfig.tearDown()
+        assertTrue(logged)
+    }
+
+    @Test
+    fun `parseTime should log error on malformed start time`() {
+        TestLoggerConfig.setupForTests()
+        val entity = HabitEntity(
+            id = 1,
+            name = "Water",
+            description = "",
+            color = "#FFFFFF",
+            isActive = true,
+            createdAt = "2024-01-01",
+            intervalMinutes = 60,
+            scheduledTimes = "",
+            startTime = "invalid",
+            endTime = null
+        )
+
+        entity.toDomainModel()
+
+        val logged = TestAntilog.logs.any { it.contains("Failed to parse time") }
+        TestLoggerConfig.tearDown()
+        assertTrue(logged)
     }
 }
