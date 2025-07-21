@@ -416,7 +416,9 @@ class HabitMapperTest {
 
         entity.toDomainModel()
 
-        val logged = TestAntilog.logs.any { it.contains("Failed to parse time") }
+        val logged = TestAntilog.logs.any { 
+            it.contains("Failed to parse time") && it.contains("[HabitMapper]")
+        }
         assertTrue(logged)
     }
 
@@ -437,7 +439,9 @@ class HabitMapperTest {
 
         entity.toDomainModel()
 
-        val logged = TestAntilog.logs.any { it.contains("Failed to parse time") }
+        val logged = TestAntilog.logs.any { 
+            it.contains("Failed to parse time") && it.contains("[HabitMapper]")
+        }
         assertTrue(logged)
     }
 }

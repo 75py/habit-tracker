@@ -87,7 +87,7 @@ private fun parseScheduledTimes(timesString: String): List<LocalTime> {
                     LocalTime(parts[0].toInt(), parts[1].toInt())
                 } else null
             } catch (e: Exception) {
-                Logger.e(e, "Failed to parse time")
+                Logger.e(e, "Failed to parse time", tag = "HabitMapper")
                 null
             }
         }.ifEmpty { listOf(LocalTime(9, 0)) }
@@ -107,7 +107,7 @@ private fun parseTime(timeString: String): LocalTime? {
             LocalTime(parts[0].toInt(), parts[1].toInt())
         } else null
     } catch (e: Exception) {
-        Logger.e(e, "Failed to parse time")
+        Logger.e(e, "Failed to parse time", tag = "HabitMapper")
         null
     }
 }
