@@ -400,7 +400,7 @@ class HabitMapperTest {
             isActive = true,
             createdAt = "2024-01-01",
             intervalMinutes = 1440,
-            scheduledTimes = "invalid"
+            scheduledTimes = "07:xx"
         )
 
         entity.toDomainModel()
@@ -422,7 +422,7 @@ class HabitMapperTest {
             createdAt = "2024-01-01",
             intervalMinutes = 60,
             scheduledTimes = "",
-            startTime = "invalid",
+            startTime = "07:xx",
             endTime = null
         )
 
