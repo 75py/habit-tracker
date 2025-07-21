@@ -206,8 +206,9 @@ The domain layer contains the core business logic and domain entities. It's comp
 
 **Habit**: Represents a habit template with scheduling information
 - Contains basic habit information (name, description, color, active status)
-- Includes scheduling configuration (frequency type, interval hours, scheduled times)
-- Supports different frequency types: ONCE_DAILY, HOURLY, INTERVAL
+- Includes scheduling configuration (frequency type, interval minutes, scheduled times)
+ - Supports different frequency types: ONCE_DAILY, INTERVAL
+ - Interval habits cover all non-daily repetitions; the interval is specified in minutes (e.g., 60 for hourly, 30 for every 30 minutes)
 
 **Task**: Represents a specific instance of a habit scheduled for a particular time
 - Generated dynamically from habit scheduling configuration
@@ -231,9 +232,9 @@ Use cases encapsulate specific business operations and ensure a single responsib
 
 **Task Generation Logic:**
 The `GetTodayTasksUseCase` implements sophisticated logic to generate task instances:
-- **ONCE_DAILY**: Creates one task per scheduled time
-- **HOURLY**: Creates tasks every hour starting from the first scheduled time
-- **INTERVAL**: Creates tasks every N hours based on the interval configuration
+ - **ONCE_DAILY**: Creates one task per scheduled time
+ - **INTERVAL**: Creates tasks every N minutes starting from the first scheduled time
+   - Hourly and sub-hourly schedules are handled by this type
 
 **Key Principles:**
 - Pure Kotlin with no platform-specific dependencies
