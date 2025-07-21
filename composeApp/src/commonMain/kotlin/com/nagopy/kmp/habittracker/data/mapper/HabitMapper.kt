@@ -7,6 +7,7 @@ import com.nagopy.kmp.habittracker.domain.model.HabitDetail
 import com.nagopy.kmp.habittracker.domain.model.HabitLog
 import com.nagopy.kmp.habittracker.domain.model.FrequencyType
 import com.nagopy.kmp.habittracker.domain.model.HabitIntervalValidator
+import com.nagopy.kmp.habittracker.util.Logger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -86,6 +87,7 @@ private fun parseScheduledTimes(timesString: String): List<LocalTime> {
                     LocalTime(parts[0].toInt(), parts[1].toInt())
                 } else null
             } catch (e: Exception) {
+                Logger.e(e, "Failed to parse time", tag = "HabitMapper")
                 null
             }
         }.ifEmpty { listOf(LocalTime(9, 0)) }
@@ -105,6 +107,7 @@ private fun parseTime(timeString: String): LocalTime? {
             LocalTime(parts[0].toInt(), parts[1].toInt())
         } else null
     } catch (e: Exception) {
+        Logger.e(e, "Failed to parse time", tag = "HabitMapper")
         null
     }
 }

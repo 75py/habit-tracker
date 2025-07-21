@@ -12,6 +12,7 @@ object TestLoggerConfig {
      * This should be called in test setup to avoid Android Log mocking issues
      */
     fun setupForTests() {
+        TestAntilog.clear()
         Napier.base(TestAntilog())
     }
     
