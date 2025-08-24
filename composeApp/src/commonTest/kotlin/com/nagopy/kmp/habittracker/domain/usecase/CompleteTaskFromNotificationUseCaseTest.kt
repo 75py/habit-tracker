@@ -1,6 +1,5 @@
 package com.nagopy.kmp.habittracker.domain.usecase
 
-import com.nagopy.kmp.habittracker.domain.notification.NotificationScheduler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -13,15 +12,13 @@ import kotlin.test.assertEquals
 class CompleteTaskFromNotificationUseCaseTest {
 
     private val mockCompleteTaskUseCase = mockk<CompleteTaskUseCase>()
-    private val mockNotificationScheduler = mockk<NotificationScheduler>(relaxed = true)
     
     private val completeTaskFromNotificationUseCase = CompleteTaskFromNotificationUseCase(
-        completeTaskUseCase = mockCompleteTaskUseCase,
-        notificationScheduler = mockNotificationScheduler
+        completeTaskUseCase = mockCompleteTaskUseCase
     )
 
     @Test
-    fun `invoke should complete task and cancel notification`() = runTest {
+    fun `invoke should complete task`() = runTest {
         // Given
         val habitId = 1L
         val date = LocalDate(2024, 1, 20)
@@ -36,15 +33,5 @@ class CompleteTaskFromNotificationUseCaseTest {
         // Then
         assertEquals(expectedLogId, result)
         coVerify { mockCompleteTaskUseCase(habitId, date, scheduledTime) }
-        coVerify { 
-            mockNotificationScheduler.cancelTaskNotification(
-                match { task ->
-                    task.habitId == habitId &&
-                    task.date == date &&
-                    task.scheduledTime == scheduledTime &&
-                    task.isCompleted == true
-                }
-            )
-        }
     }
 }
